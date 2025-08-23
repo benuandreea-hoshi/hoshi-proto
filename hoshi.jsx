@@ -575,6 +575,26 @@ function Services(){
     </div>
   );
 }
+// --- tiny viewport helper ---
+function useIsMobile(bp = 640) {
+  const q = `(max-width:${bp}px)`;
+  const initial =
+    typeof window !== "undefined" && "matchMedia" in window
+      ? window.matchMedia(q).matches
+      : false;
+
+  const [m, setM] = React.useState(initial);
+
+  React.useEffect(() => {
+    if (!("matchMedia" in window)) return;
+    const mq = window.matchMedia(q);
+    const on = (e) => setM(e.matches);
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, [q]);
+
+  return m;
+}
 function Building(){
   // Data compressed as [label, actual, budget]
   const D={
@@ -607,6 +627,7 @@ function Building(){
   const over=Math.max(0,M.ta-M.tb), overPct=M.tb?over/M.tb*100:0;
   const need=rows.filter(([,A,B])=>A>B*1.1).length;
   const fmt=n=>"€ "+Math.round(n).toLocaleString();
+  const isMobile = useIsMobile();
 
   return (
     <div className="grid gap-4 md:gap-6">
@@ -646,10 +667,16 @@ function Building(){
                   <div className="hb-a" style={{width:`${aw}%`}}/>
                   {ow>0 && <div className="hb-o" style={{left:`${bw}%`,width:`${ow}%`}}/>}
                 </div>
-                <div className="hb-v text-slate-300">
-                  <div className="text-slate-100">{fmt(A)}</div>
-                  <div className="text-xs">{fmt(B)}</div>
-                </div>
+               <div className="hb-v text-slate-300">
+  {isMobile ? (
+    <div className="text-slate-100 text-sm">
+      {fmt(A)} <span className="text-xs text-slate-400">· {fmt(B)} budget</span>
+    </div>
+  ) : (
+    <div className="text-slate-100">{fmt(A)}</div> // desktop: only actual
+  )}
+</div>
+
               </div>
             );
           })}
