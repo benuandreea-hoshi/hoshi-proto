@@ -1,6 +1,21 @@
 const LOGO_SRC   = "https://cdn.prod.website-files.com/68a8baf20ad5978747d9d44d/68a8fe47145ebb756d01c372_hoshi.jpeg";
 const PEOPLE_SRC = "https://cdn.prod.website-files.com/68a8baf20ad5978747d9d44d/68a8fe75f8001bf82851cd0f_commonwealthOfPeoples.jpeg";
 const {useMemo,useState,useRef,useEffect} = React;
+// --- responsive helper ---
+function useIsMobile(bp = 640) {
+  const [m, setM] = React.useState(
+    typeof window !== "undefined" &&
+      window.matchMedia?.(`(max-width:${bp}px)`).matches
+  );
+  React.useEffect(() => {
+    if (!window.matchMedia) return;
+    const mq = window.matchMedia(`(max-width:${bp}px)`);
+    const on = e => setM(e.matches);
+    mq.addEventListener?.("change", on);
+    return () => mq.removeEventListener?.("change", on);
+  }, [bp]);
+  return m;
+}
 
 const Badge=({tone="neutral",children})=>{
   const map={info:"bg-blue-500/15 text-blue-300 ring-1 ring-inset ring-blue-400/30",
@@ -595,6 +610,7 @@ function useIsMobile(bp = 640) {
 
   return m;
 }
+// === Building (bars without external CSS) — MOBILE-CARD-BARS ===
 function Building(){
   // Data compressed as [label, actual, budget]
   const D={
@@ -620,6 +636,141 @@ function Building(){
       ["Insurance",2100,2200],["Major Works",2000,0],["Interest",2100,0]
     ]
   };
+
+  const YEARS = Object.keys(D);
+  const [year,setYear] = React.useState(YEARS[YEARS.length-1]);
+  const rows = D[year];
+  const isMobile = useIsMobile(640);
+
+  // totals + scale
+  const M=rows.reduce((a,[,A,B])=>{a.max=Math.max(a.max,A,B);a.ta+=A;a.tb+=B;return a},{max:1,ta:0,tb:0});
+  const over=Math.max(0,M.ta-M.tb), overPct=M.tb?over/M.tb*100:0;
+  const need=rows.filter(([,A,B])=>A>B*1.1).length;
+  const fmt=n=>"€ "+Math.round(n).toLocaleString();
+
+  // legend pill
+  const Dot = ({c,label}) => (
+    <span className="flex items-center gap-2 text-slate-300 text-sm">
+      <i className="inline-block w-2.5 h-2.5 rounded-sm" style={{background:c}}/>
+      {label}
+    </span>
+  );
+
+  const Bar = ({A,B,max})=>{
+    const bw = B/max*100;
+    const aw = Math.min(A,B)/max*100;
+    const ow = A>B? (A-B)/max*100 : 0;
+
+    return (
+      <div className="relative w-full h-2.5 md:h-3 rounded-full bg-slate-900/70 border border-slate-700/80">
+        {/* budget track */}
+        <div className="absolute inset-0 rounded-full overflow-hidden">
+          <div className="h-full bg-slate-400/15" style={{width:`${bw}%`}}/>
+        </div>
+        {/* actual (green) */}
+        <div className="absolute top-0 left-0 h-full rounded-l-full bg-emerald-400" style={{width:`${aw}%`}}/>
+        {/* overrun (red) */}
+        {ow>0 && (
+          <div className="absolute top-0 h-full bg-rose-500" style={{left:`${bw}%`,width:`${ow}%`}}/>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div className="grid gap-4 md:gap-6">
+      <Section
+        title="Total Building Services Expenditures"
+        right={
+          <div className="flex items-center gap-2">
+            <span className="text-slate-300 text-xs">Year</span>
+            <select
+              className="px-2 py-1 rounded-lg text-sm"
+              style={{background:"var(--panel-2)",border:"1px solid var(--stroke)",color:"var(--text)"}}
+              value={year}
+              onChange={e=>setYear(e.target.value)}
+            >
+              {YEARS.map(y=><option key={y}>{y}</option>)}
+            </select>
+          </div>
+        }
+      >
+        {/* KPIs */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-4">
+          <Metric label="Total actual" value={fmt(M.ta)} sub={year}/>
+          <Metric label="Budget/benchmark" value={fmt(M.tb)} sub={year}/>
+          <Metric label="Overrun" value={fmt(over)} sub={`${overPct.toFixed(1)}% vs budget`}/>
+          <Metric label="Needs attention" value={`${need}`} sub=">10% above budget"/>
+        </div>
+
+        {/* Legend */}
+        <div className="flex flex-wrap items-center gap-5 mb-3">
+          <Dot c="#34d399" label="Actual"/>
+          <Dot c="rgba(221,227,234,.13)" label="Budget"/>
+          <Dot c="#ef4444" label="Overrun"/>
+        </div>
+
+        {/* Rows */}
+        {!isMobile ? (
+          // Desktop/tablet: three-column grid
+          <div className="space-y-7">
+            {rows.map(([k,A,B],i)=>{
+              const pct=B?(((A-B)/B)*100):null;
+              return (
+                <div key={i} className="grid grid-cols-[260px_1fr_140px] items-center gap-4">
+                  <div className="text-slate-100 font-medium leading-tight">{k}</div>
+                  <Bar A={A} B={B} max={M.max}/>
+                  <div className="text-right">
+                    <div className="text-slate-100">{fmt(A)}</div>
+                    <div className="text-xs text-slate-400">
+                      {B>0 ? `${fmt(B)} budget${pct!==null?``:``}` : `no budget`}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          // Mobile: stacked “card row”
+          <ul className="space-y-5">
+            {rows.map(([k,A,B],i)=>{
+              const pct=B?(((A-B)/B)*100):null;
+              return (
+                <li key={i} className="rounded-xl p-3" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="text-slate-100 font-medium">{k}</div>
+                    <div className="text-right text-[13px] text-slate-300">
+                      <span className="font-semibold text-slate-100">{fmt(A)}</span>
+                      <span className="text-slate-400"> · {B>0?`${fmt(B)} budget`:`no budget`}</span>
+                    </div>
+                  </div>
+                  <div className="mt-3"><Bar A={A} B={B} max={M.max}/></div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+
+        {/* Notes */}
+        <div className="mt-5 grid md:grid-cols-3 gap-3 text-sm">
+          <div className="rounded-xl p-3" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
+            <div className="text-slate-300">Guidance</div>
+            <div className="text-slate-100 mt-1">Red shows spend above budget — prioritise these lines.</div>
+          </div>
+          <div className="rounded-xl p-3" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
+            <div className="text-slate-300">Benchmark</div>
+            <div className="text-slate-100 mt-1">Swap “Budget” for a peer benchmark when available.</div>
+          </div>
+          <div className="rounded-xl p-3" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
+            <div className="text-slate-300">Data</div>
+            <div className="text-slate-100 mt-1">Feed from bills, service contracts, or AP exports.</div>
+          </div>
+        </div>
+      </Section>
+    </div>
+  );
+}
+
   const YEARS=Object.keys(D);
   const [year,setYear]=React.useState(YEARS[YEARS.length-1]);
   const rows=D[year];
