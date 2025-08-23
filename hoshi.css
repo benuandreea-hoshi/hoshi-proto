@@ -1,0 +1,63 @@
+/* --- Base tokens / components --- */
+#hoshi-root{
+  --bg:#0F1115; --panel:#151922; --panel-2:#1B2030; --stroke:#2A3142; --text:#e2e8f0; --accent:#3b82f6; --nav:#0d1524;
+  font-family:"Plus Jakarta Sans",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  background:
+    radial-gradient(1100px 520px at 15% -10%, rgba(59,130,246,.10), transparent),
+    radial-gradient(900px 500px at 100% 10%, rgba(16,185,129,.08), transparent),
+    var(--bg);
+  color:var(--text);
+}
+#hoshi-root .card{background:var(--panel);border:1px solid var(--stroke);border-radius:16px}
+#hoshi-root .btn{border-radius:12px;padding:10px 16px;font-weight:600}
+#hoshi-root .btn-primary{background:var(--accent);color:#fff}
+#hoshi-root .btn-ghost{background:transparent;border:1px solid var(--stroke);color:var(--text)}
+#hoshi-root .navicon{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;border:1px solid #1f2a3a;background:#0f192b;color:#cbd5e1}
+#hoshi-root .navicon.active{background:var(--accent);border-color:transparent;color:#fff}
+#hoshi-root .chip{border-radius:999px;padding:2px 8px;font-size:12px;border:1px solid rgba(59,130,246,.3);background:rgba(59,130,246,.15);color:#c7d2fe}
+#hoshi-root .overlay{position:fixed;inset:0;background:rgba(15,17,21,.5);backdrop-filter:blur(2px)}
+
+/* Hero */
+#hoshi-root .hero{position:relative;border-radius:20px;padding:28px 24px 24px;background:#0c111b;border:1px solid #1f2a33;overflow:hidden}
+#hoshi-root .hero::before{content:"";position:absolute;inset:-40% -20% auto -20%;height:340px;background:
+  radial-gradient(500px 220px at 15% 40%, rgba(56,189,248,.25), transparent),
+  radial-gradient(500px 220px at 85% 20%, rgba(16,185,129,.18), transparent),
+  radial-gradient(350px 220px at 60% 90%, rgba(139,92,246,.12), transparent);
+  filter:blur(28px);opacity:.85;animation:hero-drift 16s ease-in-out infinite alternate;pointer-events:none}
+#hoshi-root .hero::after{content:"";position:absolute;inset:0;background:
+  radial-gradient(1200px 520px at 50% -10%, rgba(255,255,255,.06), transparent 60%),
+  repeating-linear-gradient(0deg, rgba(255,255,255,.04), rgba(255,255,255,.04) 1px, transparent 1px, transparent 3px);
+  mix-blend-mode:overlay;opacity:.25;animation:hero-scan 22s linear infinite;pointer-events:none}
+@keyframes hero-drift{from{transform:translateY(0)}to{transform:translateY(-24px)}}
+@keyframes hero-scan{from{background-position:0 0,0 0}to{background-position:0 0,0 80px}}
+
+/* Accents */
+#hoshi-root .text-neon{background:linear-gradient(90deg,#38bdf8 0%,#60a5fa 40%,#34d399 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 0 18px rgba(56,189,248,.28)}
+#hoshi-root .pill{border-radius:14px;background:linear-gradient(180deg,#111827,#0b1320);border:1px solid #233040;padding:14px 16px}
+#hoshi-root .pill .k{font-size:20px;font-weight:800;letter-spacing:-.02em;color:#e5f0ff}
+#hoshi-root .pill .s{font-size:12px;color:#9fb0c6}
+#hoshi-root .usp-card{border-radius:16px;padding:14px;background:
+  linear-gradient(#111827,#111827) padding-box,
+  linear-gradient(135deg, rgba(59,130,246,.45), rgba(16,185,129,.35)) border-box;border:1px solid transparent;transition:transform .15s,box-shadow .15s}
+#hoshi-root .usp-card:hover{transform:translateY(-1px);box-shadow:0 8px 26px rgba(0,0,0,.35)}
+#hoshi-root .usp-ico{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:#0b1726;border:1px solid #1e2b3d;color:#9cc4ff}
+#hoshi-root .check{width:18px;height:18px;border-radius:999px;background:#10b98122;border:1px solid #10b98155;color:#34d399;display:grid;place-items:center;margin-right:8px}
+#hoshi-root .how-step{border-left:2px solid #233147;padding-left:12px}
+#hoshi-root .how-num{width:28px;height:28px;border-radius:999px;background:#0b1726;border:1px solid #2a3c55;display:grid;place-items:center;font-weight:700;color:#9cc4ff}
+#hoshi-root .img-frame{background:#0b1726;border:1px solid #1f2b3d;border-radius:16px;padding:10px}
+#hoshi-root .no-scrollbar::-webkit-scrollbar{display:none}
+#hoshi-root .no-scrollbar{-ms-overflow-style:none;scrollbar-width:none}
+
+/* Building bars (match .hb-* used in JSX) */
+#hoshi-root .hb{display:flex;align-items:center;gap:12px}
+#hoshi-root .hb-l{flex:0 0 230px}
+#hoshi-root .hb-w{position:relative;flex:1;height:16px;border-radius:999px;overflow:hidden;background:#0f1a2a;border:1px solid #233147}
+#hoshi-root .hb-t{position:absolute;inset:0;background:#dde3ea22}
+#hoshi-root .hb-a{position:absolute;left:0;top:0;bottom:0;background:#34d399}
+#hoshi-root .hb-o{position:absolute;top:0;bottom:0;background:#ef4444}
+#hoshi-root .hb-v{flex:0 0 110px;text-align:right}
+#hoshi-root .legend-dot{width:10px;height:10px;border-radius:2px;display:inline-block;margin-right:6px}
+
+@media (max-width:640px){
+  #hoshi-root .hb-l{flex:0 0 160px}
+}
