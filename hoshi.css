@@ -66,5 +66,29 @@
   #hoshi-root .hb-v{
     order:1;position:absolute;top:0;right:0;flex:none;width:auto;text-align:right
   }
+  /* === Building bars (.hb-*) === */
+#hoshi-root .hb{display:flex;align-items:center;gap:12px}
+#hoshi-root .hb-l{flex:0 0 230px}
+#hoshi-root .hb-w{position:relative;flex:1;height:16px;border-radius:999px;overflow:hidden;background:#0f1a2a;border:1px solid #233147}
+#hoshi-root .hb-t{position:absolute;inset:0;background:#dde3ea22}
+#hoshi-root .hb-a{position:absolute;left:0;top:0;bottom:0;background:#34d399}
+#hoshi-root .hb-o{position:absolute;top:0;bottom:0;background:#ef4444}
+#hoshi-root .hb-v{flex:0 0 140px;text-align:right} /* wider value column */
+
+/* Mobile layout */
+@media (max-width:640px){
+  #hoshi-root .hb{
+    position: relative;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    padding-top: 2px;
+  }
+  #hoshi-root .hb-l{flex:none;width:100%;padding-right:120px}
+  #hoshi-root .hb-w{order:2;width:100%;height:12px}
+  #hoshi-root .hb-v{
+    order:1;position:absolute;top:0;right:0;flex:none;width:auto;text-align:right
+  }
+}
 }
 
