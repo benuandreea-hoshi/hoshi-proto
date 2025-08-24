@@ -623,16 +623,16 @@ function Building(){
   const isMobile = useIsMobile(640);
 
   // totals + scale
-  const M=rows.reduce((a,[,A,B])=>{a.max=Math.max(a.max,A,B);a.ta+=A;a.tb+=B;return a},{max:1,ta:0,tb:0});
-  const over=Math.max(0,M.ta-M.tb), overPct=M.tb?over/M.tb*100:0;
-  const need=rows.filter(([,A,B])=>A>B*1.1).length;
-  const fmt=n=>"€ "+Math.round(n).toLocaleString();
+  const M = rows.reduce((a,[,A,B])=>{a.max=Math.max(a.max,A,B);a.ta+=A;a.tb+=B;return a},{max:1,ta:0,tb:0});
+  const over   = Math.max(0,M.ta-M.tb);
+  const overPct= M.tb ? (over/M.tb*100) : 0;
+  const need   = rows.filter(([,A,B])=>A>B*1.1).length;
+  const fmt    = n => "€ "+Math.round(n).toLocaleString();
 
   // tiny legend pill
   const Dot = ({c,label}) => (
     <span className="flex items-center gap-2 text-slate-300 text-sm">
-      <i className="inline-block w-2.5 h-2.5 rounded-sm" style={{background:c}}/>
-      {label}
+      <i className="inline-block w-2.5 h-2.5 rounded-sm" style={{background:c}}/>{label}
     </span>
   );
 
@@ -641,31 +641,26 @@ function Building(){
     const bw = B/max*100;
     const aw = Math.min(A,B)/max*100;
     const ow = A>B? (A-B)/max*100 : 0;
-// format helpers (already have fmt for €)
-const fmtPct = (p) => (p == null ? "–" : `${p.toFixed(0)}%`);
-
-// top 3 overruns this year
-const top = rows
-  .filter(([k, A, B]) => A > B)
-  .map(([k, A, B]) => ({ k, over: A - B, pct: B ? ((A - B) / B) * 100 : null }))
-  .sort((a, b) => b.over - a.over)
-  .slice(0, 3);
-
-// how many are under/at budget (nice to show balance)
-const underOrOn = rows.filter(([, A, B]) => A <= B).length;
-
     return (
       <div className="relative w-full h-2.5 md:h-3 rounded-full bg-slate-900/70 border border-slate-700/80">
         <div className="absolute inset-0 rounded-full overflow-hidden">
           <div className="h-full bg-slate-400/15" style={{width:`${bw}%`}}/>
         </div>
         <div className="absolute top-0 left-0 h-full rounded-l-full bg-emerald-400" style={{width:`${aw}%`}}/>
-        {ow>0 && (
-          <div className="absolute top-0 h-full bg-rose-500" style={{left:`${bw}%`,width:`${ow}%`}}/>
-        )}
+        {ow>0 && <div className="absolute top-0 h-full bg-rose-500" style={{left:`${bw}%`,width:`${ow}%`}}/>}
       </div>
     );
   };
+
+  // ---------- moved OUT of <Bar> ----------
+  const fmtPct = (p) => (p == null ? "–" : `${p.toFixed(0)}%`);
+  const top = rows
+    .filter(([,A,B]) => A > B)
+    .map(([k,A,B]) => ({ k, over: A-B, pct: B ? ((A-B)/B)*100 : null }))
+    .sort((a,b) => b.over - a.over)
+    .slice(0,3);
+  const underOrOn = rows.filter(([,A,B]) => A <= B).length;
+  // ----------------------------------------
 
   return (
     <div className="grid gap-4 md:gap-6">
@@ -709,9 +704,7 @@ const underOrOn = rows.filter(([, A, B]) => A <= B).length;
                 <Bar A={A} B={B} max={M.max}/>
                 <div className="text-right">
                   <div className="text-slate-100">{fmt(A)}</div>
-                  <div className="text-xs text-slate-400">
-                    {B>0 ? `${fmt(B)} budget` : `no budget`}
-                  </div>
+                  <div className="text-xs text-slate-400">{B>0 ? `${fmt(B)} budget` : `no budget`}</div>
                 </div>
               </div>
             ))}
@@ -733,76 +726,58 @@ const underOrOn = rows.filter(([, A, B]) => A <= B).length;
           </ul>
         )}
 
-        {/* Notes */}
         {/* Insights & explainer */}
-<div className="mt-5 grid md:grid-cols-3 gap-3 text-sm">
-  {/* Totals & status */}
-  <div className="rounded-xl p-3" style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}>
-    <div className="text-slate-300">Totals & status — {year}</div>
-    <div className="mt-2 space-y-1 text-slate-100">
-      <div className="flex justify-between"><span>Total actual</span><span>{fmt(M.ta)}</span></div>
-      <div className="flex justify-between"><span>Budget / benchmark</span><span>{fmt(M.tb)}</span></div>
-      <div className="flex justify-between">
-        <span>Overrun</span>
-        <span className="text-rose-300">{fmt(over)} <span className="text-slate-400">· {fmtPct(overPct)}</span></span>
-      </div>
-      <div className="flex justify-between"><span>Lines &gt;10% over</span><span>{need}</span></div>
-      <div className="flex justify-between"><span>On / under budget</span><span>{underOrOn}</span></div>
-    </div>
-  </div>
-
-  {/* Top overruns */}
-  <div className="rounded-xl p-3" style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}>
-    <div className="text-slate-300">Top overruns</div>
-    <ul className="mt-2 divide-y" style={{ borderColor: "var(--stroke)" }}>
-      {top.length ? top.map((t) => (
-        <li key={t.k} className="py-1.5 flex items-center justify-between">
-          <span className="text-slate-100">{t.k}</span>
-          <span className="font-medium text-rose-300">
-            {fmt(t.over)}{t.pct != null && <span className="text-slate-400"> · {fmtPct(t.pct)}</span>}
-          </span>
-        </li>
-      )) : (
-        <li className="py-1.5 text-slate-400">No overruns in {year}.</li>
-      )}
-    </ul>
-  </div>
-
-  {/* How to read the bars */}
-  <div className="rounded-xl p-3" style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}>
-    <div className="text-slate-300">How to read the bars</div>
-    <ul className="mt-2 text-slate-100 space-y-1 list-disc pl-4">
-      <li><span className="inline-block w-2.5 h-2.5 rounded-sm align-middle mr-2" style={{ background:"#34d399" }} />Actual spend (green).</li>
-      <li><span className="inline-block w-2.5 h-2.5 rounded-sm align-middle mr-2" style={{ background:"rgba(221,227,234,.13)" }} />Budget / benchmark track.</li>
-      <li><span className="inline-block w-2.5 h-2.5 rounded-sm align-middle mr-2" style={{ background:"#ef4444" }} />Overrun (red) shows € above budget.</li>
-      <li>Bar widths are normalised to the largest line item this year.</li>
-      <li>“Needs attention” = more than 10% above budget for that line.</li>
-      <li>Lines with no budget render fully red (treated as 100% over).</li>
-    </ul>
-    <div className="mt-2 text-[12px] text-slate-400">
-      Amounts are rounded. Totals are simple sums. Swap “Budget” for a peer benchmark when available.
-    </div>
-  </div>
-</div>
-
-          <div className="rounded-xl p-3" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
-            <div className="text-slate-300">Guidance</div>
-            <div className="text-slate-100 mt-1">Red shows spend above budget — prioritise these lines.</div>
+        <div className="mt-5 grid md:grid-cols-3 gap-3 text-sm">
+          {/* Totals & status */}
+          <div className="rounded-xl p-3" style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}>
+            <div className="text-slate-300">Totals &amp; status — {year}</div>
+            <div className="mt-2 space-y-1 text-slate-100">
+              <div className="flex justify-between"><span>Total actual</span><span>{fmt(M.ta)}</span></div>
+              <div className="flex justify-between"><span>Budget / benchmark</span><span>{fmt(M.tb)}</span></div>
+              <div className="flex justify-between">
+                <span>Overrun</span>
+                <span className="text-rose-300">{fmt(over)} <span className="text-slate-400">· {fmtPct(overPct)}</span></span>
+              </div>
+              <div className="flex justify-between"><span>Lines &gt;10% over</span><span>{need}</span></div>
+              <div className="flex justify-between"><span>On / under budget</span><span>{underOrOn}</span></div>
+            </div>
           </div>
-          <div className="rounded-xl p-3" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
-            <div className="text-slate-300">Benchmark</div>
-            <div className="text-slate-100 mt-1">Swap “Budget” for a peer benchmark when available.</div>
+
+          {/* Top overruns */}
+          <div className="rounded-xl p-3" style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}>
+            <div className="text-slate-300">Top overruns</div>
+            <ul className="mt-2 divide-y" style={{ borderColor: "var(--stroke)" }}>
+              {top.length ? top.map(t => (
+                <li key={t.k} className="py-1.5 flex items-center justify-between">
+                  <span className="text-slate-100">{t.k}</span>
+                  <span className="font-medium text-rose-300">
+                    {fmt(t.over)}{t.pct != null && <span className="text-slate-400"> · {fmtPct(t.pct)}</span>}
+                  </span>
+                </li>
+              )) : <li className="py-1.5 text-slate-400">No overruns in {year}.</li>}
+            </ul>
           </div>
-          <div className="rounded-xl p-3" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
-            <div className="text-slate-300">Data</div>
-            <div className="text-slate-100 mt-1">Feed from bills, service contracts, or AP exports.</div>
+
+          {/* How to read the bars */}
+          <div className="rounded-xl p-3" style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}>
+            <div className="text-slate-300">How to read the bars</div>
+            <ul className="mt-2 text-slate-100 space-y-1 list-disc pl-4">
+              <li><span className="inline-block w-2.5 h-2.5 rounded-sm align-middle mr-2" style={{ background:"#34d399" }} />Actual spend (green).</li>
+              <li><span className="inline-block w-2.5 h-2.5 rounded-sm align-middle mr-2" style={{ background:"rgba(221,227,234,.13)" }} />Budget / benchmark track.</li>
+              <li><span className="inline-block w-2.5 h-2.5 rounded-sm align-middle mr-2" style={{ background:"#ef4444" }} />Overrun (red) shows € above budget.</li>
+              <li>Bar widths normalised to the largest line item for the selected year.</li>
+              <li>“Needs attention” &gt; 10% above budget for that line.</li>
+              <li>No budget → bar shows only red segment.</li>
+            </ul>
+            <div className="mt-2 text-[12px] text-slate-400">
+              Amounts rounded; totals are simple sums. Swap “Budget” for a peer benchmark when available.
+            </div>
           </div>
         </div>
       </Section>
     </div>
   );
 }
-
 function Actions(){
   const items = [
     { m:"LED retrofit", capex:25000, save:8500, pay:1.8, status:"To review" },
