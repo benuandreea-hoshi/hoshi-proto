@@ -92,26 +92,30 @@ function DonutGauge({ value=0, max=1, size=120, stroke=14, label, display }) {
     </svg>
   );
 }
-function Story({ goApp }) {
-  const IcoMail = () => (
+ function Story({ goApp }) {
+  // quick mini data for the sparkline in the explainer
+  const roiSpark = [2, 3, 2, 4, 5, 4, 6, 7, 6, 7, 8, 7];
+
+  // inline icons to match your style
+  const IcoFEP = () => (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-      <path d="M4 6h16v12H4zM4 6l8 6 8-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M4 18V6m0 12h16M8 14l3 3 5-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   );
-  const IcoChart = () => (
+  const IcoScenario = () => (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-      <path d="M4 20V4M4 20h16M8 16v-6M12 20V8M16 20v-9" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+      <path d="M4 7h16M4 12h12M4 17h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+      <circle cx="19" cy="12" r="2" stroke="currentColor" strokeWidth="2"/>
     </svg>
   );
-  const IcoShield = () => (
+  const IcoThermo = () => (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-      <path d="M12 3l8 4v5c0 5-3.5 7.5-8 9-4.5-1.5-8-4-8-9V7l8-4z" stroke="currentColor" strokeWidth="2" fill="none"/>
-      <path d="M9.5 12.5l2 2 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M10 14V6a2 2 0 114 0v8a4 4 0 11-4 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   );
-  const IcoBolt = () => (
+  const IcoWrench = () => (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-      <path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z" stroke="currentColor" strokeWidth="2" fill="none" strokeLinejoin="round"/>
+      <path d="M20 7a5 5 0 01-7 7l-6 6-3-3 6-6a5 5 0 017-7z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   );
 
@@ -123,8 +127,11 @@ function Story({ goApp }) {
         <section className="hero mt-2 md:mt-4">
           <div className="flex items-center gap-2 mb-3 md:mb-4">
             <span className="chip">Prototype</span>
-            <span className="chip" style={{background:"rgba(148,163,184,.12)",color:"#e2e8f0",borderColor:"rgba(148,163,184,.3)"}}>
-              Real-estate ESG
+            <span
+              className="chip"
+              style={{background:"rgba(148,163,184,.12)",color:"#e2e8f0",borderColor:"rgba(148,163,184,.3)"}}
+            >
+              Dark UI · Blue→Green
             </span>
           </div>
 
@@ -135,86 +142,186 @@ function Story({ goApp }) {
           </h1>
 
           <p className="text-slate-300 mt-4 text-base md:text-lg max-w-3xl">
-            Ingest utility data in minutes, compare metrics instantly, and ship a public
-            Building Performance Sheet with auditable lineage.
+            Evidence that moves value: scenario-adjusted service performance, comfort risk,
+            and forward ROI — shared by owners, occupiers, and suppliers.
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3">
             <button onClick={goApp} className="btn btn-primary">Launch prototype</button>
-            <a href="#how" className="btn btn-ghost">How it works</a>
+            <a href="#how" className="btn btn-ghost">See how it works</a>
           </div>
 
           {/* KPIs */}
           <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
-            <div className="pill"><div className="k">10×</div><div className="s">faster onboarding</div></div>
-            <div className="pill"><div className="k">92%</div><div className="s">data coverage target</div></div>
-            <div className="pill"><div className="k">100%</div><div className="s">traceable metrics</div></div>
+            <div className="pill">
+              <div className="k">FEP</div>
+              <div className="s">Forward Energy Premium · % ROI</div>
+            </div>
+            <div className="pill">
+              <div className="k">β</div>
+              <div className="s">Sensitivity to energy/climate factors</div>
+            </div>
+            <div className="pill">
+              <div className="k">⚠︎</div>
+              <div className="s">Comfort / overheating risk outlook</div>
+            </div>
           </div>
         </section>
-        <section className="mt-6 card p-4 md:p-6">
-          <div className="grid md:grid-cols-2 gap-4">
-            {/* USP cards */}
-            <div className="grid gap-3 md:gap-4 content-start">
-              <div className="usp-card">
-                <div className="flex items-start gap-3">
-                  <span className="usp-ico"><IcoMail/></span>
-                  <div>
-                    <div className="text-slate-100 font-medium">Simple ingestion</div>
-                    <div className="text-slate-400 text-sm">Email bills or upload CSV. APIs when ready.</div>
-                  </div>
-                </div>
-              </div>
-              <div className="usp-card">
-                <div className="flex items-start gap-3">
-                  <span className="usp-ico"><IcoChart/></span>
-                  <div>
-                    <div className="text-slate-100 font-medium">Comparable metrics</div>
-                    <div className="text-slate-400 text-sm">kWh, tCO₂e, spend &amp; intensity—apples to apples.</div>
-                  </div>
-                </div>
-              </div>
-              <div className="usp-card">
-                <div className="flex items-start gap-3">
-                  <span className="usp-ico"><IcoShield/></span>
-                  <div>
-                    <div className="text-slate-100 font-medium">Transparent lineage</div>
-                    <div className="text-slate-400 text-sm">Every metric traceable to sources, factors &amp; formulas.</div>
-                  </div>
-                </div>
-              </div>
-              <div className="usp-card">
-                <div className="flex items-start gap-3">
-                  <span className="usp-ico"><IcoBolt/></span>
-                  <div>
-                    <div className="text-slate-100 font-medium">Action planning</div>
-                    <div className="text-slate-400 text-sm">Ranked measures with payback &amp; savings.</div>
+
+        {/* VALUE PROPOSITION */}
+        <section className="mt-6 grid md:grid-cols-2 gap-4">
+          {/* Left: Solution cards */}
+          <div className="grid gap-3 md:gap-4 content-start">
+            {/* 1 — FEP */}
+            <div className="usp-card">
+              <div className="flex items-start gap-3">
+                <span className="usp-ico"><IcoFEP/></span>
+                <div>
+                  <div className="text-slate-100 font-medium">Forward Energy Premium</div>
+                  <div className="text-slate-400 text-sm">
+                    Quantifies how energy &amp; service factors add/subtract from expected ROI — with systematic vs idiosyncratic breakdown.
                   </div>
                 </div>
               </div>
             </div>
+            {/* 2 — Scenario Studio */}
+            <div className="usp-card">
+              <div className="flex items-start gap-3">
+                <span className="usp-ico"><IcoScenario/></span>
+                <div>
+                  <div className="text-slate-100 font-medium">Scenario Studio</div>
+                  <div className="text-slate-400 text-sm">
+                    One-click stress tests across energy prices, policy, and climate pathways — see outcomes to 2030/2050.
+                  </div>
+                </div>
+              </div>
+            </div>
+            {/* 3 — Comfort risk */}
+            <div className="usp-card">
+              <div className="flex items-start gap-3">
+                <span className="usp-ico"><IcoThermo/></span>
+                <div>
+                  <div className="text-slate-100 font-medium">Comfort &amp; Overheating Risk</div>
+                  <div className="text-slate-400 text-sm">
+                    Translates servicing choices into expected overheating hours and satisfaction impact — lower is better.
+                  </div>
+                </div>
+              </div>
+            </div>
+            {/* 4 — Strategy advisor */}
+            <div className="usp-card">
+              <div className="flex items-start gap-3">
+                <span className="usp-ico"><IcoWrench/></span>
+                <div>
+                  <div className="text-slate-100 font-medium">Service Strategy Advisor</div>
+                  <div className="text-slate-400 text-sm">
+                    Recommends mixed-mode and other measures with payback, certainty and operational fit.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
 
-            {/* People image + copy */}
+          {/* Right: Explainer */}
+          <div className="card p-4 md:p-6">
+            <h3 className="text-slate-50 text-lg font-semibold">Why labels aren’t enough</h3>
+            <p className="text-slate-400 text-sm mt-1">
+              Disclosure labels are signals — but they don’t capture market scenarios or operational reality.
+              Hoshi computes a forward, decision-grade signal.
+            </p>
+
+            <div className="mt-4 rounded-xl border" style={{borderColor:"var(--stroke)", background:"var(--panel-2)"}}>
+              <div className="flex items-center justify-between p-3">
+                <div className="text-sm text-slate-200 font-medium">Expected ROI contribution (FEP)</div>
+                <span className="px-2 py-0.5 rounded-full text-xs" style={{background:"rgba(59,130,246,.15)",color:"#c7d2fe",border:"1px solid rgba(59,130,246,.3)"}}>
+                  Lower risk · Higher confidence
+                </span>
+              </div>
+              <div className="px-3 pb-3">
+                <LineChart points={roiSpark}/>
+              </div>
+            </div>
+
+            <ul className="mt-4 space-y-2 text-slate-300 text-[15px]">
+              <li className="flex items-start">
+                <span className="check">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4 10-10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                </span>
+                See the split: market sensitivity (β) vs building-specific effects.
+              </li>
+              <li className="flex items-start">
+                <span className="check">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4 10-10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                </span>
+                Compare “as-is” vs “project” scenarios with payback and comfort outcomes.
+              </li>
+              <li className="flex items-start">
+                <span className="check">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4 10-10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                </span>
+                Publish a Building Performance Sheet with auditable lineage.
+              </li>
+            </ul>
+          </div>
+        </section>
+
+        {/* COMMONWEALTH OF PEOPLE */}
+        <section className="mt-6 card p-4 md:p-6">
+          <div className="grid md:grid-cols-2 gap-4">
             <div>
-              <h3 className="text-slate-50 text-lg font-semibold">A Commonwealth of Peoples</h3>
+              <h3 className="text-slate-50 text-lg font-semibold">A Commonwealth of People</h3>
               <p className="text-slate-400 text-sm mb-3">
-                Why transparent performance matters across owners, occupiers, and the supply-chain.
+                Shared, comparable evidence that aligns incentives across the ecosystem.
               </p>
               <div className="img-frame">
                 <img src={PEOPLE_SRC} alt="Commonwealth of Peoples" className="rounded-lg w-full object-cover"/>
               </div>
-              <p className="text-slate-300 mt-4 text-[15px] leading-6">
-                Hoshi aligns incentives by making service performance comparable across buildings and portfolios.
-                Clear benchmarks, auditable lineage, and shared evidence give owners, tenants, and suppliers the
-                same picture—so better briefs get written and better outcomes get rewarded.
-              </p>
-              <ul className="mt-3 space-y-2 text-slate-300 text-[15px]">
-                <li className="flex items-start"><span className="check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4 10-10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/></svg></span>Comparable indices reveal service gaps and ROI opportunities.</li>
-                <li className="flex items-start"><span className="check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4 10-10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/></svg></span>Public Building Performance Sheets build trust and marketability.</li>
-                <li className="flex items-start"><span className="check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4 10-10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/></svg></span>Evidence-backed improvements inspire more ambitious project briefs.</li>
-              </ul>
+            </div>
+
+            <div className="grid content-start gap-3">
+              <div className="rounded-xl p-3" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
+                <div className="text-slate-300 text-sm">Shared evidence</div>
+                <div className="text-slate-100 mt-1 text-[15px]">
+                  Owners, occupiers, and suppliers reference the same forward metrics (FEP, β, comfort risk) — fewer mismatches, faster deals.
+                </div>
+              </div>
+              <div className="rounded-xl p-3" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
+                <div className="text-slate-300 text-sm">Aligned incentives</div>
+                <div className="text-slate-100 mt-1 text-[15px]">
+                  Suppliers compete on service indices; landlords show value uplift; occupiers weigh comfort and cost with confidence.
+                </div>
+              </div>
+              <div className="rounded-xl p-3" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
+                <div className="text-slate-300 text-sm">Contracting clarity</div>
+                <div className="text-slate-100 mt-1 text-[15px]">
+                  RFPs and leases reference verified metrics and lineage — not generic promises.
+                </div>
+              </div>
             </div>
           </div>
         </section>
+
+        {/* PROOF STRIP */}
+        <section className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="pill">
+            <div className="k">β: 0.35–2.48</div>
+            <div className="s">Sensitivity to energy/climate drivers</div>
+          </div>
+          <div className="pill">
+            <div className="k">± ROI impact</div>
+            <div className="s">Forward energy premium shown as a range</div>
+          </div>
+          <div className="pill">
+            <div className="k">Overheating hours</div>
+            <div className="s">Outlook for 2030 / 2050 scenarios</div>
+          </div>
+          <div className="pill">
+            <div className="k">Satisfaction signal</div>
+            <div className="s">Quality metrics that track with experience</div>
+          </div>
+        </section>
+
+        {/* HOW IT WORKS */}
         <section id="how" className="card p-5 md:p-6 mt-6">
           <h3 className="text-slate-50 text-lg font-semibold mb-3">How it works</h3>
           <div className="grid md:grid-cols-3 gap-4">
@@ -226,7 +333,7 @@ function Story({ goApp }) {
             <div className="how-step">
               <div className="how-num mb-2">2</div>
               <div className="text-slate-100 font-medium">Compare</div>
-              <div className="text-slate-400 text-sm">Factors applied. Intensity, tCO₂e, spend and a composite service index computed.</div>
+              <div className="text-slate-400 text-sm">FEP, β, intensity, tCO₂e, spend &amp; comfort risk, all scenario-aware.</div>
             </div>
             <div className="how-step">
               <div className="how-num mb-2">3</div>
@@ -236,10 +343,28 @@ function Story({ goApp }) {
           </div>
         </section>
 
+        {/* CTA */}
+        <section
+          className="mt-6 rounded-2xl p-5 md:p-6 border"
+          style={{
+            borderColor:"var(--stroke)",
+            background: "linear-gradient(135deg, rgba(59,130,246,.14), rgba(16,185,129,.12))"
+          }}
+        >
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+            <div>
+              <div className="text-slate-50 text-lg font-semibold">See your Forward Energy Premium</div>
+              <div className="text-slate-300 text-sm">Upload a bill or EPC — get decision-grade metrics in minutes.</div>
+            </div>
+            <button onClick={goApp} className="btn btn-primary">Get started</button>
+          </div>
+        </section>
+
       </div>
     </div>
   );
 }
+
 
 function Onboarding(){
   const [step,setStep]=useState(1);
