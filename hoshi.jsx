@@ -939,17 +939,30 @@ function App(){
       </aside>
 
       {/* Top bar (mobile) */}
-      <header className="md:hidden sticky top-0 z-[2000] px-4 py-3 flex items-center justify-between" style={{background:"rgba(15,17,21,.85)",backdropFilter:"blur(4px)",borderBottom:"1px solid var(--stroke)"}}>
-        <button className="navicon" onClick={()=>setOpen(true)} aria-label="Open menu"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg></button>
-       <div className="flex items-center gap-2">
-  {LOGO_SRC
-    ? <img src={LOGO_SRC} alt="Hoshi logo" className="w-6 h-6 rounded object-cover" />
-    : <StarLogo size={18} />
-  }
-  <span className="text-sm font-semibold">Real Estate Performance Marketing Platform</span>
-</div>
-        <span className="opacity-0 navicon"></span>
-      </header>
+  <header
+  className="md:hidden sticky top-0 z-[2000] px-4 py-3 flex items-center justify-between"
+  style={{background:"rgba(15,17,21,.85)",backdropFilter:"blur(4px)",borderBottom:"1px solid var(--stroke)"}}
+>
+  <button className="navicon" onClick={()=>setOpen(true)} aria-label="Open menu">
+    {/* menu icon */}
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+      <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+    </svg>
+  </button>
+
+  {/* BRAND — truly centered on mobile */}
+  <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 md:static md:translate-x-0">
+    {LOGO_SRC
+      ? <img src={LOGO_SRC} alt="Hoshi logo" className="w-6 h-6 rounded object-cover" />
+      : <StarLogo size={18} />
+    }
+    <span className="font-semibold text-lg leading-none">Hoshi</span>
+  </div>
+
+  {/* right-side spacer to balance the menu button */}
+  <span className="opacity-0 navicon" aria-hidden="true"></span>
+</header>
+
 
       {/* Drawer */}
       {open && <div className="overlay md:hidden" onClick={()=>setOpen(false)}></div>}
@@ -969,14 +982,15 @@ function App(){
           <div className="hidden md:flex items-center justify-between mb-5">
             <div className="flex items-center gap-3">
              {LOGO_SRC
-  ? <img src={LOGO_SRC} alt="Hoshi logo"
-      className="w-8 h-8 rounded-lg object-cover border border-blue-400/30 bg-blue-500/10" />
-  : <StarLogo size={20} />
-}
-<div className="text-slate-300">Real Estate Performance Marketing Platform</div>
-            </div>
-            <div className="flex items-center gap-2 text-xs text-slate-400"><Badge>Dark UI</Badge><Badge tone="neutral">CCC optional</Badge><Badge tone="success">Zero-trust</Badge></div>
-          </div>
+      ? <img src={LOGO_SRC} alt="Hoshi logo"
+          className="w-8 h-8 rounded-lg object-cover border border-blue-400/30 bg-blue-500/10" />
+      : <StarLogo size={20} />
+    }
+    <div className="text-slate-50 font-semibold text-xl tracking-tight">Hoshi</div>
+  </div>
+  <div className="flex items-center gap-2 text-xs text-slate-400">
+  </div>
+</div>
 
           {tabs.find(t=>t.key===active)?.comp}
 
