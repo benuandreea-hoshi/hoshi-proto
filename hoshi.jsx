@@ -93,8 +93,9 @@ function DonutGauge({ value=0, max=1, size=120, stroke=14, label, display }) {
   );
 }
  function Story({ goApp }) {
-  // quick mini data for the sparkline in the explainer
+  // tiny sparkline + demo values
   const roiSpark = [2, 3, 2, 4, 5, 4, 6, 7, 6, 7, 8, 7];
+  const demoAvg = 0.42;
 
   // inline icons to match your style
   const IcoFEP = () => (
@@ -119,236 +120,184 @@ function DonutGauge({ value=0, max=1, size=120, stroke=14, label, display }) {
     </svg>
   );
 
+  // local helper “stat chip”
+  const Stat = ({ k, s }) => (
+    <div className="pill">
+      <div className="k">{k}</div>
+      <div className="s">{s}</div>
+    </div>
+  );
+
+  // text logo cloud (keeps it light; swap with images anytime)
+  const LogoCloudStrip = () => (
+    <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+      {["TenantCo","LandlordCo","SupplyOne","GridIQ","GreenCap","Cetra"].map((n,i)=>(
+        <div key={i} className="px-3 py-2 rounded-lg text-center text-xs text-slate-300"
+             style={{background:"rgba(148,163,184,.06)",border:"1px solid rgba(148,163,184,.18)"}}>
+          {n}
+        </div>
+      ))}
+    </div>
+  );
+
   return (
     <div className="min-h-[calc(100vh-80px)]">
       <div className="max-w-7xl mx-auto px-5 md:px-6">
 
-        {/* HERO */}
-        <section className="hero mt-2 md:mt-4">
-          <div className="flex items-center gap-2 mb-3 md:mb-4">
-            <span className="chip">Prototype</span>
-            <span
-              className="chip"
-              style={{background:"rgba(148,163,184,.12)",color:"#e2e8f0",borderColor:"rgba(148,163,184,.3)"}}
-            >
-              Dark UI · Blue→Green
-            </span>
-          </div>
+        {/* HERO — more punch */}
+        <section className="hero mt-2 md:mt-4 relative overflow-hidden">
+          {/* soft gradient sweep for extra glow */}
+          <div className="absolute inset-0 pointer-events-none"
+               style={{
+                 background:"radial-gradient(800px 300px at 10% 0%, rgba(59,130,246,.18), transparent 60%), radial-gradient(900px 320px at 90% 20%, rgba(16,185,129,.16), transparent 60%)",
+                 maskImage:"linear-gradient(to bottom, rgba(0,0,0,.6), rgba(0,0,0,.9))"
+               }} />
+          <div className="relative">
+            <div className="flex items-center gap-2 mb-3 md:mb-4">
+              <span className="chip">Prototype</span>
+              <span className="chip" style={{background:"rgba(148,163,184,.12)",color:"#e2e8f0",borderColor:"rgba(148,163,184,.3)"}}>
+                Dark UI · Blue→Green
+              </span>
+            </div>
 
-          <h1 className="text-4xl md:text-6xl font-semibold tracking-tight leading-[1.08]">
-            <span className="text-slate-100">Hoshi — </span>
-            <span className="text-neon">transparent ESG</span>
-            <span className="text-slate-100"> for real estate.</span>
-          </h1>
+            <h1 className="text-4xl md:text-6xl font-semibold tracking-tight leading-[1.08]">
+              <span className="text-slate-100">Hoshi — </span>
+              <span className="text-neon">transparent ESG</span>
+              <span className="text-slate-100"> for real estate.</span>
+            </h1>
 
-          <p className="text-slate-300 mt-4 text-base md:text-lg max-w-3xl">
-            Evidence that moves value: scenario-adjusted service performance, comfort risk,
-            and forward ROI — shared by owners, occupiers, and suppliers.
-          </p>
-
-          <div className="mt-6 flex flex-wrap gap-3">
-            <button onClick={goApp} className="btn btn-primary">Launch prototype</button>
-            <a href="#how" className="btn btn-ghost">See how it works</a>
-          </div>
-
-          {/* KPIs */}
-          <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
-            <div className="pill">
-              <div className="k">FEP</div>
-              <div className="s">Forward Energy Premium · % ROI</div>
-            </div>
-            <div className="pill">
-              <div className="k">β</div>
-              <div className="s">Sensitivity to energy/climate factors</div>
-            </div>
-            <div className="pill">
-              <div className="k">⚠︎</div>
-              <div className="s">Comfort / overheating risk outlook</div>
-            </div>
-          </div>
-        </section>
-
-        {/* VALUE PROPOSITION */}
-        <section className="mt-6 grid md:grid-cols-2 gap-4">
-          {/* Left: Solution cards */}
-          <div className="grid gap-3 md:gap-4 content-start">
-            {/* 1 — FEP */}
-            <div className="usp-card">
-              <div className="flex items-start gap-3">
-                <span className="usp-ico"><IcoFEP/></span>
-                <div>
-                  <div className="text-slate-100 font-medium">Forward Energy Premium</div>
-                  <div className="text-slate-400 text-sm">
-                    Quantifies how energy &amp; service factors add/subtract from expected ROI — with systematic vs idiosyncratic breakdown.
-                  </div>
-                </div>
-              </div>
-            </div>
-            {/* 2 — Scenario Studio */}
-            <div className="usp-card">
-              <div className="flex items-start gap-3">
-                <span className="usp-ico"><IcoScenario/></span>
-                <div>
-                  <div className="text-slate-100 font-medium">Scenario Studio</div>
-                  <div className="text-slate-400 text-sm">
-                    One-click stress tests across energy prices, policy, and climate pathways — see outcomes to 2030/2050.
-                  </div>
-                </div>
-              </div>
-            </div>
-            {/* 3 — Comfort risk */}
-            <div className="usp-card">
-              <div className="flex items-start gap-3">
-                <span className="usp-ico"><IcoThermo/></span>
-                <div>
-                  <div className="text-slate-100 font-medium">Comfort &amp; Overheating Risk</div>
-                  <div className="text-slate-400 text-sm">
-                    Translates servicing choices into expected overheating hours and satisfaction impact — lower is better.
-                  </div>
-                </div>
-              </div>
-            </div>
-            {/* 4 — Strategy advisor */}
-            <div className="usp-card">
-              <div className="flex items-start gap-3">
-                <span className="usp-ico"><IcoWrench/></span>
-                <div>
-                  <div className="text-slate-100 font-medium">Service Strategy Advisor</div>
-                  <div className="text-slate-400 text-sm">
-                    Recommends mixed-mode and other measures with payback, certainty and operational fit.
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Right: Explainer */}
-          <div className="card p-4 md:p-6">
-            <h3 className="text-slate-50 text-lg font-semibold">Why labels aren’t enough</h3>
-            <p className="text-slate-400 text-sm mt-1">
-              Disclosure labels are signals — but they don’t capture market scenarios or operational reality.
-              Hoshi computes a forward, decision-grade signal.
+            <p className="text-slate-300 mt-4 text-base md:text-lg max-w-3xl">
+              Evidence that moves value: scenario-adjusted service performance, comfort risk,
+              and forward ROI — shared by owners, occupiers, and suppliers.
             </p>
 
-            <div className="mt-4 rounded-xl border" style={{borderColor:"var(--stroke)", background:"var(--panel-2)"}}>
-              <div className="flex items-center justify-between p-3">
-                <div className="text-sm text-slate-200 font-medium">Expected ROI contribution (FEP)</div>
-                <span className="px-2 py-0.5 rounded-full text-xs" style={{background:"rgba(59,130,246,.15)",color:"#c7d2fe",border:"1px solid rgba(59,130,246,.3)"}}>
-                  Lower risk · Higher confidence
-                </span>
-              </div>
-              <div className="px-3 pb-3">
-                <LineChart points={roiSpark}/>
-              </div>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <button onClick={goApp} className="btn btn-primary">Launch prototype</button>
+              <a href="#how" className="btn btn-ghost">See how it works</a>
             </div>
 
-            <ul className="mt-4 space-y-2 text-slate-300 text-[15px]">
-              <li className="flex items-start">
-                <span className="check">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4 10-10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                </span>
-                See the split: market sensitivity (β) vs building-specific effects.
-              </li>
-              <li className="flex items-start">
-                <span className="check">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4 10-10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                </span>
-                Compare “as-is” vs “project” scenarios with payback and comfort outcomes.
-              </li>
-              <li className="flex items-start">
-                <span className="check">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4 10-10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                </span>
-                Publish a Building Performance Sheet with auditable lineage.
-              </li>
-            </ul>
+            {/* quick trust strip */}
+            <div className="mt-5">
+              <div className="text-xs text-slate-400">Trusted across the ecosystem</div>
+              <LogoCloudStrip />
+            </div>
           </div>
         </section>
 
-        {/* COMMONWEALTH OF PEOPLE */}
+        {/* IMPACT RIBBON — bold, like Measurabl */}
+        <section className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+          <Stat k="10×" s="faster onboarding" />
+          <Stat k="92%" s="target data coverage" />
+          <Stat k="β 0.35–2.48" s="sensitivity to market drivers" />
+          <Stat k="−15–+8%" s="Forward Energy Premium (range)" />
+        </section>
+
+        {/* PRODUCT PEEK — live mini cards */}
+        <section className="mt-6 grid md:grid-cols-2 gap-4">
+          <div className="card p-4 md:p-6 relative overflow-hidden">
+            <div className="absolute -top-24 -right-24 w-[300px] h-[300px] rounded-full blur-3xl"
+                 style={{background:"radial-gradient(circle, rgba(59,130,246,.18), transparent 60%)"}}/>
+            <h3 className="text-slate-50 text-lg font-semibold">Forward Energy Premium</h3>
+            <p className="text-slate-400 text-sm mt-1">
+              Quantifies how energy & service factors add/subtract from expected ROI — split by systematic (β) vs idiosyncratic drivers.
+            </p>
+            <div className="mt-4 grid grid-cols-3 gap-3">
+              <div className="rounded-xl p-3" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
+                <div className="text-xs text-slate-400">Avg. index</div>
+                <div className="mt-2 bg-white rounded-xl p-2 inline-block"><DonutGauge value={0.07-demoAvg} max={0.07} size={96} stroke={12} display={(demoAvg*10).toFixed(2)} label="Good" /></div>
+              </div>
+              <div className="rounded-xl p-3 col-span-2" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
+                <div className="flex items-center justify-between">
+                  <div className="text-xs text-slate-400">Expected ROI contribution</div>
+                  <span className="chip">Lower risk</span>
+                </div>
+                <div className="mt-2"><LineChart points={roiSpark} /></div>
+              </div>
+            </div>
+          </div>
+
+          <div className="card p-4 md:p-6 relative overflow-hidden">
+            <div className="absolute -bottom-24 -left-24 w-[320px] h-[320px] rounded-full blur-3xl"
+                 style={{background:"radial-gradient(circle, rgba(16,185,129,.16), transparent 60%)"}}/>
+            <h3 className="text-slate-50 text-lg font-semibold">Scenario Studio</h3>
+            <p className="text-slate-400 text-sm mt-1">
+              One-click stress tests across energy prices, policy, and climate pathways — compare “as-is” vs “project” by payback and comfort.
+            </p>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <div className="rounded-xl p-3" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
+                <div className="text-xs text-slate-400 mb-1">Overheating hours</div>
+                <div className="text-slate-100 font-semibold">−28%</div>
+                <div className="text-xs text-slate-400">Mixed-mode retrofit</div>
+              </div>
+              <div className="rounded-xl p-3" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
+                <div className="text-xs text-slate-400 mb-1">Payback</div>
+                <div className="text-slate-100 font-semibold">1.8 years</div>
+                <div className="text-xs text-slate-400">LED + controls</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* VALUE GRID — crisp cards */}
+        <section className="mt-6 grid md:grid-cols-4 gap-3 md:gap-4">
+          <div className="usp-card"><div className="flex items-start gap-3"><span className="usp-ico"><IcoFEP/></span><div><div className="text-slate-100 font-medium">Forward Energy Premium</div><div className="text-slate-400 text-sm">Decision-grade ROI signal with β split.</div></div></div></div>
+          <div className="usp-card"><div className="flex items-start gap-3"><span className="usp-ico"><IcoScenario/></span><div><div className="text-slate-100 font-medium">Scenario Studio</div><div className="text-slate-400 text-sm">Stress test prices, policy, climate through 2030/2050.</div></div></div></div>
+          <div className="usp-card"><div className="flex items-start gap-3"><span className="usp-ico"><IcoThermo/></span><div><div className="text-slate-100 font-medium">Comfort Risk</div><div className="text-slate-400 text-sm">Expected overheating hours & satisfaction impact.</div></div></div></div>
+          <div className="usp-card"><div className="flex items-start gap-3"><span className="usp-ico"><IcoWrench/></span><div><div className="text-slate-100 font-medium">Strategy Advisor</div><div className="text-slate-400 text-sm">Measures ranked by payback & certainty.</div></div></div></div>
+        </section>
+
+        {/* COMMONWEALTH — concrete, not abstract */}
         <section className="mt-6 card p-4 md:p-6">
           <div className="grid md:grid-cols-2 gap-4">
             <div>
               <h3 className="text-slate-50 text-lg font-semibold">A Commonwealth of People</h3>
               <p className="text-slate-400 text-sm mb-3">
-                Shared, comparable evidence that aligns incentives across the ecosystem.
+                Shared, comparable evidence that aligns incentives across owners, occupiers, and suppliers.
               </p>
               <div className="img-frame">
-                <img src={PEOPLE_SRC} alt="Commonwealth of Peoples" className="rounded-lg w-full object-cover"/>
+                <img src={PEOPLE_SRC} alt="Commonwealth of People" className="rounded-lg w-full object-cover"/>
               </div>
             </div>
 
             <div className="grid content-start gap-3">
               <div className="rounded-xl p-3" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
-                <div className="text-slate-300 text-sm">Shared evidence</div>
+                <div className="text-slate-300 text-sm">Owners</div>
                 <div className="text-slate-100 mt-1 text-[15px]">
-                  Owners, occupiers, and suppliers reference the same forward metrics (FEP, β, comfort risk) — fewer mismatches, faster deals.
+                  Show value uplift with FEP and comfort outlook; reference indices in leases and capex cases.
                 </div>
               </div>
               <div className="rounded-xl p-3" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
-                <div className="text-slate-300 text-sm">Aligned incentives</div>
+                <div className="text-slate-300 text-sm">Occupiers</div>
                 <div className="text-slate-100 mt-1 text-[15px]">
-                  Suppliers compete on service indices; landlords show value uplift; occupiers weigh comfort and cost with confidence.
+                  Compare buildings on cost, risk, and satisfaction; prioritise measures with payback & confidence.
                 </div>
               </div>
               <div className="rounded-xl p-3" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
-                <div className="text-slate-300 text-sm">Contracting clarity</div>
+                <div className="text-slate-300 text-sm">Suppliers</div>
                 <div className="text-slate-100 mt-1 text-[15px]">
-                  RFPs and leases reference verified metrics and lineage — not generic promises.
+                  Compete on verified service indices; get credit for measured outcomes, not promises.
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* PROOF STRIP */}
-        <section className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          <div className="pill">
-            <div className="k">β: 0.35–2.48</div>
-            <div className="s">Sensitivity to energy/climate drivers</div>
-          </div>
-          <div className="pill">
-            <div className="k">± ROI impact</div>
-            <div className="s">Forward energy premium shown as a range</div>
-          </div>
-          <div className="pill">
-            <div className="k">Overheating hours</div>
-            <div className="s">Outlook for 2030 / 2050 scenarios</div>
-          </div>
-          <div className="pill">
-            <div className="k">Satisfaction signal</div>
-            <div className="s">Quality metrics that track with experience</div>
-          </div>
-        </section>
-
-        {/* HOW IT WORKS */}
+        {/* HOW IT WORKS (kept tight) */}
         <section id="how" className="card p-5 md:p-6 mt-6">
           <h3 className="text-slate-50 text-lg font-semibold mb-3">How it works</h3>
           <div className="grid md:grid-cols-3 gap-4">
-            <div className="how-step">
-              <div className="how-num mb-2">1</div>
-              <div className="text-slate-100 font-medium">Ingest</div>
-              <div className="text-slate-400 text-sm">Email PDFs/CSVs or connect a meter. OCR + normalisation standardise the data.</div>
-            </div>
-            <div className="how-step">
-              <div className="how-num mb-2">2</div>
-              <div className="text-slate-100 font-medium">Compare</div>
-              <div className="text-slate-400 text-sm">FEP, β, intensity, tCO₂e, spend &amp; comfort risk, all scenario-aware.</div>
-            </div>
-            <div className="how-step">
-              <div className="how-num mb-2">3</div>
-              <div className="text-slate-100 font-medium">Publish &amp; act</div>
-              <div className="text-slate-400 text-sm">Share a Building Performance Sheet. Prioritise actions by ROI and confidence.</div>
-            </div>
+            <div className="how-step"><div className="how-num mb-2">1</div><div className="text-slate-100 font-medium">Ingest</div><div className="text-slate-400 text-sm">Email PDFs/CSVs or connect a meter. OCR + normalisation standardise the data.</div></div>
+            <div className="how-step"><div className="how-num mb-2">2</div><div className="text-slate-100 font-medium">Compare</div><div className="text-slate-400 text-sm">FEP, β, intensity, tCO₂e, spend & comfort risk, all scenario-aware.</div></div>
+            <div className="how-step"><div className="how-num mb-2">3</div><div className="text-slate-100 font-medium">Publish & act</div><div className="text-slate-400 text-sm">Share a Building Performance Sheet. Prioritise actions by ROI and confidence.</div></div>
           </div>
         </section>
 
-        {/* CTA */}
+        {/* CTA — gradient panel */}
         <section
           className="mt-6 rounded-2xl p-5 md:p-6 border"
           style={{
             borderColor:"var(--stroke)",
-            background: "linear-gradient(135deg, rgba(59,130,246,.14), rgba(16,185,129,.12))"
+            background:"linear-gradient(135deg, rgba(59,130,246,.14), rgba(16,185,129,.12))"
           }}
         >
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
