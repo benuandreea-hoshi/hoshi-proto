@@ -561,7 +561,7 @@ function Services(){
           </div>
         </div>
 
-        <div className="rounded-2xl overflow-hidden border" style={{borderColor:"var(--stroke)"}}>
+        <div className="rounded-2xl overflow-hidden border relative z-0" style={{borderColor:"var(--stroke)"}}>
           <div ref={mapDivRef} style={{height:420,width:"100%"}}></div>
         </div>
 
@@ -653,13 +653,18 @@ function Building(){
   };
 
   // ---------- moved OUT of <Bar> ----------
-  const fmtPct = (p) => (p == null ? "–" : `${p.toFixed(0)}%`);
+   const fmtPct = p => (p==null ? "–" : `${p.toFixed(0)}%`);
   const top = rows
-    .filter(([,A,B]) => A > B)
-    .map(([k,A,B]) => ({ k, over: A-B, pct: B ? ((A-B)/B)*100 : null }))
+    .filter(([_,A,B]) => A > B)
+    .map(([k,A,B]) => ({ k, over:A-B, pct: B ? ((A-B)/B)*100 : null }))
     .sort((a,b) => b.over - a.over)
     .slice(0,3);
-  const underOrOn = rows.filter(([,A,B]) => A <= B).length;
+  const underOrOn = rows.filter(([_,A,B]) => A <= B).length;
+
+  const Bar = ({A,B,max}) => { /* ... no cross-component vars here ... */ };
+
+  return (/* ... use top/underOrOn safely here ... */);
+}
   // ----------------------------------------
 
   return (
@@ -849,7 +854,7 @@ function App(){
   return(
     <div className="min-h-screen relative">
       {/* Sidebar (desktop) */}
-      <aside className="hidden md:flex fixed left-0 top-0 bottom-0 w-[76px] bg-[#0d1524] border-r border-[#1f2a3a] flex-col items-center py-4 gap-4 z-40">
+      <aside className="hidden md:flex fixed left-0 top-0 bottom-0 w-[76px] bg-[#0d1524] border-r border-[#1f2a3a] flex-col items-center py-4 gap-4 z-[2000]">
       <div className="w-10 h-10 rounded-xl overflow-hidden bg-[#0b1220] border border-[#233147] grid place-items-center">
   {LOGO_SRC
     ? <img src={LOGO_SRC} alt="Hoshi logo" className="w-10 h-10 object-cover" />
@@ -861,7 +866,7 @@ function App(){
       </aside>
 
       {/* Top bar (mobile) */}
-      <header className="md:hidden sticky top-0 z-30 px-4 py-3 flex items-center justify-between" style={{background:"rgba(15,17,21,.85)",backdropFilter:"blur(4px)",borderBottom:"1px solid var(--stroke)"}}>
+      <header className="md:hidden sticky top-0 z-[2000] px-4 py-3 flex items-center justify-between" style={{background:"rgba(15,17,21,.85)",backdropFilter:"blur(4px)",borderBottom:"1px solid var(--stroke)"}}>
         <button className="navicon" onClick={()=>setOpen(true)} aria-label="Open menu"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg></button>
        <div className="flex items-center gap-2">
   {LOGO_SRC
