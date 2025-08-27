@@ -590,7 +590,7 @@ function Services(){
     </div>
   );
 }
-// === Building (bars without external CSS) — MOBILE-CARD-BARS ===
+   // === Building (bars without external CSS) — MOBILE-CARD-BARS ===
 function Building(){
   // Data compressed as [label, actual, budget]
   const D={
@@ -623,11 +623,27 @@ function Building(){
   const isMobile = useIsMobile(640);
 
   // totals + scale
-  const M = rows.reduce((a,[,A,B])=>{a.max=Math.max(a.max,A,B);a.ta+=A;a.tb+=B;return a},{max:1,ta:0,tb:0});
-  const over   = Math.max(0,M.ta-M.tb);
-  const overPct= M.tb ? (over/M.tb*100) : 0;
-  const need   = rows.filter(([,A,B])=>A>B*1.1).length;
-  const fmt    = n => "€ "+Math.round(n).toLocaleString();
+  const M = rows.reduce((a,[,A,B])=>{
+    a.max = Math.max(a.max,A,B);
+    a.ta += A; a.tb += B;
+    return a;
+  },{max:1,ta:0,tb:0});
+
+  const over    = Math.max(0, M.ta - M.tb);
+  const overPct = M.tb ? (over/M.tb*100) : 0;
+  const need    = rows.filter(([,A,B]) => A > B*1.1).length;
+
+  // format helpers
+  const fmt    = n => "€ " + Math.round(n).toLocaleString();
+  const fmtPct = p => (p==null ? "–" : `${p.toFixed(0)}%`);
+
+  // insights
+  const top = rows
+    .filter(([,A,B]) => A > B)
+    .map(([k,A,B]) => ({ k, over: A-B, pct: B ? ((A-B)/B)*100 : null }))
+    .sort((a,b) => b.over - a.over)
+    .slice(0,3);
+  const underOrOn = rows.filter(([,A,B]) => A <= B).length;
 
   // tiny legend pill
   const Dot = ({c,label}) => (
@@ -636,7 +652,7 @@ function Building(){
     </span>
   );
 
-  // single bar renderer (Tailwind only, no .hb- CSS needed)
+  // single bar renderer (Tailwind only)
   const Bar = ({A,B,max})=>{
     const bw = B/max*100;
     const aw = Math.min(A,B)/max*100;
@@ -651,21 +667,6 @@ function Building(){
       </div>
     );
   };
-
-  // ---------- moved OUT of <Bar> ----------
-   const fmtPct = p => (p==null ? "–" : `${p.toFixed(0)}%`);
-  const top = rows
-    .filter(([_,A,B]) => A > B)
-    .map(([k,A,B]) => ({ k, over:A-B, pct: B ? ((A-B)/B)*100 : null }))
-    .sort((a,b) => b.over - a.over)
-    .slice(0,3);
-  const underOrOn = rows.filter(([_,A,B]) => A <= B).length;
-
-  const Bar = ({A,B,max}) => { /* ... no cross-component vars here ... */ };
-
-  return (/* ... use top/underOrOn safely here ... */);
-}
-  // ----------------------------------------
 
   return (
     <div className="grid gap-4 md:gap-6">
@@ -733,7 +734,6 @@ function Building(){
 
         {/* Insights & explainer */}
         <div className="mt-5 grid md:grid-cols-3 gap-3 text-sm">
-          {/* Totals & status */}
           <div className="rounded-xl p-3" style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}>
             <div className="text-slate-300">Totals &amp; status — {year}</div>
             <div className="mt-2 space-y-1 text-slate-100">
@@ -748,7 +748,6 @@ function Building(){
             </div>
           </div>
 
-          {/* Top overruns */}
           <div className="rounded-xl p-3" style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}>
             <div className="text-slate-300">Top overruns</div>
             <ul className="mt-2 divide-y" style={{ borderColor: "var(--stroke)" }}>
@@ -763,7 +762,6 @@ function Building(){
             </ul>
           </div>
 
-          {/* How to read the bars */}
           <div className="rounded-xl p-3" style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}>
             <div className="text-slate-300">How to read the bars</div>
             <ul className="mt-2 text-slate-100 space-y-1 list-disc pl-4">
@@ -783,6 +781,7 @@ function Building(){
     </div>
   );
 }
+ 
 function Actions(){
   const items = [
     { m:"LED retrofit", capex:25000, save:8500, pay:1.8, status:"To review" },
