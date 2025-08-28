@@ -99,39 +99,140 @@ function DonutGauge({ value=0, max=1, size=120, stroke=14, label, display }) {
     </svg>
   );
 }
-// animated orb (uses DonutGauge)
-const HeroOrb = ({value=0.42,label="Avg. index"}) => (
-  <div className="relative aspect-square max-w-[520px] mx-auto">
-    {/* halos */}
-    <div className="absolute -inset-6 rounded-full blur-2xl opacity-90"
-         style={{background:
-          `radial-gradient(60% 60% at 30% 30%, rgba(56,189,248,.35), transparent 60%),
-           radial-gradient(60% 60% at 70% 65%, rgba(16,185,129,.28), transparent 55%)`}}/>
-    {/* glass sphere */}
-    <div className="absolute inset-0 rounded-full backdrop-blur-[2px]"
-         style={{background:"linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02))",
-                 border:"1px solid rgba(99,102,241,.25)", boxShadow:"0 20px 60px rgba(0,0,0,.45)"}}/>
-    {/* rotating ring */}
-    <div className="absolute inset-0 rounded-full" style={{WebkitMask:"radial-gradient(circle, transparent 58%, black 59%)"}}>
-      <div className="absolute inset-0 rounded-full" style={{background:"conic-gradient(from 0deg, rgba(56,189,248,.6), rgba(16,185,129,.6), rgba(56,189,248,.6))", animation:"spin 18s linear infinite"}}/>
+// == HeroOrb (desktop-only, stronger contrast ring)
+function HeroOrb({ value = 0.42, label = "Composite index" }) {
+  const size = 420;           // overall canvas
+  const core = 260;           // inner plate
+  const stroke = 22;          // gauge thickness
+  const r = (core - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const pct = Math.max(0, Math.min(1, value));
+  const dash = c * pct;
+
+  return (
+    <div className="hidden md:flex items-center justify-center relative w-full">
+      {/* soft background glow so text reads */}
+      <div
+        className="absolute inset-0 -z-10 rounded-[999px]"
+        style={{
+          background:
+            "radial-gradient(60% 60% at 60% 45%, rgba(16,185,129,.18), transparent 60%)," +
+            "radial-gradient(70% 70% at 40% 55%, rgba(59,130,246,.20), transparent 70%)",
+          filter: "blur(6px)",
+        }}
+      />
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        {/* large decorative outer ring */}
+        <defs>
+          <linearGradient id="orbGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#10b981" />
+            <stop offset="100%" stopColor="#3b82f6" />
+          </linearGradient>
+        </defs>
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={size / 2 - 28}
+          fill="none"
+          stroke="url(#orbGrad)"
+          strokeOpacity="0.33"
+          strokeWidth="28"
+        />
+        {/* inner plate + gauge */}
+        <g transform={`translate(${(size - core) / 2},${(size - core) / 2})`}>
+          <circle
+            cx={core / 2}
+            cy={core / 2}
+            r={core / 2}
+            fill="#090f1ccc"
+            stroke="#1f2a33"
+            strokeWidth="1"
+          />
+          <circle
+            cx={core / 2}
+            cy={core / 2}
+            r={r}
+            fill="none"
+            stroke="#e5e7eb"
+            strokeOpacity="0.28"
+            strokeWidth={stroke}
+          />
+          <g transform={`translate(${core / 2},${core / 2}) rotate(-90)`}>
+            <circle
+              r={r}
+              fill="none"
+              stroke="#10b981"
+              strokeWidth={stroke}
+              strokeLinecap="round"
+              strokeDasharray={`${dash} ${c - dash}`}
+            />
+          </g>
+          <text
+            x="50%"
+            y="50%"
+            dominantBaseline="middle"
+            textAnchor="middle"
+            fontSize="64"
+            fontWeight="800"
+            fill="#e2e8f0"
+          >
+            {value.toFixed(2)}
+          </text>
+          <text
+            x="50%"
+            y={core / 2 + 40}
+            textAnchor="middle"
+            fontSize="18"
+            fill="#a9b1c4"
+          >
+            Good
+          </text>
+        </g>
+      </svg>
     </div>
-    {/* center */}
-    <div className="absolute inset-0 grid place-items-center">
-      <div className="bg-white rounded-full p-3 shadow-lg">
-        <DonutGauge value={value} max={0.70} size={140} stroke={14} display={value.toFixed(2)} label="Good" />
-      </div>
-      <div className="absolute bottom-6 text-center">
-        <div className="text-slate-300 text-xs">{label}</div>
-      </div>
-    </div>
-  </div>
-);
+  );
+}
 function Story({ goApp }) {
-  // tiny sparkline + demo values
+  // tiny sparkline + demo
   const roiSpark = [2, 3, 2, 4, 5, 4, 6, 7, 6, 7, 8, 7];
   const demoAvg = 0.42;
 
-  // inline icons (match your style)
+  // small helpers
+  const Stat = ({ k, s }) => (
+    <div className="pill">
+      <div className="k">{k}</div>
+      <div className="s">{s}</div>
+    </div>
+  );
+  const LogoCloudStrip = () => (
+    <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+      {["TenantCo","LandlordCo","SupplyOne","GridIQ","GreenCap","Cetra"].map((n,i)=>(
+        <div key={i}
+          className="px-3 py-2 rounded-lg text-center text-xs text-slate-300"
+          style={{background:"rgba(148,163,184,.06)",border:"1px solid rgba(148,163,184,.18)"}}
+        >{n}</div>
+      ))}
+    </div>
+  );
+  const Band = ({ tone = 1, children, id }) => {
+    // three subtle tints to “reset” the eye between sections
+    const bg = [
+      "linear-gradient(180deg,#0c111b 0%,#0b1320 100%)",
+      "linear-gradient(180deg,#0b1320 0%,#0b1626 100%)",
+      "linear-gradient(180deg,#0b1626 0%,#0b1a2d 100%)",
+    ][Math.max(0, Math.min(2, tone - 1))];
+    return (
+      <section
+        id={id}
+        className="rounded-2xl p-5 md:p-6 border"
+        style={{ background: bg, border: "1px solid var(--stroke)" }}
+      >
+        {children}
+      </section>
+    );
+  };
+
+  // icons for “what you get”
   const IcoFEP = () => (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
       <path d="M4 18V6m0 12h16M8 14l3 3 5-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -154,46 +255,11 @@ function Story({ goApp }) {
     </svg>
   );
 
-  // stat chip and tiny logo cloud
-  const Stat = ({ k, s }) => (
-    <div className="pill">
-      <div className="k">{k}</div>
-      <div className="s">{s}</div>
-    </div>
-  );
-  const LogoCloudStrip = () => (
-    <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
-      {["TenantCo","LandlordCo","SupplyOne","GridIQ","GreenCap","Cetra"].map((n,i)=>(
-        <div key={i} className="px-3 py-2 rounded-lg text-center text-xs text-slate-300"
-             style={{background:"rgba(148,163,184,.06)",border:"1px solid rgba(148,163,184,.18)"}}>
-          {n}
-        </div>
-      ))}
-    </div>
-  );
-
-  // big hero gauge (desktop only)
-  const HeroGauge = ({ value=0.42 }) => (
-    <div
-      className="rounded-full p-8"
-      style={{
-        width: 420, height: 420, // tweak if you want it larger/smaller
-        background: "linear-gradient(135deg, rgba(16,185,129,.45), rgba(59,130,246,.45))"
-      }}
-    >
-      <div className="w-full h-full rounded-full bg-[#0c111b] border grid place-items-center"
-           style={{borderColor:"rgba(255,255,255,.08)"}}>
-        <DonutGauge value={value} max={1} size={220} stroke={18} display={value.toFixed(2)} label="Good" />
-      </div>
-    </div>
-  );
-
   return (
     <div className="min-h-[calc(100vh-80px)]">
       <div className="max-w-7xl mx-auto px-5 md:px-6">
-
-        {/* HERO — clear two-column layout; big gauge hidden on mobile */}
-        <section className="hero mt-2 md:mt-4">
+        {/* HERO (Band 1) */}
+        <Band tone={1}>
           <div className="grid md:grid-cols-2 items-center gap-6 md:gap-10">
             <div>
               <div className="flex items-center gap-2 mb-3 md:mb-4">
@@ -202,131 +268,145 @@ function Story({ goApp }) {
                   Dark UI · Blue→Green
                 </span>
               </div>
-
               <h1 className="text-4xl md:text-6xl font-semibold tracking-tight leading-[1.08]">
                 <span className="text-slate-100">Hoshi — </span>
                 <span className="text-neon">transparent ESG</span>
                 <span className="text-slate-100"> for real estate.</span>
               </h1>
-
               <p className="text-slate-300 mt-4 text-base md:text-lg max-w-2xl">
                 Evidence that moves value: scenario-adjusted service performance, comfort risk,
                 and forward ROI — shared by owners, occupiers, and suppliers.
               </p>
-
               <div className="mt-6 flex flex-wrap gap-3">
                 <button onClick={goApp} className="btn btn-primary">Launch prototype</button>
                 <a href="#how" className="btn btn-ghost">See how it works</a>
               </div>
-
+              {/* KPIs */}
+              <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <Stat k="10×"  s="faster onboarding" />
+                <Stat k="92%"  s="data coverage target" />
+                <Stat k="0.42" s="avg. service index" />
+                <Stat k="€↗"  s="forward ROI insight" />
+              </div>
               {/* trust strip */}
               <div className="mt-5">
                 <div className="text-xs text-slate-400">Trusted across the ecosystem</div>
                 <LogoCloudStrip />
               </div>
-            </div>
-
-            <div className="hidden md:flex justify-end">
-              <HeroGauge value={demoAvg} />
-            </div>
-          </div>
-        </section>
-
-        {/* IMPACT RIBBON */}
-        <section className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-2 md:gap-4">
-          <Stat k="10×" s="faster onboarding" />
-          <Stat k="92%" s="data coverage target" />
-          <Stat k="0.42" s="avg. service index" />
-          <Stat k="€↗" s="forward ROI insight" />
-        </section>
-
-        {/* PRODUCT PEEK */}
-        <section className="mt-6 grid md:grid-cols-2 gap-4">
-          <div className="card p-4 md:p-6 relative overflow-hidden">
-            <div className="absolute -top-24 -right-24 w-[300px] h-[300px] rounded-full blur-3xl"
-                 style={{background:"radial-gradient(circle, rgba(59,130,246,.18), transparent 60%)"}}/>
-            <h3 className="text-slate-50 text-lg font-semibold">Forward Energy Premium</h3>
-            <p className="text-slate-400 text-sm mt-1">
-              Quantifies how energy & service factors add/subtract from expected ROI — split by systematic (β) vs idiosyncratic drivers.
-            </p>
-            <div className="mt-4 grid grid-cols-3 gap-3">
-              <div className="rounded-xl p-3" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
-                <div className="text-xs text-slate-400">Avg. index</div>
-                <div className="mt-2 bg-white rounded-xl p-2 inline-block">
-                  <DonutGauge value={demoAvg} max={1} size={96} stroke={12} display={demoAvg.toFixed(2)} label="Good" />
+              {/* small gauge for mobile only (don’t lead with a chart) */}
+              <div className="md:hidden mt-6">
+                <div className="bg-white rounded-full p-2 shadow-md inline-block overflow-visible">
+                  <DonutGauge value={0.07 - demoAvg} max={0.07} size={120} stroke={14} display={demoAvg.toFixed(2)} label="Good" />
                 </div>
               </div>
-              <div className="rounded-xl p-3 col-span-2" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
-                <div className="flex items-center justify-between">
-                  <div className="text-xs text-slate-400">Expected ROI contribution</div>
-                  <span className="chip">Lower risk</span>
-                </div>
-                <div className="mt-2"><LineChart points={roiSpark} /></div>
+            </div>
+
+            {/* big ring is desktop-only */}
+            <HeroOrb value={demoAvg} />
+          </div>
+        </Band>
+
+        {/* VALUE STRIPE (Band 2) */}
+        <Band tone={2}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+            <Stat k="10×" s="faster onboarding" />
+            <Stat k="92%" s="data coverage" />
+            <Stat k="β 0.35–2.48" s="sensitivity to drivers" />
+            <Stat k="−15–+8%" s="Forward Energy Premium" />
+          </div>
+        </Band>
+
+        {/* WHO IT BENEFITS (Band 3) */}
+        <Band tone={3} id="who">
+          <h3 className="text-slate-50 text-lg font-semibold mb-3">Who Hoshi serves</h3>
+          <div className="grid md:grid-cols-3 gap-3 md:gap-4">
+            <div className="rounded-xl p-3" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
+              <div className="text-slate-300 text-sm">Owners</div>
+              <div className="text-slate-100 mt-1 text-[15px]">
+                Show value uplift with FEP and comfort outlook; reference indices in leases and capex cases.
+              </div>
+            </div>
+            <div className="rounded-xl p-3" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
+              <div className="text-slate-300 text-sm">Occupiers</div>
+              <div className="text-slate-100 mt-1 text-[15px]">
+                Compare buildings on cost, risk, and satisfaction; prioritise measures with payback & confidence.
+              </div>
+            </div>
+            <div className="rounded-xl p-3" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
+              <div className="text-slate-300 text-sm">Suppliers</div>
+              <div className="text-slate-100 mt-1 text-[15px]">
+                Compete on verified service indices; get credit for measured outcomes, not promises.
               </div>
             </div>
           </div>
+        </Band>
 
-          <div className="card p-4 md:p-6 relative overflow-hidden">
-            <div className="absolute -bottom-24 -left-24 w-[320px] h-[320px] rounded-full blur-3xl"
-                 style={{background:"radial-gradient(circle, rgba(16,185,129,.16), transparent 60%)"}}/>
-            <h3 className="text-slate-50 text-lg font-semibold">Scenario Studio</h3>
-            <p className="text-slate-400 text-sm mt-1">
-              One-click stress tests across energy prices, policy, and climate pathways — compare “as-is” vs “project” by payback and comfort.
-            </p>
-            <div className="mt-4 grid grid-cols-2 gap-3">
-              <div className="rounded-xl p-3" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
-                <div className="text-xs text-slate-400 mb-1">Overheating hours</div>
-                <div className="text-slate-100 font-semibold">−28%</div>
-                <div className="text-xs text-slate-400">Mixed-mode retrofit</div>
-              </div>
-              <div className="rounded-xl p-3" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
-                <div className="text-xs text-slate-400 mb-1">Payback</div>
-                <div className="text-slate-100 font-semibold">1.8 years</div>
-                <div className="text-xs text-slate-400">LED + controls</div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* VALUE GRID */}
-        <section className="mt-6 grid md:grid-cols-4 gap-3 md:gap-4">
-          <div className="usp-card"><div className="flex items-start gap-3"><span className="usp-ico"><IcoFEP/></span><div><div className="text-slate-100 font-medium">Forward Energy Premium</div><div className="text-slate-400 text-sm">Decision-grade ROI signal with β split.</div></div></div></div>
-          <div className="usp-card"><div className="flex items-start gap-3"><span className="usp-ico"><IcoScenario/></span><div><div className="text-slate-100 font-medium">Scenario Studio</div><div className="text-slate-400 text-sm">Stress test prices, policy, climate to 2030/2050.</div></div></div></div>
-          <div className="usp-card"><div className="flex items-start gap-3"><span className="usp-ico"><IcoThermo/></span><div><div className="text-slate-100 font-medium">Comfort Risk</div><div className="text-slate-400 text-sm">Expected overheating hours & satisfaction impact.</div></div></div></div>
-          <div className="usp-card"><div className="flex items-start gap-3"><span className="usp-ico"><IcoWrench/></span><div><div className="text-slate-100 font-medium">Strategy Advisor</div><div className="text-slate-400 text-sm">Measures ranked by payback & certainty.</div></div></div></div>
-        </section>
-
-        {/* COMMONWEALTH */}
-        <section className="mt-6 card p-4 md:p-6">
+        {/* WHAT YOU GET (Band 1 again for rhythm) */}
+        <Band tone={1}>
           <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <h3 className="text-slate-50 text-lg font-semibold">A Commonwealth of People</h3>
-              <p className="text-slate-400 text-sm mb-3">
-                Shared, comparable evidence that aligns incentives across owners, occupiers, and suppliers.
+            {/* Forward Energy Premium */}
+            <div className="card p-4 md:p-6 relative overflow-hidden">
+              <div className="absolute -top-24 -right-24 w-[300px] h-[300px] rounded-full blur-3xl"
+                   style={{background:"radial-gradient(circle, rgba(59,130,246,.18), transparent 60%)"}}/>
+              <h3 className="text-slate-50 text-lg font-semibold">Forward Energy Premium</h3>
+              <p className="text-slate-400 text-sm mt-1">
+                Quantifies how energy & service factors add/subtract from expected ROI — split by systematic (β) vs idiosyncratic drivers.
               </p>
-              <div className="img-frame">
-                <img src={PEOPLE_SRC} alt="Commonwealth of People" className="rounded-lg w-full object-cover"/>
+              <div className="mt-4 grid grid-cols-3 gap-3">
+                <div className="rounded-xl p-3"
+                     style={{background:"var(--panel-2)",border:"1px solid var(--stroke)", overflow:"visible"}}>
+                  <div className="text-xs text-slate-400">Avg. index</div>
+                  <div className="mt-2 bg-white rounded-xl p-2 inline-block overflow-visible">
+                    <DonutGauge value={0.07 - demoAvg} max={0.07} size={96} stroke={12}
+                                display={(demoAvg*10).toFixed(2)} label="Good" />
+                  </div>
+                </div>
+                <div className="rounded-xl p-3 col-span-2"
+                     style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
+                  <div className="flex items-center justify-between">
+                    <div className="text-xs text-slate-400">Expected ROI contribution</div>
+                    <span className="chip">Lower risk</span>
+                  </div>
+                  <div className="mt-2"><LineChart points={roiSpark} /></div>
+                </div>
               </div>
             </div>
-            <div className="grid content-start gap-3">
-              <div className="rounded-xl p-3" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
-                <div className="text-slate-300 text-sm">Owners</div>
-                <div className="text-slate-100 mt-1 text-[15px]">Show value uplift with FEP & comfort outlook; reference indices in leases and capex cases.</div>
-              </div>
-              <div className="rounded-xl p-3" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
-                <div className="text-slate-300 text-sm">Occupiers</div>
-                <div className="text-slate-100 mt-1 text-[15px]">Compare buildings on cost, risk, and satisfaction; prioritise measures with payback & confidence.</div>
-              </div>
-              <div className="rounded-xl p-3" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
-                <div className="text-slate-300 text-sm">Suppliers</div>
-                <div className="text-slate-100 mt-1 text-[15px]">Compete on verified service indices; get credit for measured outcomes, not promises.</div>
+
+            {/* Scenario Studio */}
+            <div className="card p-4 md:p-6 relative overflow-hidden">
+              <div className="absolute -bottom-24 -left-24 w-[320px] h-[320px] rounded-full blur-3xl"
+                   style={{background:"radial-gradient(circle, rgba(16,185,129,.16), transparent 60%)"}}/>
+              <h3 className="text-slate-50 text-lg font-semibold">Scenario Studio</h3>
+              <p className="text-slate-400 text-sm mt-1">
+                One-click stress tests across energy prices, policy, and climate pathways —
+                compare “as-is” vs “project” by payback and comfort.
+              </p>
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                <div className="rounded-xl p-3" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
+                  <div className="text-xs text-slate-400 mb-1">Overheating hours</div>
+                  <div className="text-slate-100 font-semibold">−28%</div>
+                  <div className="text-xs text-slate-400">Mixed-mode retrofit</div>
+                </div>
+                <div className="rounded-xl p-3" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
+                  <div className="text-xs text-slate-400 mb-1">Payback</div>
+                  <div className="text-slate-100 font-semibold">1.8 years</div>
+                  <div className="text-xs text-slate-400">LED + controls</div>
+                </div>
               </div>
             </div>
           </div>
-        </section>
 
-        {/* HOW IT WORKS */}
-        <section id="how" className="card p-5 md:p-6 mt-6">
+          {/* compact value grid */}
+          <div className="mt-4 grid md:grid-cols-4 gap-3 md:gap-4">
+            <div className="usp-card"><div className="flex items-start gap-3"><span className="usp-ico"><IcoFEP/></span><div><div className="text-slate-100 font-medium">Forward Energy Premium</div><div className="text-slate-400 text-sm">Decision-grade ROI signal with β split.</div></div></div></div>
+            <div className="usp-card"><div className="flex items-start gap-3"><span className="usp-ico"><IcoScenario/></span><div><div className="text-slate-100 font-medium">Scenario Studio</div><div className="text-slate-400 text-sm">Stress test prices, policy, climate to 2030/2050.</div></div></div></div>
+            <div className="usp-card"><div className="flex items-start gap-3"><span className="usp-ico"><IcoThermo/></span><div><div className="text-slate-100 font-medium">Comfort risk</div><div className="text-slate-400 text-sm">Expected overheating hours & satisfaction impact.</div></div></div></div>
+            <div className="usp-card"><div className="flex items-start gap-3"><span className="usp-ico"><IcoWrench/></span><div><div className="text-slate-100 font-medium">Strategy advisor</div><div className="text-slate-400 text-sm">Measures ranked by payback & certainty.</div></div></div></div>
+          </div>
+        </Band>
+
+        {/* HOW IT WORKS (Band 2) */}
+        <Band tone={2} id="how">
           <h3 className="text-slate-50 text-lg font-semibold mb-3">How it works</h3>
           <div className="grid md:grid-cols-3 gap-4">
             <div className="how-step">
@@ -337,7 +417,7 @@ function Story({ goApp }) {
             <div className="how-step">
               <div className="how-num mb-2">2</div>
               <div className="text-slate-100 font-medium">Compare</div>
-              <div className="text-slate-400 text-sm">FEP, β, intensity, tCO₂e, spend & comfort risk — all scenario-aware.</div>
+              <div className="text-slate-400 text-sm">FEP, β, intensity, tCO₂e, spend & comfort risk — scenario-aware.</div>
             </div>
             <div className="how-step">
               <div className="how-num mb-2">3</div>
@@ -345,16 +425,10 @@ function Story({ goApp }) {
               <div className="text-slate-400 text-sm">Share a Building Performance Sheet. Prioritise actions by ROI and confidence.</div>
             </div>
           </div>
-        </section>
+        </Band>
 
-        {/* CTA */}
-        <section
-          className="mt-6 rounded-2xl p-5 md:p-6 border"
-          style={{
-            borderColor:"var(--stroke)",
-            background:"linear-gradient(135deg, rgba(59,130,246,.14), rgba(16,185,129,.12))"
-          }}
-        >
+        {/* CTA (Band 3) */}
+        <Band tone={3}>
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
             <div>
               <div className="text-slate-50 text-lg font-semibold">See your Forward Energy Premium</div>
@@ -362,8 +436,7 @@ function Story({ goApp }) {
             </div>
             <button onClick={goApp} className="btn btn-primary">Get started</button>
           </div>
-        </section>
-
+        </Band>
       </div>
     </div>
   );
