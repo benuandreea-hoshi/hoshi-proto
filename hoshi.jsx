@@ -127,20 +127,64 @@ const HeroOrb = ({value=0.42,label="Avg. index"}) => (
   </div>
 );
 function Story({ goApp }) {
-  // --- tiny demo values (safe placeholders)
+  // tiny sparkline + demo values
   const roiSpark = [2, 3, 2, 4, 5, 4, 6, 7, 6, 7, 8, 7];
-  const demoAvg  = 0.42;
+  const demoAvg = 0.42;
 
-  // --- inline icons
-  const IcoFEP      = () => (<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 18V6m0 12h16M8 14l3 3 5-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>);
-  const IcoScenario = () => (<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h12M4 17h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><circle cx="19" cy="12" r="2" stroke="currentColor" strokeWidth="2"/></svg>);
-  const IcoThermo   = () => (<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M10 14V6a2 2 0 114 0v8a4 4 0 11-4 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>);
-  const IcoWrench   = () => (<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M20 7a5 5 0 01-7 7l-6 6-3-3 6-6a5 5 0 017-7z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>);
+  // inline icons (match your style)
+  const IcoFEP = () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+      <path d="M4 18V6m0 12h16M8 14l3 3 5-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+  const IcoScenario = () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+      <path d="M4 7h16M4 12h12M4 17h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+      <circle cx="19" cy="12" r="2" stroke="currentColor" strokeWidth="2"/>
+    </svg>
+  );
+  const IcoThermo = () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+      <path d="M10 14V6a2 2 0 114 0v8a4 4 0 11-4 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+  const IcoWrench = () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+      <path d="M20 7a5 5 0 01-7 7l-6 6-3-3 6-6a5 5 0 017-7z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
 
+  // stat chip and tiny logo cloud
   const Stat = ({ k, s }) => (
     <div className="pill">
       <div className="k">{k}</div>
       <div className="s">{s}</div>
+    </div>
+  );
+  const LogoCloudStrip = () => (
+    <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+      {["TenantCo","LandlordCo","SupplyOne","GridIQ","GreenCap","Cetra"].map((n,i)=>(
+        <div key={i} className="px-3 py-2 rounded-lg text-center text-xs text-slate-300"
+             style={{background:"rgba(148,163,184,.06)",border:"1px solid rgba(148,163,184,.18)"}}>
+          {n}
+        </div>
+      ))}
+    </div>
+  );
+
+  // big hero gauge (desktop only)
+  const HeroGauge = ({ value=0.42 }) => (
+    <div
+      className="rounded-full p-8"
+      style={{
+        width: 420, height: 420, // tweak if you want it larger/smaller
+        background: "linear-gradient(135deg, rgba(16,185,129,.45), rgba(59,130,246,.45))"
+      }}
+    >
+      <div className="w-full h-full rounded-full bg-[#0c111b] border grid place-items-center"
+           style={{borderColor:"rgba(255,255,255,.08)"}}>
+        <DonutGauge value={value} max={1} size={220} stroke={18} display={value.toFixed(2)} label="Good" />
+      </div>
     </div>
   );
 
@@ -148,20 +192,15 @@ function Story({ goApp }) {
     <div className="min-h-[calc(100vh-80px)]">
       <div className="max-w-7xl mx-auto px-5 md:px-6">
 
-        {/* ============== HERO ============== */}
-        <section
-          className="hero mt-2 md:mt-4"
-          style={{
-            // slightly cooler tint on hero
-            background:
-              "linear-gradient(180deg, rgba(59,130,246,.08), rgba(16,185,129,.06)) , #0c111b",
-          }}
-        >
+        {/* HERO — clear two-column layout; big gauge hidden on mobile */}
+        <section className="hero mt-2 md:mt-4">
           <div className="grid md:grid-cols-2 items-center gap-6 md:gap-10">
             <div>
               <div className="flex items-center gap-2 mb-3 md:mb-4">
                 <span className="chip">Prototype</span>
-                <span className="chip" style={{background:"rgba(148,163,184,.12)",color:"#e2e8f0",borderColor:"rgba(148,163,184,.3)"}}>Dark UI · Blue→Green</span>
+                <span className="chip" style={{background:"rgba(148,163,184,.12)",color:"#e2e8f0",borderColor:"rgba(148,163,184,.3)"}}>
+                  Dark UI · Blue→Green
+                </span>
               </div>
 
               <h1 className="text-4xl md:text-6xl font-semibold tracking-tight leading-[1.08]">
@@ -180,82 +219,33 @@ function Story({ goApp }) {
                 <a href="#how" className="btn btn-ghost">See how it works</a>
               </div>
 
-              {/* quick KPI chips */}
-              <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <Stat k="10×"  s="faster onboarding" />
-                <Stat k="92%"  s="data coverage" />
-                <Stat k="0.42" s="avg. service index" />
-                <Stat k="€↗"  s="forward ROI insight" />
-              </div>
-
-              {/* small gauge only on mobile (we don't lead with a big graph) */}
-              <div className="md:hidden mt-5 inline-flex bg-white rounded-full p-2 shadow-md">
-                <DonutGauge value={demoAvg} max={1} size={110} stroke={14} display={demoAvg.toFixed(2)} label="Good" />
+              {/* trust strip */}
+              <div className="mt-5">
+                <div className="text-xs text-slate-400">Trusted across the ecosystem</div>
+                <LogoCloudStrip />
               </div>
             </div>
 
-            {/* big ring only on desktop; no caption */}
-            <div className="hidden md:flex justify-center">
-              {/* If you already have <HeroOrb />, keep it. Otherwise the small gauge above covers mobile. */}
-              {typeof HeroOrb === "function"
-                ? <HeroOrb value={demoAvg} />
-                : <div className="bg-white/5 rounded-2xl p-6 border" style={{borderColor:"var(--stroke)"}}>
-                    <DonutGauge value={demoAvg} max={1} size={220} stroke={18} display={demoAvg.toFixed(2)} label="Good" />
-                  </div>}
+            <div className="hidden md:flex justify-end">
+              <HeroGauge value={demoAvg} />
             </div>
           </div>
         </section>
 
-        {/* ============== VALUE STRIPE ============== */}
-        <section className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-          <div className="rounded-2xl p-4" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
-            <div className="text-2xl font-semibold text-slate-50">10×</div>
-            <div className="text-slate-400 text-sm">faster onboarding</div>
-          </div>
-          <div className="rounded-2xl p-4" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
-            <div className="text-2xl font-semibold text-slate-50">92%</div>
-            <div className="text-slate-400 text-sm">target data coverage</div>
-          </div>
-          <div className="rounded-2xl p-4" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
-            <div className="text-2xl font-semibold text-slate-50">β 0.35–2.48</div>
-            <div className="text-slate-400 text-sm">sensitivity to market drivers</div>
-          </div>
-          <div className="rounded-2xl p-4" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
-            <div className="text-2xl font-semibold text-slate-50">−15–+8%</div>
-            <div className="text-slate-400 text-sm">Forward Energy Premium (range)</div>
-          </div>
+        {/* IMPACT RIBBON */}
+        <section className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-2 md:gap-4">
+          <Stat k="10×" s="faster onboarding" />
+          <Stat k="92%" s="data coverage target" />
+          <Stat k="0.42" s="avg. service index" />
+          <Stat k="€↗" s="forward ROI insight" />
         </section>
 
-        {/* ============== WHO IT BENEFITS ============== */}
-        <section
-          className="mt-6 card p-4 md:p-6"
-          style={{background:"linear-gradient(135deg, rgba(59,130,246,.10), rgba(16,185,129,.08)) , var(--panel)"}}
-        >
-          <h3 className="text-slate-50 text-lg font-semibold mb-3">Who Hoshi serves</h3>
-          <div className="grid md:grid-cols-3 gap-3">
-            <div className="rounded-xl p-3" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
-              <div className="text-slate-300 text-sm">Owners</div>
-              <div className="text-slate-100 mt-1 text-[15px]">Show value uplift with FEP and comfort outlook; reference indices in leases & capex cases.</div>
-            </div>
-            <div className="rounded-xl p-3" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
-              <div className="text-slate-300 text-sm">Occupiers</div>
-              <div className="text-slate-100 mt-1 text-[15px]">Compare buildings on cost, risk & satisfaction; prioritise measures by payback and confidence.</div>
-            </div>
-            <div className="rounded-xl p-3" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
-              <div className="text-slate-300 text-sm">Suppliers</div>
-              <div className="text-slate-100 mt-1 text-[15px]">Compete on verified service indices; get credit for measured outcomes, not promises.</div>
-            </div>
-          </div>
-        </section>
-
-        {/* ============== WHAT YOU GET ============== */}
+        {/* PRODUCT PEEK */}
         <section className="mt-6 grid md:grid-cols-2 gap-4">
-          {/* FEP card */}
-          <div className="card p-4 md:p-6 relative overflow-hidden"
-               style={{background:"linear-gradient(145deg, rgba(59,130,246,.08), transparent) , var(--panel)"}}>
-            <h3 className="text-slate-50 text-lg font-semibold flex items-center gap-2">
-              <span className="usp-ico"><IcoFEP/></span> Forward Energy Premium
-            </h3>
+          <div className="card p-4 md:p-6 relative overflow-hidden">
+            <div className="absolute -top-24 -right-24 w-[300px] h-[300px] rounded-full blur-3xl"
+                 style={{background:"radial-gradient(circle, rgba(59,130,246,.18), transparent 60%)"}}/>
+            <h3 className="text-slate-50 text-lg font-semibold">Forward Energy Premium</h3>
             <p className="text-slate-400 text-sm mt-1">
               Quantifies how energy & service factors add/subtract from expected ROI — split by systematic (β) vs idiosyncratic drivers.
             </p>
@@ -271,17 +261,15 @@ function Story({ goApp }) {
                   <div className="text-xs text-slate-400">Expected ROI contribution</div>
                   <span className="chip">Lower risk</span>
                 </div>
-                <div className="mt-2"><LineChart points={roiSpark}/></div>
+                <div className="mt-2"><LineChart points={roiSpark} /></div>
               </div>
             </div>
           </div>
 
-          {/* Scenario card */}
-          <div className="card p-4 md:p-6 relative overflow-hidden"
-               style={{background:"linear-gradient(145deg, rgba(16,185,129,.10), transparent) , var(--panel)"}}>
-            <h3 className="text-slate-50 text-lg font-semibold flex items-center gap-2">
-              <span className="usp-ico"><IcoScenario/></span> Scenario Studio
-            </h3>
+          <div className="card p-4 md:p-6 relative overflow-hidden">
+            <div className="absolute -bottom-24 -left-24 w-[320px] h-[320px] rounded-full blur-3xl"
+                 style={{background:"radial-gradient(circle, rgba(16,185,129,.16), transparent 60%)"}}/>
+            <h3 className="text-slate-50 text-lg font-semibold">Scenario Studio</h3>
             <p className="text-slate-400 text-sm mt-1">
               One-click stress tests across energy prices, policy, and climate pathways — compare “as-is” vs “project” by payback and comfort.
             </p>
@@ -300,30 +288,71 @@ function Story({ goApp }) {
           </div>
         </section>
 
-        {/* ============== MORE PROOF POINTS ============== */}
+        {/* VALUE GRID */}
         <section className="mt-6 grid md:grid-cols-4 gap-3 md:gap-4">
+          <div className="usp-card"><div className="flex items-start gap-3"><span className="usp-ico"><IcoFEP/></span><div><div className="text-slate-100 font-medium">Forward Energy Premium</div><div className="text-slate-400 text-sm">Decision-grade ROI signal with β split.</div></div></div></div>
+          <div className="usp-card"><div className="flex items-start gap-3"><span className="usp-ico"><IcoScenario/></span><div><div className="text-slate-100 font-medium">Scenario Studio</div><div className="text-slate-400 text-sm">Stress test prices, policy, climate to 2030/2050.</div></div></div></div>
           <div className="usp-card"><div className="flex items-start gap-3"><span className="usp-ico"><IcoThermo/></span><div><div className="text-slate-100 font-medium">Comfort Risk</div><div className="text-slate-400 text-sm">Expected overheating hours & satisfaction impact.</div></div></div></div>
           <div className="usp-card"><div className="flex items-start gap-3"><span className="usp-ico"><IcoWrench/></span><div><div className="text-slate-100 font-medium">Strategy Advisor</div><div className="text-slate-400 text-sm">Measures ranked by payback & certainty.</div></div></div></div>
-          <div className="usp-card"><div className="flex items-start gap-3"><span className="usp-ico">%</span><div><div className="text-slate-100 font-medium">Public BPS</div><div className="text-slate-400 text-sm">Share auditable Building Performance Sheets.</div></div></div></div>
-          <div className="usp-card"><div className="flex items-start gap-3"><span className="usp-ico">∞</span><div><div className="text-slate-100 font-medium">Lineage</div><div className="text-slate-400 text-sm">Sources, factors & formulas — end-to-end traceable.</div></div></div></div>
         </section>
 
-        {/* ============== HOW IT WORKS ============== */}
-        <section id="how" className="card p-5 md:p-6 mt-6">
-          <h3 className="text-slate-50 text-lg font-semibold mb-3">How it works</h3>
-          <div className="grid md:grid-cols-3 gap-4">
-            <div className="how-step"><div className="how-num mb-2">1</div><div className="text-slate-100 font-medium">Ingest</div><div className="text-slate-400 text-sm">Email PDFs/CSVs or connect a meter. OCR + normalisation standardise the data.</div></div>
-            <div className="how-step"><div className="how-num mb-2">2</div><div className="text-slate-100 font-medium">Compare</div><div className="text-slate-400 text-sm">FEP, β, intensity, tCO₂e, spend & comfort risk, all scenario-aware.</div></div>
-            <div className="how-step"><div className="how-num mb-2">3</div><div className="text-slate-100 font-medium">Publish & act</div><div className="text-slate-400 text-sm">Share a Building Performance Sheet. Prioritise actions by ROI and confidence.</div></div>
+        {/* COMMONWEALTH */}
+        <section className="mt-6 card p-4 md:p-6">
+          <div className="grid md:grid-cols-2 gap-4">
+            <div>
+              <h3 className="text-slate-50 text-lg font-semibold">A Commonwealth of People</h3>
+              <p className="text-slate-400 text-sm mb-3">
+                Shared, comparable evidence that aligns incentives across owners, occupiers, and suppliers.
+              </p>
+              <div className="img-frame">
+                <img src={PEOPLE_SRC} alt="Commonwealth of People" className="rounded-lg w-full object-cover"/>
+              </div>
+            </div>
+            <div className="grid content-start gap-3">
+              <div className="rounded-xl p-3" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
+                <div className="text-slate-300 text-sm">Owners</div>
+                <div className="text-slate-100 mt-1 text-[15px]">Show value uplift with FEP & comfort outlook; reference indices in leases and capex cases.</div>
+              </div>
+              <div className="rounded-xl p-3" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
+                <div className="text-slate-300 text-sm">Occupiers</div>
+                <div className="text-slate-100 mt-1 text-[15px]">Compare buildings on cost, risk, and satisfaction; prioritise measures with payback & confidence.</div>
+              </div>
+              <div className="rounded-xl p-3" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
+                <div className="text-slate-300 text-sm">Suppliers</div>
+                <div className="text-slate-100 mt-1 text-[15px]">Compete on verified service indices; get credit for measured outcomes, not promises.</div>
+              </div>
+            </div>
           </div>
         </section>
 
-        {/* ============== CTA ============== */}
+        {/* HOW IT WORKS */}
+        <section id="how" className="card p-5 md:p-6 mt-6">
+          <h3 className="text-slate-50 text-lg font-semibold mb-3">How it works</h3>
+          <div className="grid md:grid-cols-3 gap-4">
+            <div className="how-step">
+              <div className="how-num mb-2">1</div>
+              <div className="text-slate-100 font-medium">Ingest</div>
+              <div className="text-slate-400 text-sm">Email PDFs/CSVs or connect a meter. OCR + normalisation standardise the data.</div>
+            </div>
+            <div className="how-step">
+              <div className="how-num mb-2">2</div>
+              <div className="text-slate-100 font-medium">Compare</div>
+              <div className="text-slate-400 text-sm">FEP, β, intensity, tCO₂e, spend & comfort risk — all scenario-aware.</div>
+            </div>
+            <div className="how-step">
+              <div className="how-num mb-2">3</div>
+              <div className="text-slate-100 font-medium">Publish & act</div>
+              <div className="text-slate-400 text-sm">Share a Building Performance Sheet. Prioritise actions by ROI and confidence.</div>
+            </div>
+          </div>
+        </section>
+
+        {/* CTA */}
         <section
           className="mt-6 rounded-2xl p-5 md:p-6 border"
           style={{
             borderColor:"var(--stroke)",
-            background:"linear-gradient(135deg, rgba(59,130,246,.14), rgba(16,185,129,.12))",
+            background:"linear-gradient(135deg, rgba(59,130,246,.14), rgba(16,185,129,.12))"
           }}
         >
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
@@ -339,10 +368,6 @@ function Story({ goApp }) {
     </div>
   );
 }
-
-
-   
-        
 
 
 function Onboarding(){
