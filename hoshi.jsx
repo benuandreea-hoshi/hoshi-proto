@@ -62,6 +62,13 @@ const StarLogo=({size=28})=>(
     <path d="M20 34 L77 30 L35 63 Z" fill="url(#gradB)" opacity="0.95"/>
   </svg>
 );
+// small label chip
+const Tag = ({children}) => (
+  <span className="chip" style={{borderColor:"rgba(148,163,184,.3)",background:"rgba(148,163,184,.12)",color:"#e2e8f0"}}>
+    {children}
+  </span>
+);
+
 function DonutGauge({ value=0, max=1, size=120, stroke=14, label, display }) {
   const pct = Math.max(0, Math.min(1, value / max));
   const r = (size - stroke) / 2;
@@ -92,6 +99,33 @@ function DonutGauge({ value=0, max=1, size=120, stroke=14, label, display }) {
     </svg>
   );
 }
+// animated orb (uses DonutGauge)
+const HeroOrb = ({value=0.42,label="Avg. index"}) => (
+  <div className="relative aspect-square max-w-[520px] mx-auto">
+    {/* halos */}
+    <div className="absolute -inset-6 rounded-full blur-2xl opacity-90"
+         style={{background:
+          `radial-gradient(60% 60% at 30% 30%, rgba(56,189,248,.35), transparent 60%),
+           radial-gradient(60% 60% at 70% 65%, rgba(16,185,129,.28), transparent 55%)`}}/>
+    {/* glass sphere */}
+    <div className="absolute inset-0 rounded-full backdrop-blur-[2px]"
+         style={{background:"linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02))",
+                 border:"1px solid rgba(99,102,241,.25)", boxShadow:"0 20px 60px rgba(0,0,0,.45)"}}/>
+    {/* rotating ring */}
+    <div className="absolute inset-0 rounded-full" style={{WebkitMask:"radial-gradient(circle, transparent 58%, black 59%)"}}>
+      <div className="absolute inset-0 rounded-full" style={{background:"conic-gradient(from 0deg, rgba(56,189,248,.6), rgba(16,185,129,.6), rgba(56,189,248,.6))", animation:"spin 18s linear infinite"}}/>
+    </div>
+    {/* center */}
+    <div className="absolute inset-0 grid place-items-center">
+      <div className="bg-white rounded-full p-3 shadow-lg">
+        <DonutGauge value={value} max={0.70} size={140} stroke={14} display={value.toFixed(2)} label="Good" />
+      </div>
+      <div className="absolute bottom-6 text-center">
+        <div className="text-slate-300 text-xs">{label}</div>
+      </div>
+    </div>
+  </div>
+);
  function Story({ goApp }) {
   // tiny sparkline + demo values
   const roiSpark = [2, 3, 2, 4, 5, 4, 6, 7, 6, 7, 8, 7];
@@ -142,47 +176,52 @@ function DonutGauge({ value=0, max=1, size=120, stroke=14, label, display }) {
 
   return (
     <div className="min-h-[calc(100vh-80px)]">
-      <div className="max-w-7xl mx-auto px-5 md:px-6">
+      <div className="max-w-7xl mx-auto px-5 md:px-6">    
+{/* HERO */}
+<section className="hero mt-2 md:mt-4">
+  <div className="grid md:grid-cols-2 items-center gap-6 md:gap-10">
+    <div>
+      <div className="flex items-center gap-2 mb-3 md:mb-4">
+        <span className="chip">Prototype</span>
+        <Tag>Dark UI · Blue→Green</Tag>
+      </div>
 
-        {/* HERO — more punch */}
-        <section className="hero mt-2 md:mt-4 relative overflow-hidden">
-          {/* soft gradient sweep for extra glow */}
-          <div className="absolute inset-0 pointer-events-none"
-               style={{
-                 background:"radial-gradient(800px 300px at 10% 0%, rgba(59,130,246,.18), transparent 60%), radial-gradient(900px 320px at 90% 20%, rgba(16,185,129,.16), transparent 60%)",
-                 maskImage:"linear-gradient(to bottom, rgba(0,0,0,.6), rgba(0,0,0,.9))"
-               }} />
-          <div className="relative">
-            <div className="flex items-center gap-2 mb-3 md:mb-4">
-              <span className="chip">Prototype</span>
-              <span className="chip" style={{background:"rgba(148,163,184,.12)",color:"#e2e8f0",borderColor:"rgba(148,163,184,.3)"}}>
-                Dark UI · Blue→Green
-              </span>
-            </div>
+      <h1 className="text-4xl md:text-6xl font-semibold tracking-tight leading-[1.08]">
+        <span className="text-slate-100">Hoshi — </span>
+        <span className="text-neon">transparent ESG</span>
+        <span className="text-slate-100"> for real estate.</span>
+      </h1>
 
-            <h1 className="text-4xl md:text-6xl font-semibold tracking-tight leading-[1.08]">
-              <span className="text-slate-100">Hoshi — </span>
-              <span className="text-neon">transparent ESG</span>
-              <span className="text-slate-100"> for real estate.</span>
-            </h1>
+      <p className="text-slate-300 mt-4 text-base md:text-lg max-w-2xl">
+        Evidence that moves value: scenario-adjusted service performance, comfort risk,
+        and forward ROI — shared by owners, occupiers, and suppliers.
+      </p>
 
-            <p className="text-slate-300 mt-4 text-base md:text-lg max-w-3xl">
-              Evidence that moves value: scenario-adjusted service performance, comfort risk,
-              and forward ROI — shared by owners, occupiers, and suppliers.
-            </p>
+      <div className="mt-6 flex flex-wrap gap-3">
+        <button onClick={goApp} className="btn btn-primary">Launch prototype</button>
+        <a href="#how" className="btn btn-ghost">See how it works</a>
+      </div>
 
-            <div className="mt-6 flex flex-wrap gap-3">
-              <button onClick={goApp} className="btn btn-primary">Launch prototype</button>
-              <a href="#how" className="btn btn-ghost">See how it works</a>
-            </div>
+      <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <div className="pill"><div className="k">92%</div><div className="s">data coverage</div></div>
+        <div className="pill"><div className="k">10×</div><div className="s">faster onboarding</div></div>
+        <div className="pill"><div className="k">0.42</div><div className="s">avg. service index</div></div>
+        <div className="pill"><div className="k">€↗</div><div className="s">forward ROI insight</div></div>
+      </div>
 
-            {/* quick trust strip */}
-            <div className="mt-5">
-              <div className="text-xs text-slate-400">Trusted across the ecosystem</div>
-              <LogoCloudStrip />
-            </div>
-          </div>
-        </section>
+      {/* (optional) trust strip */}
+      {/* <div className="mt-5">
+        <div className="text-xs text-slate-400">Trusted across the ecosystem</div>
+        <LogoCloudStrip />
+      </div> */}
+    </div>
+
+    <div className="order-first md:order-none">
+      <HeroOrb value={0.42} label="Composite index (×10 shown)" />
+    </div>
+  </div>
+</section>
+
 
         {/* IMPACT RIBBON — bold, like Measurabl */}
         <section className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
