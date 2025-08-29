@@ -225,9 +225,9 @@ function Story({ goApp }) {
               systematic (β) vs idiosyncratic drivers.
             </p>
             {/* mini grid — mobile-safe */}
-<div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-3">
+<div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
   <div
-    className="rounded-xl p-3 donut-wrap relative z-[1]"
+    className="rounded-xl p-3 donut-wrap relative z-10"
     style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}
   >
     <div className="text-xs text-slate-400">Avg. index</div>
@@ -235,13 +235,25 @@ function Story({ goApp }) {
       <DonutGauge
         value={0.07 - demoAvg}
         max={0.07}
-        size={useIsMobile() ? 84 : 96}
+        size={76}            // was 84/96 → tighter for phones
         stroke={12}
         display={(demoAvg * 10).toFixed(2)}
         label="Good"
       />
     </div>
   </div>
+  <div
+    className="rounded-xl p-3 md:col-span-2 relative z-0"
+    style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}
+  >
+    <div className="flex items-center justify-between">
+      <div className="text-xs text-slate-400">Expected ROI contribution</div>
+      <span className="chip">Lower risk</span>
+    </div>
+    <div className="mt-2"><LineChart points={roiSpark} /></div>
+  </div>
+</div>
+
 
   <div
     className="rounded-xl p-3 md:col-span-2"
