@@ -253,19 +253,6 @@ function Story({ goApp }) {
     <div className="mt-2"><LineChart points={roiSpark} /></div>
   </div>
 </div>
-
-
-  <div
-    className="rounded-xl p-3 md:col-span-2"
-    style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}
-  >
-    <div className="flex items-center justify-between">
-      <div className="text-xs text-slate-400">Expected ROI contribution</div>
-      <span className="chip">Lower risk</span>
-    </div>
-    <div className="mt-2"><LineChart points={roiSpark} /></div>
-  </div>
-</div>
           {/* Scenario Studio */}
           <div className="card p-4 md:p-6 relative overflow-visible">
             <h3 className="text-slate-50 text-lg font-semibold">Scenario Studio</h3>
