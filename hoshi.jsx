@@ -306,37 +306,101 @@ function PublicBPS(){ return (<div className="max-w-4xl mx-auto bg-white text-sl
 /* ------------------------------ Shell ------------------------------ */
 const ICONS={story:()=>(<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h10M4 17h7" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>)};
 function App(){
-  const tabs=[{key:"story",label:"Story",comp:<Story goApp={()=>setActive("onboarding")}/>},{key:"onboarding",label:"Onboarding",comp:<Onboarding/>},{key:"portfolio",label:"Portfolio",comp:<Portfolio/>},{key:"building",label:"Building",comp:<Building/>},{key:"actions",label:"Actions",comp:<Actions/>},{key:"services",label:"Services",comp:<Services/>},{key:"lineage",label:"Lineage & Governance",comp:<Lineage/>},{key:"public",label:"Public BPS",comp:<PublicBPS/>}];
-  const [active,setActive]=useState("story"); const [open,setOpen]=useState(false);
-  const NavItem=({t})=>{const is=active===t.key;return(<button onClick={()=>{setActive(t.key);setOpen(false);}} className={"navicon "+(is?"active":"")} title={t.label} aria-label={t.label}>{ICONS[t.key]?.(is)}</button>);};
-  return(<div className="min-h-screen relative">
-    <aside className="hidden md:flex fixed left-0 top-0 bottom-0 w-[76px] bg-[#0d1524] border-r border-[#1f2a3a] flex-col items-center py-4 gap-4 z-[2000]">
-      <div className="w-10 h-10 rounded-xl overflow-hidden bg-[#0b1220] border border-[#233147] grid place-items-center">
-        {LOGO_SRC ? <img src={LOGO_SRC} alt="Hoshi logo" className="w-10 h-10 object-cover" /> : <StarLogo size={22} />}
+  // define hooks FIRST
+  const [active, setActive] = useState("story");
+  const [open, setOpen] = useState(false);
+
+  // helper used by Story CTA
+  const goToOnboarding = () => setActive("onboarding");
+
+  // now it's safe to build tabs
+  const tabs = [
+    { key:"story",      label:"Story",               comp:<Story goApp={goToOnboarding}/> },
+    { key:"onboarding", label:"Onboarding",          comp:<Onboarding/> },
+    { key:"portfolio",  label:"Portfolio",           comp:<Portfolio/> },
+    { key:"building",   label:"Building",            comp:<Building/> },
+    { key:"actions",    label:"Actions",             comp:<Actions/> },
+    { key:"services",   label:"Services",            comp:<Services/> },
+    { key:"lineage",    label:"Lineage & Governance",comp:<Lineage/> },
+    { key:"public",     label:"Public BPS",          comp:<PublicBPS/> },
+  ];
+
+  const NavItem = ({ t }) => {
+    const is = active === t.key;
+    return (
+      <button
+        onClick={()=>{ setActive(t.key); setOpen(false); }}
+        className={"navicon " + (is ? "active" : "")}
+        title={t.label}
+        aria-label={t.label}
+      >
+        {ICONS[t.key]?.(is)}
+      </button>
+    );
+  };
+
+  return (
+    <div className="min-h-screen relative">
+      {/* Sidebar (desktop) */}
+      <aside className="hidden md:flex fixed left-0 top-0 bottom-0 w-[76px] bg-[#0d1524] border-r border-[#1f2a3a] flex-col items-center py-4 gap-4 z-[2000]">
+        <div className="w-10 h-10 rounded-xl overflow-hidden bg-[#0b1220] border border-[#233147] grid place-items-center">
+          {LOGO_SRC ? <img src={LOGO_SRC} alt="Hoshi logo" className="w-10 h-10 object-cover" /> : <StarLogo size={22} />}
+        </div>
+        <div className="mt-1 flex flex-col gap-3">{tabs.map(t => <NavItem key={t.key} t={t}/>)}</div>
+        <div className="mt-auto opacity-70 text-[10px] text-slate-300 px-2 text-center">© {new Date().getFullYear()}</div>
+      </aside>
+
+      {/* Top bar (mobile) */}
+      <header className="md:hidden sticky top-0 z-[2000] px-4 py-3 flex items-center justify-between"
+              style={{background:"rgba(15,17,21,.85)",backdropFilter:"blur(4px)",borderBottom:"1px solid var(--stroke)"}}>
+        <button className="navicon" onClick={()=>setOpen(true)} aria-label="Open menu">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+        </button>
+        <div className="flex items-center gap-2">
+          {LOGO_SRC ? <img src={LOGO_SRC} alt="Hoshi logo" className="w-6 h-6 rounded object-cover" /> : <StarLogo size={18} />}
+          <span className="text-sm font-semibold">Hoshi</span>
+        </div>
+        <span className="opacity-0 navicon"></span>
+      </header>
+
+      {/* Drawer (mobile) */}
+      {open && <div className="overlay md:hidden" onClick={()=>setOpen(false)}></div>}
+      <div className={"md:hidden fixed top-0 bottom-0 left-0 w-[76px] bg-[#0d1524] border-r border-[#1f2a3a] z-40 transition-transform " + (open ? "translate-x-0" : "-translate-x-full")}>
+        <div className="p-3 flex items-center justify-center">
+          {LOGO_SRC ? <img src={LOGO_SRC} alt="Hoshi logo" className="w-8 h-8 rounded-md object-cover" /> : <StarLogo size={22} />}
+        </div>
+        <div className="flex flex-col items-center gap-3 pt-1">{tabs.map(t => <NavItem key={t.key} t={t}/>)}</div>
       </div>
-      <div className="mt-1 flex flex-col gap-3">{tabs.map(t=><NavItem key={t.key} t={t}/>)}</div>
-      <div className="mt-auto opacity-70 text-[10px] text-slate-300 px-2 text-center">© {new Date().getFullYear()}</div>
-    </aside>
-    <header className="md:hidden sticky top-0 z-[2000] px-4 py-3 flex items-center justify-between" style={{background:"rgba(15,17,21,.85)",backdropFilter:"blur(4px)",borderBottom:"1px solid var(--stroke)"}}>
-      <button className="navicon" onClick={()=>setOpen(true)} aria-label="Open menu"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg></button>
-      <div className="flex items-center gap-2">{LOGO_SRC ? <img src={LOGO_SRC} alt="Hoshi logo" className="w-6 h-6 rounded object-cover" /> : <StarLogo size={18} />}<span className="text-sm font-semibold">Hoshi</span></div>
-      <span className="opacity-0 navicon"></span>
-    </header>
-    {open && <div className="overlay md:hidden" onClick={()=>setOpen(false)}></div>}
-    <div className={"md:hidden fixed top-0 bottom-0 left-0 w-[76px] bg-[#0d1524] border-r border-[#1f2a3a] z-40 transition-transform "+(open?"translate-x-0":"-translate-x-full")}>
-      <div className="p-3 flex items-center justify-center">{LOGO_SRC ? <img src={LOGO_SRC} alt="Hoshi logo" className="w-8 h-8 rounded-md object-cover" /> : <StarLogo size={22} />}</div>
-      <div className="flex flex-col items-center gap-3 pt-1">{tabs.map(t=><NavItem key={t.key} t={t}/>)}</div>
+
+      {/* Main */}
+      <main className="px-4 md:px-6 py-5 md:py-6 max-w-7xl mx-auto">
+        <div className="md:ml-[90px]">
+          <div className="hidden md:flex items-center justify-between mb-5">
+            <div className="flex items-center gap-3">
+              {LOGO_SRC
+                ? <img src={LOGO_SRC} alt="Hoshi logo" className="w-8 h-8 rounded-lg object-cover border border-blue-400/30 bg-blue-500/10" />
+                : <StarLogo size={20} />
+              }
+              <div className="text-slate-300 font-semibold">Hoshi</div>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-slate-400">
+              <Badge>Dark UI</Badge><Badge tone="neutral">CCC optional</Badge><Badge tone="success">Zero-trust</Badge>
+            </div>
+          </div>
+
+          {/* Render active tab */}
+          {tabs.find(t => t.key === active)?.comp}
+
+          <div className="border-t mt-8 pt-4 text-xs text-slate-500" style={{borderColor:"var(--stroke)"}}>
+            © {new Date().getFullYear()} Hoshi • Prototype
+          </div>
+        </div>
+      </main>
     </div>
-    <main className="px-4 md:px-6 py-5 md:py-6 max-w-7xl mx-auto"><div className="md:ml-[90px]">
-      <div className="hidden md:flex items-center justify-between mb-5"><div className="flex items-center gap-3">
-        {LOGO_SRC ? <img src={LOGO_SRC} alt="Hoshi logo" className="w-8 h-8 rounded-lg object-cover border border-blue-400/30 bg-blue-500/10" /> : <StarLogo size={20} />}
-        <div className="text-slate-300 font-semibold">Hoshi</div></div>
-        <div className="flex items-center gap-2 text-xs text-slate-400"><Badge>Dark UI</Badge><Badge tone="neutral">CCC optional</Badge><Badge tone="success">Zero-trust</Badge></div></div>
-      <Story goApp={()=>{}}/>
-      <div className="border-t mt-8 pt-4 text-xs text-slate-500" style={{borderColor:"var(--stroke)"}}>© {new Date().getFullYear()} Hoshi • Prototype</div>
-    </div></div>
-  </div>);
+  );
 }
+
+    
 
 /* error overlay (handles both sync and async) */
 window.addEventListener('error', e => {
