@@ -99,7 +99,7 @@ function DonutGauge({ value=0, max=1, size=120, stroke=14, label, display }) {
     </svg>
   );
 }
-// == HeroOrb (desktop-only, stronger contrast ring)
+// == HeroOrb (desktop-only, high-contrast center gauge)
 function HeroOrb({ value = 0.42, label = "Composite index" }) {
   const size = 420;           // overall canvas
   const core = 260;           // inner plate
@@ -111,7 +111,7 @@ function HeroOrb({ value = 0.42, label = "Composite index" }) {
 
   return (
     <div className="hidden md:flex items-center justify-center relative w-full">
-      {/* soft background glow so text reads */}
+      {/* soft glow behind rings for legibility */}
       <div
         className="absolute inset-0 -z-10 rounded-[999px]"
         style={{
@@ -119,79 +119,48 @@ function HeroOrb({ value = 0.42, label = "Composite index" }) {
             "radial-gradient(60% 60% at 60% 45%, rgba(16,185,129,.18), transparent 60%)," +
             "radial-gradient(70% 70% at 40% 55%, rgba(59,130,246,.20), transparent 70%)",
           filter: "blur(6px)",
+          mixBlendMode: "normal",
         }}
       />
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-        {/* large decorative outer ring */}
         <defs>
           <linearGradient id="orbGrad" x1="0" y1="0" x2="1" y2="1">
             <stop offset="0%" stopColor="#10b981" />
             <stop offset="100%" stopColor="#3b82f6" />
           </linearGradient>
         </defs>
+
+        {/* decorative outer ring */}
         <circle
           cx={size / 2}
           cy={size / 2}
           r={size / 2 - 28}
           fill="none"
           stroke="url(#orbGrad)"
-          strokeOpacity="0.33"
+          strokeOpacity="0.38"
           strokeWidth="28"
         />
+
         {/* inner plate + gauge */}
         <g transform={`translate(${(size - core) / 2},${(size - core) / 2})`}>
-          <circle
-            cx={core / 2}
-            cy={core / 2}
-            r={core / 2}
-            fill="#090f1ccc"
-            stroke="#1f2a33"
-            strokeWidth="1"
-          />
-          <circle
-            cx={core / 2}
-            cy={core / 2}
-            r={r}
-            fill="none"
-            stroke="#e5e7eb"
-            strokeOpacity="0.28"
-            strokeWidth={stroke}
-          />
+          <circle cx={core/2} cy={core/2} r={core/2} fill="#090f1ccc" stroke="#1f2a33" strokeWidth="1" />
+          <circle cx={core/2} cy={core/2} r={r} fill="none" stroke="#e5e7eb" strokeOpacity="0.28" strokeWidth={stroke} />
           <g transform={`translate(${core / 2},${core / 2}) rotate(-90)`}>
-            <circle
-              r={r}
-              fill="none"
-              stroke="#10b981"
-              strokeWidth={stroke}
-              strokeLinecap="round"
-              strokeDasharray={`${dash} ${c - dash}`}
-            />
+            <circle r={r} fill="none" stroke="#10b981" strokeWidth={stroke} strokeLinecap="round"
+              strokeDasharray={`${dash} ${c - dash}`} />
           </g>
-          <text
-            x="50%"
-            y="50%"
-            dominantBaseline="middle"
-            textAnchor="middle"
-            fontSize="64"
-            fontWeight="800"
-            fill="#e2e8f0"
-          >
+          <text x="50%" y="50%" dominantBaseline="middle" textAnchor="middle"
+                fontSize="64" fontWeight="800" fill="#e2e8f0">
             {value.toFixed(2)}
           </text>
-          <text
-            x="50%"
-            y={core / 2 + 40}
-            textAnchor="middle"
-            fontSize="18"
-            fill="#a9b1c4"
-          >
-            Good
-          </text>
+          <text x="50%" y={core/2 + 40} textAnchor="middle" fontSize="18" fill="#a9b1c4">Good</text>
         </g>
       </svg>
     </div>
   );
 }
+
+  
 function Story({ goApp }) {
   // tiny sparkline + demo
   const roiSpark = [2, 3, 2, 4, 5, 4, 6, 7, 6, 7, 8, 7];
