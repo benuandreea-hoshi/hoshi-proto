@@ -224,23 +224,36 @@ function Story({ goApp }) {
               Quantifies how energy &amp; service factors add/subtract from expected ROI — split by
               systematic (β) vs idiosyncratic drivers.
             </p>
-            <div className="mt-4 grid grid-cols-3 gap-3">
-              <div className="rounded-xl p-3 donut-wrap" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
-                <div className="text-xs text-slate-400">Avg. index</div>
-                <div className="mt-2 bg-white rounded-xl p-2 inline-block">
-                  <DonutGauge value={0.07-demoAvg} max={0.07} size={96} stroke={12} display={(demoAvg*10).toFixed(2)} label="Good" />
-                </div>
-              </div>
-              <div className="rounded-xl p-3 col-span-2" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
-                <div className="flex items-center justify-between">
-                  <div className="text-xs text-slate-400">Expected ROI contribution</div>
-                  <span className="chip">Lower risk</span>
-                </div>
-                <div className="mt-2"><LineChart points={roiSpark} /></div>
-              </div>
-            </div>
-          </div>
+            {/* mini grid — mobile-safe */}
+<div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-3">
+  <div
+    className="rounded-xl p-3 donut-wrap relative z-[1]"
+    style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}
+  >
+    <div className="text-xs text-slate-400">Avg. index</div>
+    <div className="mt-2 bg-white rounded-xl p-2 inline-flex items-center justify-center">
+      <DonutGauge
+        value={0.07 - demoAvg}
+        max={0.07}
+        size={useIsMobile() ? 84 : 96}
+        stroke={12}
+        display={(demoAvg * 10).toFixed(2)}
+        label="Good"
+      />
+    </div>
+  </div>
 
+  <div
+    className="rounded-xl p-3 md:col-span-2"
+    style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}
+  >
+    <div className="flex items-center justify-between">
+      <div className="text-xs text-slate-400">Expected ROI contribution</div>
+      <span className="chip">Lower risk</span>
+    </div>
+    <div className="mt-2"><LineChart points={roiSpark} /></div>
+  </div>
+</div>
           {/* Scenario Studio */}
           <div className="card p-4 md:p-6 relative overflow-visible">
             <h3 className="text-slate-50 text-lg font-semibold">Scenario Studio</h3>
