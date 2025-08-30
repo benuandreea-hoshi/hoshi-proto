@@ -99,7 +99,7 @@ function DonutGauge({ value=0, max=1, size=120, stroke=14, label, display }) {
     </svg>
   );
 }
-// == HeroOrb (desktop-only, stronger contrast ring)
+ // == HeroOrb (desktop-only, stronger contrast ring)
 function HeroOrb({ value = 0.42, label = "Composite index" }) {
   const size = 420;           // overall canvas
   const core = 260;           // inner plate
@@ -111,7 +111,7 @@ function HeroOrb({ value = 0.42, label = "Composite index" }) {
 
   return (
     <div className="hidden md:flex items-center justify-center relative w-full">
-      {/* soft background glow so text reads */}
+      {/* soft background glow so white type reads better */}
       <div
         className="absolute inset-0 -z-10 rounded-[999px]"
         style={{
@@ -122,7 +122,7 @@ function HeroOrb({ value = 0.42, label = "Composite index" }) {
         }}
       />
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-        {/* large decorative outer ring */}
+        {/* decorative outer ring */}
         <defs>
           <linearGradient id="orbGrad" x1="0" y1="0" x2="1" y2="1">
             <stop offset="0%" stopColor="#10b981" />
@@ -138,6 +138,7 @@ function HeroOrb({ value = 0.42, label = "Composite index" }) {
           strokeOpacity="0.33"
           strokeWidth="28"
         />
+
         {/* inner plate + gauge */}
         <g transform={`translate(${(size - core) / 2},${(size - core) / 2})`}>
           <circle
@@ -157,6 +158,7 @@ function HeroOrb({ value = 0.42, label = "Composite index" }) {
             strokeOpacity="0.28"
             strokeWidth={stroke}
           />
+          {/* the gauge arc */}
           <g transform={`translate(${core / 2},${core / 2}) rotate(-90)`}>
             <circle
               r={r}
@@ -167,6 +169,8 @@ function HeroOrb({ value = 0.42, label = "Composite index" }) {
               strokeDasharray={`${dash} ${c - dash}`}
             />
           </g>
+
+          {/* number & label perfectly centered */}
           <text
             x="50%"
             y="50%"
@@ -192,6 +196,7 @@ function HeroOrb({ value = 0.42, label = "Composite index" }) {
     </div>
   );
 }
+
 function Story({ goApp }) {
   // tiny sparkline + demo
   const roiSpark = [2, 3, 2, 4, 5, 4, 6, 7, 6, 7, 8, 7];
@@ -293,13 +298,20 @@ function Story({ goApp }) {
                 <div className="text-xs text-slate-400">Trusted across the ecosystem</div>
                 <LogoCloudStrip />
               </div>
-              {/* small gauge for mobile only (don’t lead with a chart) */}
-              <div className="md:hidden mt-6">
-                <div className="bg-white rounded-full p-2 shadow-md inline-block overflow-visible">
-                  <DonutGauge value={0.07 - demoAvg} max={0.07} size={120} stroke={14} display={demoAvg.toFixed(2)} label="Good" />
-                </div>
-              </div>
-            </div>
+             {/* small gauge for mobile only (don’t lead with a chart) */}
+<div className="md:hidden mt-6">
+  <div className="donut-wrap bg-white rounded-full p-2 shadow-md inline-block">
+    <DonutGauge
+      value={0.07 - demoAvg}
+      max={0.07}
+      size={120}
+      stroke={14}
+      display={demoAvg.toFixed(2)}
+      label="Good"
+    />
+  </div>
+</div>
+
 
             {/* big ring is desktop-only */}
             <HeroOrb value={demoAvg} />
