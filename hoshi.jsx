@@ -1560,7 +1560,7 @@ function PublicBPS({ goLineage = ()=>{}, goActions = ()=>{} }){
       {/* Footer / attestation strip */}
       <div className="px-6 pb-5 text-[12px] text-slate-500 flex items-center justify-between">
         <div>BPS v1.3 • commit abc123 • Published 10 Aug 2025</div>
-        <div>Signed by Hoshi • License: CC BY-SA</div>
+        <div>Signed by Hoshi • License: Aidan Parkinson</div>
       </div>
     </div>
   );
@@ -1605,7 +1605,7 @@ function Blog({ openPortfolio, openBuilding }) {
           Hoshi turns messy building data (bills, meters, comfort logs) into <b>decision-grade signals</b>:
           <b> NPV</b> (money), <b>β</b>/<b> sensitivity</b> (exposure to market-wide drivers),
           and a split between <b>systematic</b> and <b>idiosyncratic</b> risk. Real estate can’t just
-          “diversify away” idiosyncratic risk — buildings are few, large, and unique — so we measure and manage it.
+          “diversify away” idiosyncratic risk, buildings are few, large, and unique, so we measure and manage it.
         </p>
       </div>
 
@@ -1638,9 +1638,9 @@ function Blog({ openPortfolio, openBuilding }) {
       {/* Different vs others */}
       <h3 className="text-slate-50 text-lg font-semibold mt-6">What makes Hoshi different</h3>
       <ul className="list-disc pl-6 text-slate-300">
-        <li><b>Signals, not just scores:</b> NPV, β, systematic vs idiosyncratic — built for capital decisions.</li>
+        <li><b>Signals, not just scores:</b> NPV, β, systematic vs idiosyncratic; built for capital decisions.</li>
         <li><b>Alarm → Action → M&amp;V loop:</b> evidence-first governance with data lineage and acceptance criteria.</li>
-        <li><b>Earth-first framing:</b> align with a “commonwealth cost of carbon” lens rather than box-ticking.</li>
+        <li><b>Earth-first framing:</b> align with a “Commonwealth Cost of Carbon” lens rather than box-ticking.</li>
       </ul>
 
       {/* Walkthrough */}
@@ -1673,8 +1673,7 @@ function Blog({ openPortfolio, openBuilding }) {
       {/* Sources */}
       <div className="mt-6 rounded-xl p-3" style={{background:"rgba(148,163,184,.06)",border:"1px solid var(--stroke)"}}>
         <div className="text-slate-400 text-sm">
-          <b>Source notes:</b> Thesis (factor-aware framing, systematic vs idiosyncratic) and Digital Assurance / Ecosystem
-          (publicly addressable alarms, governance &amp; lineage).
+          <b>Source notes:</b> Ecosystem Alarm Management by Aidan Parkinson (https://github.com/aidan-parkinson/corporation-sole).
         </div>
       </div>
     </div>
