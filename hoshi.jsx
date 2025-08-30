@@ -1405,8 +1405,6 @@ const [actions, setActions] = React.useState(() => ACTIONS.map(enrich));
   );
 }
 
-
-function PublicBPS(){return(<div className="max-w-4xl mx-auto bg-white text-slate-900 rounded-2xl overflow-hidden shadow-2xl"><div className="bg-slate-900 text-white p-6"><div className="flex items-center justify-between"><h2 className="text-lg md:text-xl font-semibold">Building Performance Sheet</h2><span className="text-xs text-slate-300">Data coverage: 92% • Updated 10 Aug 2025</span></div><div className="text-slate-300 text-sm">1 King Street, London • Office • 12,800 m²</div></div><div className="p-6 grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4"><div className="rounded-xl bg-slate-100 p-4"><div className="text-xs text-slate-600">Energy</div><div className="text-xl font-semibold">142,000 kWh</div></div><div className="rounded-xl bg-slate-100 p-4"><div className="text-xs text-slate-600">Emissions</div><div className="text-xl font-semibold">36.2 tCO₂e</div></div><div className="rounded-xl bg-slate-100 p-4"><div className="text-xs text-slate-600">Spend</div><div className="text-xl font-semibold">£ 30,150</div></div><div className="rounded-xl bg-slate-100 p-4"><div className="text-xs text-slate-600">Intensity</div><div className="text-xl font-semibold">92 kWh/m²</div></div></div><div className="px-6 pb-6"><div className="rounded-xl border border-slate-200 p-4"><div className="flex items-center justify-between"><div className="text-sm font-medium">12-month trend (tCO₂e)</div><span className="inline-flex"><span className="px-2 py-0.5 rounded-full text-xs bg-slate-200 text-slate-700">Peer: Q2</span></span></div><div className="mt-2"><LineChart/></div></div></div></div>);}
 function PublicBPS({ goLineage = ()=>{}, goActions = ()=>{} }){
   // Demo signals (swap with real values later)
   const signals = {
@@ -1567,6 +1565,17 @@ function PublicBPS({ goLineage = ()=>{}, goActions = ()=>{} }){
     </div>
   );
 }
+const ICONS={
+  story:()=>(<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h10M4 17h7" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>),
+  onboarding:()=> (<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 6v12M6 12h12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>),
+  portfolio:()=>  (<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="2"/><path d="M7 8h10M7 12h10M7 16h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>),
+  building:()=>   (<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="6" y="3" width="12" height="18" rx="2" stroke="currentColor" strokeWidth="2"/><path d="M10 7h4M10 11h4M10 15h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>),
+  actions:()=>    (<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 12l3 3 9-9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>),
+  services:()=>   (<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 18h16M6 18V9M10 18V6M14 18v-4M18 18v-8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>),
+  lineage:()=>    (<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 18h16M4 6h16M8 6v12M16 6v12" stroke="currentColor" strokeWidth="2"/></svg>),
+  public:()=>     (<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 3a9 9 0 100 18 9 9 0 000-18z" stroke="currentColor" strokeWidth="2"/><path d="M3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18" stroke="currentColor" strokeWidth="2"/></svg>),
+};
+
 
 function App(){
   const [active,setActive]=useState("story");
