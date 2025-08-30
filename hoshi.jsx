@@ -1153,35 +1153,33 @@ function Building(){
 
                 {/* CTAs */}
                 <div className="mt-4 flex flex-wrap gap-3">
-                  <button className="btn btn-ghost"                  
-  onClick={()=>{
-    // "a" is the current action object in your .map(...)
-    const npvVal = typeof npv === "function"
-      ? npv(a.save, a.years, 0.08, a.capex)   // use your existing helper if present
-      : computeNPV(a.save, a.years, 0.08, a.capex);
-
+      <button
+  className="btn btn-ghost"
+  onClick={() => {
     goLineage({
       id: a.id,
       title: a.title,
       status: a.status,
-      alarm: { type:a.alarm, category:a.category, window:a.window, rule:a.rule },
+      alarm: { type: a.alarm, category: a.category, window: a.window, rule: a.rule },
       finance: {
-        capex:a.capex, save:a.save, years:a.years,
-        npv: npvVal, payback: (a.capex/a.save).toFixed(1),
-        beta:a.beta, confidence:a.confidence
+        capex: a.capex, save: a.save, years: a.years,
+        npv: theNpv,                           // <- reuse computed value
+        payback: (a.capex / a.save).toFixed(1),
+        beta: a.beta, confidence: a.confidence
       },
       impacts: {
-        indexDelta:a.indexDelta,
-        comfortDeltaPct:a.comfortDeltaPct,
-        co2Delta:a.co2Delta
+        indexDelta: a.indexDelta,
+        comfortDeltaPct: a.comfortDeltaPct,
+        co2Delta: a.co2Delta
       },
-      lineage: a.lineage,  // { baseline, method, factors:[...] }
-      plan: a.plan || null // if you store plan details, they’ll show on Lineage
+      lineage: a.lineage,
+      plan: a.plan || null
     });
   }}
 >
   View data lineage
 </button>
+
 
                   {a.status!=="Planned" ? (
                     <button className="btn btn-primary" onClick={()=>openPlan(a)}>Add to plan</button>
@@ -1392,24 +1390,25 @@ const ICONS={
 };
 
 function App(){
-  const tabs=[
-    {key:"story",label:"Story",comp:<Story goApp={()=>setActive("onboarding")}/>},
-    {key:"onboarding",label:"Onboarding",comp:<Onboarding/>},
-    {key:"portfolio",label:"Portfolio",comp:<Portfolio/>},
-    {key:"building",label:"Building",comp:<Building/>},
-//{key:"actions", label:"Actions", comp:<Actions/>},
-//{key:"lineage", label:"Lineage & Governance", comp:<Lineage/>},
-    {key:"actions", label:"Actions",
-  comp:<Actions goLineage={(payload)=>{ setLineageCtx(payload); setActive("lineage"); }}/>},
-
-{key:"lineage", label:"Lineage & Governance",
-  comp:<Lineage fromAction={lineageCtx} goActions={()=>setActive("actions")}/>},
-    {key:"services",label:"Services",comp:<Services/>},     // NEW
-    {key:"public",label:"Public BPS",comp:<PublicBPS/>},
-  ];
   const [active,setActive]=useState("story");
  const [open,setOpen]=useState(false);
 const [lineageCtx, setLineageCtx] = useState(null);
+  
+const tabs = [
+    { key: "story", label: "Story",      comp: <Story goApp={() => setActive("onboarding")} /> },
+    { key: "onboarding", label: "Onboarding", comp: <Onboarding /> },
+    { key: "portfolio",  label: "Portfolio",  comp: <Portfolio /> },
+    { key: "building",   label: "Building",   comp: <Building /> },
+
+    { key: "actions", label: "Actions",
+      comp: <Actions goLineage={(payload) => { setLineageCtx(payload); setActive("lineage"); }} /> },
+
+    { key: "lineage", label: "Lineage & Governance",
+      comp: <Lineage fromAction={lineageCtx} goActions={() => setActive("actions")} /> },
+
+    { key: "services", label: "Services", comp: <Services /> },
+    { key: "public",   label: "Public BPS", comp: <PublicBPS /> },
+  ];
 
   const NavItem=({t})=>{
     const is=active===t.key;
