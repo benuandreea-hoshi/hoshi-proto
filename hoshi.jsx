@@ -1,6 +1,36 @@
 const LOGO_SRC   = "https://cdn.prod.website-files.com/68a8baf20ad5978747d9d44d/68a8fe47145ebb756d01c372_hoshi.jpeg";
 const PEOPLE_SRC = "https://cdn.prod.website-files.com/68a8baf20ad5978747d9d44d/68a8fe75f8001bf82851cd0f_commonwealthOfPeoples.jpeg";
 const {useMemo,useState,useRef,useEffect} = React;
+// --- Demo actions shared by Actions() and PublicBPS() ---
+const ACTIONS = [
+  {
+    id: "led",
+    title: "LED retrofit",
+    alarm: "Overrun • Electricity",
+    status: "To review",
+    capex: 25000,
+    save: 8500,
+    npv: 19254,
+    pay: 2.9,
+    beta: 0.60,
+    confidence: 0.70,
+    deltaIndex: -0.03,
+  },
+  {
+    id: "hvac",
+    title: "HVAC schedule",
+    alarm: "Comfort risk • Overheating",
+    status: "Approved",
+    capex: 1000,
+    save: 4200,
+    npv: 9824,
+    pay: 0.2,
+    beta: 0.20,
+    confidence: 0.80,
+    deltaIndex: -0.02,
+  },
+];
+
 // --- responsive helper ---
 function useIsMobile(bp = 640) {
   const [m, setM] = React.useState(
@@ -976,56 +1006,56 @@ function Building(){
     return Math.round(pv - capex);
   };
 
-  // --- demo actions (extended with impact + alarm links)
-  const [actions, setActions] = React.useState([
-    {
-      id: 1,
-      title: "LED retrofit",
-      alarm: "Overrun",
-      category: "Electricity",
-      window: "Last 12m",
-      rule: ">10% vs budget",
-      capex: 25000,
-      save: 8500,
-      years: 7,
-      beta: 0.60,
-      confidence: 0.70,
-      // impacts (expected deltas)
-      indexDelta: -0.03,        // improves composite index (lower is better)
-      comfortDeltaPct: -28,     // reduces risk
-      co2Delta: -6.5,           // tCO2e/yr
-      status: "To review",
-      plan: null,               // filled when “Add to plan”
-      lineage: {
-        baseline:"FY24 bills",
-        method:"Top-down regression adj. for HDD/CDD",
-        factors:["lamp efficacy","hours-of-use","maintenance"],
-      },
-    },
-    {
-      id: 2,
-      title: "HVAC schedule",
-      alarm: "Comfort risk",
-      category: "Overheating hours",
-      window: "Summer",
-      rule: "> threshold",
-      capex: 1000,
-      save: 4200,
-      years: 3,
-      beta: 0.20,
-      confidence: 0.80,
-      indexDelta: -0.02,
-      comfortDeltaPct: -18,
-      co2Delta: -2.3,
-      status: "Approved",
-      plan: null,
-      lineage: {
-        baseline:"FY24 logger data",
-        method:"Schedule optimisation (BMS)",
-        factors:["occupied hours","supply temp","night purge"],
-      },
-    },
-  ]);
+ // --- lineage defaults for demo ids (led/hvac)
+const DEFAULT_LINEAGE = {
+  led: {
+    baseline: "FY24 bills",
+    method: "Top-down regression adj. for HDD/CDD",
+    factors: ["lamp efficacy", "hours-of-use", "maintenance"],
+  },
+  hvac: {
+    baseline: "FY24 logger data",
+    method: "Schedule optimisation (BMS)",
+    factors: ["occupied hours", "supply temp", "night purge"],
+  }
+};
+
+// Turn a compact ACTION row into the richer shape your UI expects
+const enrich = (a) => {
+  const [alarmType, alarmCat] = (a.alarm || "").split("•").map(s => s && s.trim());
+  const isOverrun = (alarmType || "").toLowerCase().includes("overrun");
+
+  return {
+    id: a.id,
+    title: a.title,
+
+    // chips
+    alarm: alarmType || a.alarm || "Alarm",
+    category: alarmCat || (a.id === "led" ? "Electricity" : "Overheating hours"),
+    window: a.window || (a.id === "hvac" ? "Summer" : "Last 12m"),
+    rule: a.rule || (isOverrun ? ">10% vs budget" : "> threshold"),
+
+    // finance
+    capex: a.capex,
+    save: a.save,
+    years: a.years ?? (a.pay ? Math.max(1, Math.round(a.pay)) : 7),
+    beta: a.beta,
+    confidence: a.confidence, // 0..1
+
+    // impacts
+    indexDelta: a.deltaIndex,                          // “Δ service index”
+    comfortDeltaPct: a.comfortDeltaPct ?? (a.id==="hvac" ? -18 : -28),
+    co2Delta: a.co2Delta ?? (a.id==="led" ? -6.5 : -2.3),
+
+    // admin
+    status: a.status || "To review",
+    plan: null,
+    lineage: a.lineage || DEFAULT_LINEAGE[a.id] || { baseline: "FY data", method: "Modelled", factors: [] },
+  };
+};
+
+// *** this replaces your previous useState([...]) ***
+const [actions, setActions] = React.useState(() => ACTIONS.map(enrich));
 
   // --- derived: planned roll-ups for a quick bar at the top
   const planned = actions.filter(a => a.status === "Planned");
@@ -1377,17 +1407,166 @@ function Building(){
 
 
 function PublicBPS(){return(<div className="max-w-4xl mx-auto bg-white text-slate-900 rounded-2xl overflow-hidden shadow-2xl"><div className="bg-slate-900 text-white p-6"><div className="flex items-center justify-between"><h2 className="text-lg md:text-xl font-semibold">Building Performance Sheet</h2><span className="text-xs text-slate-300">Data coverage: 92% • Updated 10 Aug 2025</span></div><div className="text-slate-300 text-sm">1 King Street, London • Office • 12,800 m²</div></div><div className="p-6 grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4"><div className="rounded-xl bg-slate-100 p-4"><div className="text-xs text-slate-600">Energy</div><div className="text-xl font-semibold">142,000 kWh</div></div><div className="rounded-xl bg-slate-100 p-4"><div className="text-xs text-slate-600">Emissions</div><div className="text-xl font-semibold">36.2 tCO₂e</div></div><div className="rounded-xl bg-slate-100 p-4"><div className="text-xs text-slate-600">Spend</div><div className="text-xl font-semibold">£ 30,150</div></div><div className="rounded-xl bg-slate-100 p-4"><div className="text-xs text-slate-600">Intensity</div><div className="text-xl font-semibold">92 kWh/m²</div></div></div><div className="px-6 pb-6"><div className="rounded-xl border border-slate-200 p-4"><div className="flex items-center justify-between"><div className="text-sm font-medium">12-month trend (tCO₂e)</div><span className="inline-flex"><span className="px-2 py-0.5 rounded-full text-xs bg-slate-200 text-slate-700">Peer: Q2</span></span></div><div className="mt-2"><LineChart/></div></div></div></div>);}
+function PublicBPS({ goLineage = ()=>{}, goActions = ()=>{} }){
+  // Demo signals (swap with real values later)
+  const signals = {
+    beta: 0.55,         // systematic sensitivity (β)
+    idio: 1.8,          // idiosyncratic premium, %
+    total: 2.6,         // total Forward Energy Premium, %
+  };
 
-const ICONS={
-  story:()=>(<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h10M4 17h7" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>),
-  onboarding:()=> (<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 6v12M6 12h12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>),
-  portfolio:()=>  (<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="2"/><path d="M7 8h10M7 12h10M7 16h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>),
-  building:()=>   (<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="6" y="3" width="12" height="18" rx="2" stroke="currentColor" strokeWidth="2"/><path d="M10 7h4M10 11h4M10 15h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>),
-  actions:()=>    (<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 12l3 3 9-9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>),
-  services:()=>   (<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 18h16M6 18V9M10 18V6M14 18v-4M18 18v-8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>),
-  lineage:()=>    (<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 18h16M4 6h16M8 6v12M16 6v12" stroke="currentColor" strokeWidth="2"/></svg>),
-  public:()=>     (<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 3a9 9 0 100 18 9 9 0 000-18z" stroke="currentColor" strokeWidth="2"/><path d="M3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18" stroke="currentColor" strokeWidth="2"/></svg>),
-};
+  const topActions = ACTIONS.slice(0,2);
+
+  const fmtGBP = n => "£ " + n.toLocaleString();
+  const fmtPct = n => (n>=0?"+":"") + n.toFixed(1) + "%";
+
+  const MiniStackBar = ({sys,idio})=>{
+    const total = Math.max(0.0001, Math.abs(sys) + Math.abs(idio));
+    const sysPct = Math.round(Math.abs(sys)/total*100);
+    const idioPct = 100 - sysPct;
+    return (
+      <div className="h-2 w-full rounded-full bg-slate-200 overflow-hidden">
+        <div className="h-full inline-block" style={{width:`${sysPct}%`, background:"#38bdf8"}}/>
+        <div className="h-full inline-block" style={{width:`${idioPct}%`, background:"#34d399"}}/>
+      </div>
+    );
+  };
+
+  const Chip = ({children,onClick})=>(
+    <button onClick={onClick}
+      className="px-2.5 py-1 rounded-full text-xs bg-slate-200/70 text-slate-700 hover:bg-slate-200 transition">
+      {children}
+    </button>
+  );
+
+  return (
+    <div className="max-w-4xl mx-auto bg-white text-slate-900 rounded-2xl overflow-hidden shadow-2xl">
+      {/* Header */}
+      <div className="bg-slate-900 text-white p-6">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-lg md:text-xl font-semibold">Building Performance Sheet</h2>
+          <div className="hidden sm:flex items-center gap-2">
+            <Chip>Coverage 92%</Chip>
+            <Chip>Sources 2</Chip>
+            <Chip>Methods: bills+meter</Chip>
+            <Chip>Updated 10 Aug 2025</Chip>
+            <Chip onClick={goLineage}>View lineage →</Chip>
+          </div>
+        </div>
+        <div className="text-slate-300 text-sm">1 King Street, London • Office • 12,800 m²</div>
+
+        {/* Mobile chips */}
+        <div className="sm:hidden flex flex-wrap gap-2 mt-3">
+          <Chip>Coverage 92%</Chip>
+          <Chip>Sources 2</Chip>
+          <Chip onClick={goLineage}>Lineage →</Chip>
+        </div>
+      </div>
+
+      {/* Top KPI tiles */}
+      <div className="p-6 grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+        <div className="rounded-xl bg-slate-100 p-4">
+          <div className="text-xs text-slate-600">Energy</div>
+          <div className="text-xl font-semibold">142,000 kWh</div>
+        </div>
+        <div className="rounded-xl bg-slate-100 p-4">
+          <div className="text-xs text-slate-600">Emissions</div>
+          <div className="text-xl font-semibold">36.2 tCO₂e</div>
+        </div>
+        <div className="rounded-xl bg-slate-100 p-4">
+          <div className="text-xs text-slate-600">Spend</div>
+          <div className="text-xl font-semibold">£ 30,150</div>
+        </div>
+        <div className="rounded-xl bg-slate-100 p-4">
+          <div className="text-xs text-slate-600">Intensity</div>
+          <div className="text-xl font-semibold">92 kWh/m²</div>
+        </div>
+      </div>
+
+      {/* Financial signals (β / idio / total FEP) */}
+      <div className="px-6">
+        <div className="rounded-xl border border-slate-200 p-4">
+          <div className="flex items-center justify-between">
+            <div className="text-sm font-medium">Financial signals (Forward ROI)</div>
+            <span className="text-xs text-slate-500">β + Idiosyncratic → FEP</span>
+          </div>
+
+          <div className="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="rounded-lg bg-slate-50 p-3">
+              <div className="text-xs text-slate-600">β (systematic sensitivity)</div>
+              <div className="text-lg font-semibold">{signals.beta.toFixed(2)}</div>
+              <div className="text-[12px] text-slate-500 mt-1">Higher → more exposed to prices/policy/climate</div>
+            </div>
+
+            <div className="rounded-lg bg-slate-50 p-3">
+              <div className="text-xs text-slate-600">Idiosyncratic premium</div>
+              <div className="text-lg font-semibold">{fmtPct(signals.idio)}</div>
+              <div className="text-[12px] text-slate-500 mt-1">Asset-specific performance & variance</div>
+            </div>
+
+            <div className="rounded-lg bg-slate-50 p-3">
+              <div className="text-xs text-slate-600">Total FEP</div>
+              <div className="text-lg font-semibold">{fmtPct(signals.total)}</div>
+              <div className="mt-2"><MiniStackBar sys={signals.total - signals.idio} idio={signals.idio} /></div>
+              <div className="text-[12px] text-slate-500 mt-1">Stack shows systematic vs idiosyncratic share</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 12-month trend */}
+      <div className="px-6 pb-6">
+        <div className="rounded-xl border border-slate-200 p-4">
+          <div className="flex items-center justify-between">
+            <div className="text-sm font-medium">12-month trend (tCO₂e)</div>
+            <span className="inline-flex">
+              <span className="px-2 py-0.5 rounded-full text-xs bg-slate-200 text-slate-700">Peer: Q2</span>
+            </span>
+          </div>
+          <div className="mt-2"><LineChart/></div>
+        </div>
+      </div>
+
+      {/* Actions summary */}
+      <div className="px-6 pb-6">
+        <div className="rounded-xl border border-slate-200 p-4">
+          <div className="flex items-center justify-between">
+            <div className="text-sm font-medium">Actions in plan</div>
+            <button onClick={goActions}
+              className="text-sm px-3 py-1.5 rounded-lg bg-slate-900 text-white hover:opacity-90">
+              View plan →
+            </button>
+          </div>
+
+          <ul className="mt-3 divide-y divide-slate-200">
+            {topActions.map(a=>(
+              <li key={a.id} className="py-2 flex items-start justify-between gap-3">
+                <div>
+                  <div className="font-medium">{a.title}</div>
+                  <div className="text-xs text-slate-500">{a.alarm} • {a.status}</div>
+                </div>
+                <div className="text-right text-sm text-slate-700">
+                  <div>NPV {fmtGBP(a.npv)}</div>
+                  <div className="text-xs text-slate-500">Payback {a.pay}y • β {a.beta.toFixed(2)} • conf. {Math.round(a.confidence*100)}%</div>
+                </div>
+              </li>
+            ))}
+          </ul>
+
+          <div className="text-[12px] text-slate-500 mt-3">
+            Each action originates from a monitored alarm and carries a finance view (NPV, payback) plus expected impact on service index and comfort risk.
+          </div>
+        </div>
+      </div>
+
+      {/* Footer / attestation strip */}
+      <div className="px-6 pb-5 text-[12px] text-slate-500 flex items-center justify-between">
+        <div>BPS v1.3 • commit abc123 • Published 10 Aug 2025</div>
+        <div>Signed by Hoshi • License: CC BY-SA</div>
+      </div>
+    </div>
+  );
+}
 
 function App(){
   const [active,setActive]=useState("story");
@@ -1407,7 +1586,7 @@ const tabs = [
       comp: <Lineage fromAction={lineageCtx} goActions={() => setActive("actions")} /> },
 
     { key: "services", label: "Services", comp: <Services /> },
-    { key: "public",   label: "Public BPS", comp: <PublicBPS /> },
+  {key:"public",label:"Public BPS",comp:<PublicBPS goLineage={()=>setActive("lineage")} goActions={()=>setActive("actions")} />},
   ];
 
   const NavItem=({t})=>{
