@@ -968,165 +968,254 @@ function Building(){
     </div>
   );
 }
-function Actions(){
-  // Helper: sum of (estimated) index deltas for display (×10 like elsewhere)
-  const indexDeltaX10 = (a) =>
-    (Object.values((a.links?.index)||{}).reduce((s,v)=>s+v,0) * 10); // negative is better
-
-  // Demo actions wired to overrun categories + index drivers
-  const actions = [
+  // REPLACE the whole Actions() with this version
+function Actions({ openLineage }) {
+  // Example actions wired to alarms and value math
+  const items = [
     {
-      id:1,
-      m:"LED retrofit",
-      capex:25000, save:8500, pay:1.8, status:"To review", confidence:.75,
-      links:{ overrun:["Electricity","Mechanical & Electrical"], index:{ electricity:-0.0030 } },
-      note:"Replace fluorescent with LED + controls (sensors/schedules)."
+      id: "fep-led-2025Q3",
+      m: "LED retrofit",
+      trigger: { kind: "Overrun", metric: "Electricity", period: "Last 12m", detail: ">10% vs budget" },
+      capex: 25000,
+      save: 8500,
+      rate: 0.08,
+      yrs: 7,
+      beta: 0.6,
+      confidence: 0.70,
+      impact: { index: -0.03, comfort: -0.28, emissions: -6.5 }, // index (×10), comfort risk (Δ%), emissions (tCO₂e/yr)
+      status: "To review",
     },
     {
-      id:2,
-      m:"HVAC schedule",
-      capex:1000, save:4200, pay:0.4, status:"Approved", confidence:.85,
-      links:{ overrun:["Gas","HVAC"], index:{ hvac:-0.0015 } },
-      note:"Tighten occupied/unoccupied times; enable demand-based ventilation."
+      id: "ops-hvac-2025Q3",
+      m: "HVAC schedule",
+      trigger: { kind: "Comfort risk", metric: "Overheating hours", period: "Summer", detail: "> threshold" },
+      capex: 1000,
+      save: 4200,
+      rate: 0.08,
+      yrs: 3,
+      beta: 0.2,
+      confidence: 0.80,
+      impact: { index: -0.02, comfort: -0.18, emissions: -2.3 },
+      status: "Approved",
     },
   ];
 
-  const totalAnnualSave = actions.reduce((s,a)=>s+a.save,0);
+  const money = n => `£${Math.round(n).toLocaleString()}`;
+  const percent = f => `${Math.round(f * 100)}%`;
+  const signed = (n, d = 0, unit = "") => `${n > 0 ? "+" : ""}${n.toFixed(d)}${unit}`;
+  const annuityPV = (r, n) => (1 - Math.pow(1 + r, -n)) / r;
+  const npv = (capex, save, r, n) => -capex + save * annuityPV(r, n);
 
-  const [sortBy, setSortBy] = React.useState("roi"); // 'roi' | 'impact' | 'capex'
-  const sorted = [...actions].sort((a,b)=>{
-    const roiA = a.save/Math.max(1,a.capex), roiB = b.save/Math.max(1,b.capex);
-    if (sortBy==="roi")     return roiB - roiA;
-    if (sortBy==="impact")  return indexDeltaX10(a) - indexDeltaX10(b); // more negative first
-    if (sortBy==="capex")   return a.capex - b.capex;
-    return 0;
-  });
+  const Badge = ({ tone = "neutral", children }) => {
+    const map = {
+      info: "bg-blue-500/15 text-blue-300 ring-1 ring-inset ring-blue-400/30",
+      success: "bg-emerald-500/15 text-emerald-300 ring-1 ring-inset ring-emerald-400/30",
+      warn: "bg-amber-500/15 text-amber-300 ring-1 ring-inset ring-amber-400/30",
+      danger: "bg-rose-500/15 text-rose-300 ring-1 ring-inset ring-rose-400/30",
+      neutral: "bg-slate-500/15 text-slate-300 ring-1 ring-inset ring-slate-400/30",
+    };
+    return <span className={"px-2 py-0.5 rounded-full text-xs " + map[tone]}>{children}</span>;
+  };
 
-  // little pill
-  const Chip = ({children}) => (
-    <span className="chip whitespace-nowrap">{children}</span>
+  return (
+    <div className="grid gap-4 md:gap-6">
+      <Section
+        title="Actions"
+        desc="Each action originates from a monitored alarm and carries a finance view (NPV, payback) plus expected performance impact."
+      >
+        <ul className="space-y-2">
+          {items.map((x) => {
+            const pay = x.save ? x.capex / x.save : null;
+            const nv = npv(x.capex, x.save, x.rate ?? 0.08, x.yrs ?? 5);
+            return (
+              <li key={x.id} className="rounded-xl p-3 md:p-4" style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}>
+                {/* Header */}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="text-slate-100 font-medium">{x.m}</div>
+                  <Badge tone={x.status === "Approved" ? "success" : x.status === "To review" ? "info" : "neutral"}>{x.status}</Badge>
+                </div>
+
+                {/* Why this (alarm) */}
+                <div className="mt-2 text-xs text-slate-300 flex flex-wrap items-center gap-2">
+                  <span className="px-2 py-0.5 rounded-full bg-slate-500/15 ring-1 ring-inset ring-slate-400/30">
+                    Alarm: {x.trigger.kind}
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full bg-slate-500/15 ring-1 ring-inset ring-slate-400/30">
+                    {x.trigger.metric}
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full bg-slate-500/15 ring-1 ring-inset ring-slate-400/30">
+                    {x.trigger.period}
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full bg-slate-500/15 ring-1 ring-inset ring-slate-400/30">
+                    {x.trigger.detail}
+                  </span>
+                </div>
+
+                {/* Business case */}
+                <div className="mt-3 grid grid-cols-2 md:grid-cols-6 gap-2 text-sm">
+                  <div className="rounded-lg p-2" style={{ background: "rgba(148,163,184,.06)", border: "1px solid rgba(148,163,184,.18)" }}>
+                    <div className="text-xs text-slate-400">CapEx</div>
+                    <div className="text-slate-100 font-medium">{money(x.capex)}</div>
+                  </div>
+                  <div className="rounded-lg p-2" style={{ background: "rgba(148,163,184,.06)", border: "1px solid rgba(148,163,184,.18)" }}>
+                    <div className="text-xs text-slate-400">Annual savings</div>
+                    <div className="text-slate-100 font-medium">{money(x.save)}</div>
+                  </div>
+                  <div className="rounded-lg p-2" style={{ background: "rgba(148,163,184,.06)", border: "1px solid rgba(148,163,184,.18)" }}>
+                    <div className="text-xs text-slate-400">NPV @ {Math.round((x.rate ?? 0.08) * 100)}% / {x.yrs}y</div>
+                    <div className={"font-medium " + (nv >= 0 ? "text-emerald-300" : "text-rose-300")}>{money(nv)}</div>
+                  </div>
+                  <div className="rounded-lg p-2" style={{ background: "rgba(148,163,184,.06)", border: "1px solid rgba(148,163,184,.18)" }}>
+                    <div className="text-xs text-slate-400">Simple payback</div>
+                    <div className="text-slate-100 font-medium">{pay ? pay.toFixed(1) + "y" : "–"}</div>
+                  </div>
+                  <div className="rounded-lg p-2" style={{ background: "rgba(148,163,184,.06)", border: "1px solid rgba(148,163,184,.18)" }}>
+                    <div className="text-xs text-slate-400">β / sensitivity</div>
+                    <div className="text-slate-100 font-medium">{x.beta.toFixed(2)}</div>
+                  </div>
+                  <div className="rounded-lg p-2" style={{ background: "rgba(148,163,184,.06)", border: "1px solid rgba(148,163,184,.18)" }}>
+                    <div className="text-xs text-slate-400">Confidence</div>
+                    <div className="text-slate-100 font-medium">{percent(x.confidence)}</div>
+                  </div>
+                </div>
+
+                {/* Expected impact */}
+                <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+                  <Badge tone="success">Δ service index {signed(x.impact.index, 2)}</Badge>
+                  <Badge tone="success">Δ comfort risk {signed(x.impact.comfort * 100, 0, "%")}</Badge>
+                  <Badge tone="success">Δ emissions {signed(x.impact.emissions, 1, " tCO₂e/yr")}</Badge>
+                </div>
+
+                {/* Links */}
+                <div className="mt-3 flex items-center gap-2">
+                  <button
+                    className="btn btn-ghost"
+                    onClick={() => {
+                      // pass focus to the Lineage tab
+                      window.hoshiLineageId = x.id;
+                      if (typeof openLineage === "function") openLineage();
+                    }}
+                  >
+                    View data lineage
+                  </button>
+                  <button className="btn btn-primary">Add to plan</button>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </Section>
+    </div>
   );
+}
 
-  // little metric inline
-  const Pill = ({k,v,sub})=>(
-    <div className="px-2 py-1 rounded-lg"
-         style={{background:"rgba(148,163,184,.10)",border:"1px solid var(--stroke)"}}>
-      <span className="text-slate-300 text-[11px]">{k}</span>
-      <span className="ml-1 text-slate-100 font-medium">{v}</span>
-      {sub && <span className="ml-1 text-slate-400 text-[11px]">{sub}</span>}
+// REPLACE the whole Lineage() with this version
+function Lineage() {
+  const catalog = {
+    "fep-led-2025Q3": {
+      title: "LED retrofit",
+      inputs: [
+        "Supplier invoices (OCR v1.4)",
+        "Meter reads (AMR–E01)",
+        "Space area: 12,800 m² (Portfolio master v0.9)",
+      ],
+      factors: [
+        "Grid emissions factor: 0.18 kgCO₂e/kWh (BEIS 2024, v24.2)",
+        "Discount rate r = 8% (portfolio WACC proxy)",
+      ],
+      formulas: [
+        "Annual savings = baseline kWh × (retrofit saving rate)",
+        "NPV = -CapEx + Σ (Savings_t / (1+r)^t)",
+        "Service index = Σ w_i·m_i  (internal composite)",
+      ],
+      versions: [
+        "Extraction: 2025-08-01 • model v0.3",
+        "Composite index weights: preset Balanced v0.2",
+      ],
+    },
+    "ops-hvac-2025Q3": {
+      title: "HVAC schedule",
+      inputs: [
+        "BMS logs (weekdays 7–19h, weekends 9–16h)",
+        "Indoor T sensors (QA flagged: 2/38 missing)",
+      ],
+      factors: [
+        "Comfort threshold: 27°C (ASHRAE-adaptive band)",
+        "Tariff: TOU blended (supplier file 2025-Q2)",
+      ],
+      formulas: [
+        "Overheating hours = Σ max(0, T_indoor − T_thresh) over period",
+        "Expected savings = Δ runtime × kW × tariff",
+      ],
+      versions: [
+        "Schedule policy template v1.1",
+        "Comfort method v0.9 (adaptive)",
+      ],
+    },
+  };
+
+  const [focus, setFocus] = React.useState(window.hoshiLineageId || Object.keys(catalog)[0]);
+
+  React.useEffect(() => {
+    const onHash = () => {
+      if (window.hoshiLineageId) setFocus(window.hoshiLineageId);
+    };
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
+
+  const entry = catalog[focus];
+
+  const Card = ({ title, children }) => (
+    <div className="rounded-xl p-3" style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}>
+      <div className="text-slate-300 text-sm">{title}</div>
+      <div className="mt-2 text-slate-100 text-sm">{children}</div>
     </div>
   );
 
   return (
     <div className="grid gap-4 md:gap-6">
       <Section
-        title="Actions"
-        desc="Concrete measures to cut spend and improve the Service Performance index. Each action shows money impact (CapEx, savings, payback) and the estimated index change. Overrun links show which budget lines this action addresses."
+        title="Data lineage"
+        desc="Inputs, factors, formulas, and model versions behind actions and metrics."
         right={
-          <div className="hidden md:flex items-center gap-2">
-            <span className="text-slate-300 text-xs">Sort</span>
-            <select
-              className="px-2 py-1 rounded-lg text-sm"
-              style={{background:"var(--panel-2)",border:"1px solid var(--stroke)",color:"var(--text)"}}
-              value={sortBy}
-              onChange={e=>setSortBy(e.target.value)}
-            >
-              <option value="roi">Best ROI</option>
-              <option value="impact">Biggest Index impact</option>
-              <option value="capex">Lowest CapEx</option>
-            </select>
-          </div>
+          <select
+            className="px-2 py-1 rounded-lg text-sm"
+            style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)", color: "var(--text)" }}
+            value={focus}
+            onChange={(e) => setFocus(e.target.value)}
+          >
+            {Object.entries(catalog).map(([id, e]) => (
+              <option key={id} value={id}>
+                {e.title}
+              </option>
+            ))}
+          </select>
         }
       >
-        {/* roll-up */}
-        <div className="mb-3 flex flex-wrap items-center gap-2">
-          <Pill k="Annual savings (est.)" v={`£${totalAnnualSave.toLocaleString()}`} />
-          <Pill k="Actions" v={actions.length} />
-          <Pill k="Sort" v={
-            sortBy==="roi"?"Best ROI":sortBy==="impact"?"Biggest Index impact":"Lowest CapEx"
-          } />
-        </div>
-
-        {/* list */}
-        <ul className="space-y-2">
-          {sorted.map(a=>{
-            const idx = indexDeltaX10(a); // e.g. −0.03 (×10 display)
-            const idxText = (idx>=0?`+${idx.toFixed(2)}`:idx.toFixed(2));
-            const statusTone = a.status==="Approved" ? "success"
-                              : a.status==="To review" ? "info" : "neutral";
-            return (
-              <li key={a.id} className="rounded-xl p-3 md:p-4"
-                  style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="text-slate-100 font-medium">{a.m}</div>
-                    <div className="text-xs text-slate-400 mt-0.5">{a.note}</div>
-                  </div>
-                  <span className="hidden md:inline-flex">
-                    <Badge tone={statusTone}>{a.status}</Badge>
-                  </span>
-                </div>
-
-                {/* impact row */}
-                <div className="mt-2 flex flex-wrap items-center gap-2">
-                  <Pill k="CapEx"   v={`£${a.capex.toLocaleString()}`} />
-                  <Pill k="Saves"   v={`£${a.save.toLocaleString()}/y`} />
-                  <Pill k="Payback" v={`${a.pay}y`} />
-                  <Pill k="Index Δ" v={idxText} sub="(×10)" />
-                  <Pill k="Confidence" v={`${Math.round(a.confidence*100)}%`} />
-                </div>
-
-                {/* links */}
-                <div className="mt-2 flex flex-wrap items-center gap-2">
-                  <span className="text-xs text-slate-400">Links:</span>
-                  <Chip>Overruns: {a.links?.overrun?.join(", ")||"—"}</Chip>
-                  {a.links?.index && (
-                    <Chip>
-                      Index drivers:&nbsp;
-                      {Object.keys(a.links.index).map((k,i)=>(
-                        <span key={k}>
-                          {k}{i<Object.keys(a.links.index).length-1?", ":""}
-                        </span>
-                      ))}
-                    </Chip>
-                  )}
-                </div>
-
-                {/* mobile status */}
-                <div className="mt-2 md:hidden">
-                  <Badge tone={statusTone}>{a.status}</Badge>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-
-        {/* how this ties in */}
-        <div className="mt-4 rounded-xl p-3 text-sm"
-             style={{background:"rgba(148,163,184,.06)",border:"1px solid var(--stroke)"}}>
-          <div className="text-slate-100 font-medium mb-1">How Actions connect</div>
-          <ul className="text-slate-300 list-disc pl-5 space-y-1">
-            <li><b>Overruns</b>: the “Overruns” tags match the budget lines in <em>Building</em>. Pick actions that reduce those first.</li>
-            <li><b>Service index</b>: “Index Δ” shows the estimated change to the composite index (×10 scale) like in <em>Services</em>.</li>
-            <li>Prioritise by ROI, then by Index impact if two actions have similar payback.</li>
-          </ul>
-        </div>
+        {entry ? (
+          <div className="grid md:grid-cols-2 gap-3 md:gap-4">
+            <Card title="Inputs">
+              <ul className="list-disc pl-5 space-y-1">{entry.inputs.map((x, i) => <li key={i}>{x}</li>)}</ul>
+            </Card>
+            <Card title="Factors / assumptions">
+              <ul className="list-disc pl-5 space-y-1">{entry.factors.map((x, i) => <li key={i}>{x}</li>)}</ul>
+            </Card>
+            <Card title="Formulas">
+              <ul className="list-disc pl-5 space-y-1">{entry.formulas.map((x, i) => <li key={i}>{x}</li>)}</ul>
+            </Card>
+            <Card title="Versions / provenance">
+              <ul className="list-disc pl-5 space-y-1">{entry.versions.map((x, i) => <li key={i}>{x}</li>)}</ul>
+            </Card>
+          </div>
+        ) : (
+          <div className="text-slate-300">Select an item to view lineage.</div>
+        )}
       </Section>
     </div>
   );
 }
 
-   
-
-function Lineage(){
-  return (
-    <div className="grid gap-4 md:gap-6">
-      <Section title="Data lineage — demo" desc="Inputs, factors, formulas, versions.">
-        <p className="text-slate-300 text-sm">Placeholder content.</p>
-      </Section>
-    </div>
-  );
-}
 
 function PublicBPS(){return(<div className="max-w-4xl mx-auto bg-white text-slate-900 rounded-2xl overflow-hidden shadow-2xl"><div className="bg-slate-900 text-white p-6"><div className="flex items-center justify-between"><h2 className="text-lg md:text-xl font-semibold">Building Performance Sheet</h2><span className="text-xs text-slate-300">Data coverage: 92% • Updated 10 Aug 2025</span></div><div className="text-slate-300 text-sm">1 King Street, London • Office • 12,800 m²</div></div><div className="p-6 grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4"><div className="rounded-xl bg-slate-100 p-4"><div className="text-xs text-slate-600">Energy</div><div className="text-xl font-semibold">142,000 kWh</div></div><div className="rounded-xl bg-slate-100 p-4"><div className="text-xs text-slate-600">Emissions</div><div className="text-xl font-semibold">36.2 tCO₂e</div></div><div className="rounded-xl bg-slate-100 p-4"><div className="text-xs text-slate-600">Spend</div><div className="text-xl font-semibold">£ 30,150</div></div><div className="rounded-xl bg-slate-100 p-4"><div className="text-xs text-slate-600">Intensity</div><div className="text-xl font-semibold">92 kWh/m²</div></div></div><div className="px-6 pb-6"><div className="rounded-xl border border-slate-200 p-4"><div className="flex items-center justify-between"><div className="text-sm font-medium">12-month trend (tCO₂e)</div><span className="inline-flex"><span className="px-2 py-0.5 rounded-full text-xs bg-slate-200 text-slate-700">Peer: Q2</span></span></div><div className="mt-2"><LineChart/></div></div></div></div>);}
 
@@ -1147,7 +1236,7 @@ function App(){
     {key:"onboarding",label:"Onboarding",comp:<Onboarding/>},
     {key:"portfolio",label:"Portfolio",comp:<Portfolio/>},
     {key:"building",label:"Building",comp:<Building/>},
-    {key:"actions",label:"Actions",comp:<Actions/>},
+ { key: "actions", label: "Actions", comp: <Actions openLineage={() => setActive("lineage")} /> },
     {key:"services",label:"Services",comp:<Services/>},     // NEW
     {key:"lineage",label:"Lineage & Governance",comp:<Lineage/>},
     {key:"public",label:"Public BPS",comp:<PublicBPS/>},
