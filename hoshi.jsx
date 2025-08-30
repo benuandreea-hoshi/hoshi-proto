@@ -265,20 +265,6 @@ function Story({ goApp }) {
         <button onClick={goApp} className="btn btn-primary">Launch prototype</button>
         <a href="#how" className="btn btn-ghost">See how it works</a>
       </div>
-
-      {/* small gauge for mobile only (keep if you want the quick read) */}
-      <div className="md:hidden mt-6">
-        <div className="donut-wrap bg-white rounded-full p-2 shadow-md inline-block">
-          <DonutGauge
-            value={0.07 - 0.42}
-            max={0.07}
-            size={120}
-            stroke={14}
-            display={(0.42).toFixed(2)}
-            label="Good"
-          />
-        </div>
-      </div>
     </div>
   </div>
 </Band>
