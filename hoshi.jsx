@@ -358,8 +358,7 @@ function Story({ goApp }) {
     <div className="mt-2"><LineChart points={roiSpark} /></div>
   </div>
 </div>
-
-
+</div>
             {/* Scenario Studio */}
             <div className="card p-4 md:p-6 relative overflow-hidden">
               <div className="absolute -bottom-24 -left-24 w-[320px] h-[320px] rounded-full blur-3xl"
