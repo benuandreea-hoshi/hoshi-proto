@@ -1605,7 +1605,7 @@ function Blog({ openPortfolio, openBuilding }) {
           Hoshi turns messy building data (bills, meters, comfort logs) into <b>decision-grade signals</b>:
           <b> NPV</b> (money), <b>β</b>/<b> sensitivity</b> (exposure to market-wide drivers),
           and a split between <b>systematic</b> and <b>idiosyncratic</b> risk. Real estate can’t just
-          “diversify away” idiosyncratic risk — buildings are few, large, and unique — so we measure and manage it.
+          “diversify away” idiosyncratic risk; buildings are few, large, and unique, so we measure and manage it.
         </p>
       </div>
 
@@ -1638,7 +1638,7 @@ function Blog({ openPortfolio, openBuilding }) {
       {/* Different vs others */}
       <h3 className="text-slate-50 text-lg font-semibold mt-6">What makes Hoshi different</h3>
       <ul className="list-disc pl-6 text-slate-300">
-        <li><b>Signals, not just scores:</b> NPV, β, systematic vs idiosyncratic — built for capital decisions.</li>
+        <li><b>Signals, not just scores:</b> NPV, β, systematic vs idiosyncratic; built for capital decisions.</li>
         <li><b>Alarm → Action → M&amp;V loop:</b> evidence-first governance with data lineage and acceptance criteria.</li>
         <li><b>Earth-first framing:</b> align with a “commonwealth cost of carbon” lens rather than box-ticking.</li>
       </ul>
@@ -1673,8 +1673,7 @@ function Blog({ openPortfolio, openBuilding }) {
       {/* Sources */}
       <div className="mt-6 rounded-xl p-3" style={{background:"rgba(148,163,184,.06)",border:"1px solid var(--stroke)"}}>
         <div className="text-slate-400 text-sm">
-          <b>Source notes:</b> Thesis (factor-aware framing, systematic vs idiosyncratic) and Digital Assurance / Ecosystem
-          (publicly addressable alarms, governance &amp; lineage).
+          <b>Source notes:</b> Ecosystem Alarm Management by Aidan T Parkinson.
         </div>
       </div>
     </div>
@@ -1683,7 +1682,7 @@ function Blog({ openPortfolio, openBuilding }) {
   // layout
   return (
     <div className="grid gap-4 md:gap-6">
-      <Section title="Blog" desc="Plain-English explainers that connect Hoshi’s UI to finance, risk, and governance.">
+      <Section title="Blog" desc="What is Hoshi?">
         {/* List (left) + CTA rail (right on desktop) */}
         <div className="grid md:grid-cols-[1fr_280px] gap-4">
           {/* Article + switcher */}
@@ -1719,22 +1718,7 @@ function Blog({ openPortfolio, openBuilding }) {
                 <button className="btn btn-ghost" onClick={openBuilding}>Open Building</button>
               </div>
             </div>
-          </div>
-
-          {/* CTA rail (moves below on mobile) */}
-          <aside className="md:sticky md:top-4 h-max rounded-2xl p-4"
-                 style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
-            <div className="text-slate-100 font-medium">Try it in Hoshi</div>
-            <p className="text-slate-400 text-sm mt-1">Jump to live views that mirror this article.</p>
-            <div className="mt-3 flex flex-col gap-2">
-              <button className="btn btn-primary" onClick={openPortfolio}>Open Portfolio</button>
-              <button className="btn btn-ghost" onClick={openBuilding}>Open Building</button>
-            </div>
-            <div className="mt-4 text-xs text-slate-500">
-              Next up: <span className="text-slate-300">“How Alarms → Actions → M&amp;V works”</span>
-            </div>
-          </aside>
-        </div>
+          </div>  
       </Section>
     </div>
   );
