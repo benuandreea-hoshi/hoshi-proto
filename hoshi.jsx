@@ -310,32 +310,52 @@ function Story({ goApp }) {
         <Band tone={1}>
           <div className="grid md:grid-cols-2 gap-4">
             {/* Forward Energy Premium */}
-            <div className="card p-4 md:p-6 relative overflow-hidden">
-              <div className="absolute -top-24 -right-24 w-[300px] h-[300px] rounded-full blur-3xl"
-                   style={{background:"radial-gradient(circle, rgba(59,130,246,.18), transparent 60%)"}}/>
-              <h3 className="text-slate-50 text-lg font-semibold">Forward Energy Premium</h3>
-              <p className="text-slate-400 text-sm mt-1">
-                Quantifies how energy & service factors add/subtract from expected ROI — split by systematic (β) vs idiosyncratic drivers.
-              </p>
-              <div className="mt-4 grid grid-cols-3 gap-3">
-                <div className="rounded-xl p-3"
-                     style={{background:"var(--panel-2)",border:"1px solid var(--stroke)", overflow:"visible"}}>
-                  <div className="text-xs text-slate-400">Avg. index</div>
-                  <div className="mt-2 bg-white rounded-xl p-2 inline-block overflow-visible">
-                    <DonutGauge value={0.07 - demoAvg} max={0.07} size={96} stroke={12}
-                                display={(demoAvg*10).toFixed(2)} label="Good" />
-                  </div>
-                </div>
-                <div className="rounded-xl p-3 col-span-2"
-                     style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
-                  <div className="flex items-center justify-between">
-                    <div className="text-xs text-slate-400">Expected ROI contribution</div>
-                    <span className="chip">Lower risk</span>
-                  </div>
-                  <div className="mt-2"><LineChart points={roiSpark} /></div>
-                </div>
-              </div>
-            </div>
+<div className="card p-4 md:p-6 relative">
+  <div
+    className="absolute -top-24 -right-24 w-[300px] h-[300px] rounded-full blur-3xl"
+    style={{ background: "radial-gradient(circle, rgba(59,130,246,.18), transparent 60%)" }}
+  />
+  <h3 className="text-slate-50 text-lg font-semibold">Forward Energy Premium</h3>
+  <p className="text-slate-400 text-sm mt-1">
+    Quantifies how energy &amp; service factors add/subtract from expected ROI — split by systematic (β) vs idiosyncratic drivers.
+  </p>
+
+  {/* On mobile: stack; on small screens: 2 cols; on md+: 3 cols with the sparkline spanning 2 */}
+  <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+    {/* Avg. index */}
+    <div
+      className="rounded-xl p-3 z-10"
+      style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}
+    >
+      <div className="text-xs text-slate-400">Avg. index</div>
+      <div className="mt-2 bg-white rounded-xl p-2 inline-block">
+        <DonutGauge
+          value={0.07 - demoAvg}
+          max={0.07}
+          size={96}
+          stroke={12}
+          display={(demoAvg * 10).toFixed(2)}
+          label="Good"
+        />
+      </div>
+    </div>
+
+    {/* Expected ROI contribution */}
+    <div
+      className="rounded-xl p-3 sm:col-span-1 md:col-span-2 z-0"
+      style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}
+    >
+      <div className="flex items-center justify-between">
+        <div className="text-xs text-slate-400">Expected ROI contribution</div>
+        <span className="chip">Lower risk</span>
+      </div>
+      <div className="mt-2">
+        <LineChart points={roiSpark} />
+      </div>
+    </div>
+  </div>
+</div>
+
 
             {/* Scenario Studio */}
             <div className="card p-4 md:p-6 relative overflow-hidden">
