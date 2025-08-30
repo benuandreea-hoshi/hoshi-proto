@@ -99,18 +99,23 @@ function DonutGauge({ value=0, max=1, size=120, stroke=14, label, display }) {
     </svg>
   );
 }
-// desktop-only hero orb (keep rings; center number via HTML overlay)
+ // desktop-only hero orb (fixed outer ring bounds; centered text overlay)
 function HeroOrb({ value = 0.42, label = "Good" }) {
-  const size = 520;          // overall canvas
-  const stroke = 28;         // ring thickness
+  const size = 520;             // canvas
+  const stroke = 28;            // gauge thickness
   const r = (size / 2) - stroke;
+
+  // keep the decorative ring fully inside the viewBox:
+  // outerR + (outerStroke/2) <= size/2
+  const outerStroke = 16;
+  const outerR = Math.min((size / 2) - outerStroke / 2, r + 12);
+
   const circ = 2 * Math.PI * r;
-  const pct = Math.max(0, Math.min(1, value));     // 0..1
+  const pct = Math.max(0, Math.min(1, value));
   const dash = `${circ * pct} ${circ * (1 - pct)}`;
 
   return (
     <div className="hidden md:flex items-center justify-center relative w-full">
-      {/* RINGS */}
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
         <defs>
           <linearGradient id="heroGrad" x1="0" y1="0" x2="1" y2="1">
@@ -119,29 +124,42 @@ function HeroOrb({ value = 0.42, label = "Good" }) {
           </linearGradient>
         </defs>
 
-        {/* large decorative outer ring */}
+        {/* decorative outer ring (now fully inside the box) */}
         <circle
-          cx={size/2} cy={size/2} r={r + 70}
-          fill="none" stroke="url(#heroGrad)" strokeWidth="28" strokeOpacity="0.33"
+          cx={size / 2}
+          cy={size / 2}
+          r={outerR}
+          fill="none"
+          stroke="url(#heroGrad)"
+          strokeWidth={outerStroke}
+          strokeOpacity="0.33"
         />
 
-        {/* inner plate */}
+        {/* inner track */}
         <circle
-          cx={size/2} cy={size/2} r={r}
-          fill="none" stroke="#1f2937" strokeWidth={stroke} strokeOpacity="0.28"
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          stroke="#1f2937"
+          strokeWidth={stroke}
+          strokeOpacity="0.28"
         />
 
         {/* value arc */}
-        <g transform={`translate(${size/2}, ${size/2}) rotate(-90)`}>
+        <g transform={`translate(${size / 2}, ${size / 2}) rotate(-90)`}>
           <circle
             r={r}
-            fill="none" stroke="#10b981" strokeWidth={stroke} strokeLinecap="round"
+            fill="none"
+            stroke="#10b981"
+            strokeWidth={stroke}
+            strokeLinecap="round"
             strokeDasharray={dash}
           />
         </g>
       </svg>
 
-      {/* PERFECTLY CENTERED LABEL + NUMBER */}
+      {/* centered number + label */}
       <div className="absolute inset-0 grid place-items-center pointer-events-none">
         <div className="text-center">
           <div className="text-slate-300 text-lg mb-1">{label}</div>
