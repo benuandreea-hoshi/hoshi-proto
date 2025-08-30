@@ -266,14 +266,6 @@ function Story({ goApp }) {
         <a href="#how" className="btn btn-ghost">See how it works</a>
       </div>
 
-      {/* KPIs */}
-      <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-2">
-        <Stat k="10×"  s="faster onboarding" />
-        <Stat k="92%"  s="data coverage target" />
-        <Stat k="0.42" s="avg. service index" />
-        <Stat k="€↗"  s="forward ROI insight" />
-      </div>
-
       {/* small gauge for mobile only (keep if you want the quick read) */}
       <div className="md:hidden mt-6">
         <div className="donut-wrap bg-white rounded-full p-2 shadow-md inline-block">
