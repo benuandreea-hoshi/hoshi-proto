@@ -1575,6 +1575,171 @@ const ICONS={
   lineage:()=>    (<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 18h16M4 6h16M8 6v12M16 6v12" stroke="currentColor" strokeWidth="2"/></svg>),
   public:()=>     (<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 3a9 9 0 100 18 9 9 0 000-18z" stroke="currentColor" strokeWidth="2"/><path d="M3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18" stroke="currentColor" strokeWidth="2"/></svg>),
 };
+/* --------------------- BLOG TAB --------------------- */
+function Blog({ openPortfolio, openBuilding }) {
+  // simple registry (1st article preloaded)
+  const BLOG = [
+    {
+      slug: "hoshi-in-5-minutes",
+      title: "Hoshi in 5 minutes",
+      summary: "From utility bills to decision-grade signals (NPV, β, systematic vs idiosyncratic).",
+      readingMins: 5,
+      tags: ["Getting started","Investors","Operators"],
+    },
+  ];
+
+  const [active, setActive] = React.useState(BLOG[0].slug);
+  const article = BLOG.find(b => b.slug === active);
+
+  const TagPill = ({children}) => (
+    <span className="chip whitespace-nowrap">{children}</span>
+  );
+
+  // article body as JSX so you can style/tweak freely
+  const ArticleBody = () => (
+    <div className="prose prose-invert max-w-none">
+      {/* TLDR */}
+      <div className="rounded-xl p-4 mb-4" style={{background:"rgba(148,163,184,.06)",border:"1px solid var(--stroke)"}}>
+        <div className="text-slate-100 font-semibold">TL;DR (60 seconds)</div>
+        <p className="text-slate-300 text-sm mt-1">
+          Hoshi turns messy building data (bills, meters, comfort logs) into <b>decision-grade signals</b>:
+          <b> NPV</b> (money), <b>β</b>/<b> sensitivity</b> (exposure to market-wide drivers),
+          and a split between <b>systematic</b> and <b>idiosyncratic</b> risk. Real estate can’t just
+          “diversify away” idiosyncratic risk — buildings are few, large, and unique — so we measure and manage it.
+        </p>
+      </div>
+
+      {/* Why translate */}
+      <h3 className="text-slate-50 text-lg font-semibold">Why translate energy &amp; comfort into ROI and risk?</h3>
+      <ul className="list-disc pl-6 text-slate-300">
+        <li><b>Finance speaks NPV.</b> We express outcomes as present value so ops and capital can align.</li>
+        <li><b>Markets price exposure.</b> β shows how much results move with shared forces (prices, policy, climate).</li>
+        <li><b>Idiosyncratic ≠ ignorable.</b> You don’t hold 500 micro-assets; building-specific risk must be managed.</li>
+      </ul>
+
+      {/* Pipeline */}
+      <h3 className="text-slate-50 text-lg font-semibold mt-6">What Hoshi actually does (the pipeline)</h3>
+      <ol className="list-decimal pl-6 text-slate-300">
+        <li><b>Ingest:</b> email PDFs/CSVs or connect meters; normalise units and periods.</li>
+        <li><b>Clean &amp; compare:</b> compute intensity, spend, tCO₂e, comfort risk, coverage.</li>
+        <li><b>Turn into signals:</b> NPV / payback; β/sensitivity; a factor-aware composite for forward ROI.</li>
+        <li><b>Make it scenario-aware:</b> stress test prices, policy, and climate (2030/2050) to see what holds up.</li>
+        <li><b>Publish:</b> the <i>Building Performance Sheet</i> (BPS) with systematic vs idiosyncratic split + lineage.</li>
+        <li><b>Act (with governance):</b> every alarm becomes an Action with M&amp;V and acceptance criteria.</li>
+      </ol>
+
+      {/* Can’t diversify away */}
+      <h3 className="text-slate-50 text-lg font-semibold mt-6">Why you can’t just diversify idiosyncratic risk away</h3>
+      <p className="text-slate-300">
+        In equities, idiosyncratic noise averages out across many small holdings. In property it doesn’t:
+        each building is material and unique. That’s why Hoshi makes the <b>asset-specific</b> drivers visible and actionable.
+      </p>
+
+      {/* Different vs others */}
+      <h3 className="text-slate-50 text-lg font-semibold mt-6">What makes Hoshi different</h3>
+      <ul className="list-disc pl-6 text-slate-300">
+        <li><b>Signals, not just scores:</b> NPV, β, systematic vs idiosyncratic — built for capital decisions.</li>
+        <li><b>Alarm → Action → M&amp;V loop:</b> evidence-first governance with data lineage and acceptance criteria.</li>
+        <li><b>Earth-first framing:</b> align with a “commonwealth cost of carbon” lens rather than box-ticking.</li>
+      </ul>
+
+      {/* Walkthrough */}
+      <h3 className="text-slate-50 text-lg font-semibold mt-6">Mini walk-through (2 minutes)</h3>
+      <ul className="list-disc pl-6 text-slate-300">
+        <li><b>Portfolio:</b> sort by intensity or coverage; pick a likely underperformer.</li>
+        <li><b>Building:</b> see spend/tCO₂e, overruns and comfort risk; inspect the composite index.</li>
+        <li><b>Actions:</b> e.g., LED retrofit with CapEx, savings, <b>NPV</b>, <b>β</b>, confidence, and expected Δ in
+            service index, comfort risk, and tCO₂e/yr; add to plan with <b>M&amp;V</b>.</li>
+        <li><b>Lineage &amp; Governance:</b> jump to baseline, methods and factors so auditors and partners can trust the numbers.</li>
+      </ul>
+
+      {/* Glossary */}
+      <h3 className="text-slate-50 text-lg font-semibold mt-6">Micro-glossary</h3>
+      <div className="grid md:grid-cols-3 gap-3">
+        <div className="rounded-xl p-3" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
+          <div className="text-slate-100 font-medium">NPV</div>
+          <div className="text-slate-400 text-sm">Today’s value of expected savings minus cost.</div>
+        </div>
+        <div className="rounded-xl p-3" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
+          <div className="text-slate-100 font-medium">β / sensitivity</div>
+          <div className="text-slate-400 text-sm">How outcomes move with shared drivers (systematic exposure).</div>
+        </div>
+        <div className="rounded-xl p-3" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
+          <div className="text-slate-100 font-medium">Systematic vs idiosyncratic</div>
+          <div className="text-slate-400 text-sm">Market-wide vs asset-specific; property must manage the latter.</div>
+        </div>
+      </div>
+
+      {/* Sources */}
+      <div className="mt-6 rounded-xl p-3" style={{background:"rgba(148,163,184,.06)",border:"1px solid var(--stroke)"}}>
+        <div className="text-slate-400 text-sm">
+          <b>Source notes:</b> Thesis (factor-aware framing, systematic vs idiosyncratic) and Digital Assurance / Ecosystem
+          (publicly addressable alarms, governance &amp; lineage).
+        </div>
+      </div>
+    </div>
+  );
+
+  // layout
+  return (
+    <div className="grid gap-4 md:gap-6">
+      <Section title="Blog" desc="Plain-English explainers that connect Hoshi’s UI to finance, risk, and governance.">
+        {/* List (left) + CTA rail (right on desktop) */}
+        <div className="grid md:grid-cols-[1fr_280px] gap-4">
+          {/* Article + switcher */}
+          <div>
+            {/* tiny list (only one for now, but future-proofed) */}
+            <div className="mb-3 flex gap-2 flex-wrap">
+              {BLOG.map(b => (
+                <button
+                  key={b.slug}
+                  className={"chip " + (active===b.slug?"bg-blue-500/20 text-blue-200 border-blue-400/40":"")}
+                  onClick={()=>setActive(b.slug)}
+                >
+                  {b.title}
+                </button>
+              ))}
+            </div>
+
+            {/* meta */}
+            <div className="flex items-center gap-2 mb-3 text-xs text-slate-400">
+              <TagPill>{article.readingMins} min read</TagPill>
+              {article.tags.map((t,i)=><TagPill key={i}>{t}</TagPill>)}
+            </div>
+
+            {/* body */}
+            <div className="rounded-2xl p-4 md:p-5" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
+              <h2 className="text-slate-50 text-xl md:text-2xl font-semibold">{article.title}</h2>
+              <p className="text-slate-300 mt-1">{article.summary}</p>
+              <div className="mt-4"><ArticleBody/></div>
+
+              {/* in-article CTA */}
+              <div className="mt-6 flex flex-wrap gap-3">
+                <button className="btn btn-primary" onClick={openPortfolio}>Open Portfolio</button>
+                <button className="btn btn-ghost" onClick={openBuilding}>Open Building</button>
+              </div>
+            </div>
+          </div>
+
+          {/* CTA rail (moves below on mobile) */}
+          <aside className="md:sticky md:top-4 h-max rounded-2xl p-4"
+                 style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
+            <div className="text-slate-100 font-medium">Try it in Hoshi</div>
+            <p className="text-slate-400 text-sm mt-1">Jump to live views that mirror this article.</p>
+            <div className="mt-3 flex flex-col gap-2">
+              <button className="btn btn-primary" onClick={openPortfolio}>Open Portfolio</button>
+              <button className="btn btn-ghost" onClick={openBuilding}>Open Building</button>
+            </div>
+            <div className="mt-4 text-xs text-slate-500">
+              Next up: <span className="text-slate-300">“How Alarms → Actions → M&amp;V works”</span>
+            </div>
+          </aside>
+        </div>
+      </Section>
+    </div>
+  );
+}
+/* ------------------- END BLOG TAB ------------------- */
 
 
 function App(){
@@ -1596,6 +1761,13 @@ const tabs = [
 
     { key: "services", label: "Services", comp: <Services /> },
   {key:"public",label:"Public BPS",comp:<PublicBPS goLineage={()=>setActive("lineage")} goActions={()=>setActive("actions")} />},
+  { key:"blog", label:"Blog",
+  comp: <Blog
+          openPortfolio={()=>setActive("portfolio")}
+          openBuilding={()=>setActive("building")}
+        />
+},
+
   ];
 
   const NavItem=({t})=>{
