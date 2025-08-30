@@ -239,53 +239,59 @@ function Story({ goApp }) {
   return (
     <div className="min-h-[calc(100vh-80px)]">
       <div className="max-w-7xl mx-auto px-5 md:px-6">
-        {/* HERO (Band 1) */}
-        <Band tone={1}>
-          <div className="grid md:grid-cols-2 items-center gap-6 md:gap-10">
-            <div>
-              <div className="flex items-center gap-2 mb-3 md:mb-4">
-                <span className="chip">Prototype</span>
-                <span className="chip" style={{background:"rgba(148,163,184,.12)",color:"#e2e8f0",borderColor:"rgba(148,163,184,.3)"}}>
-                  Dark UI · Blue→Green
-                </span>
-              </div>
-              <h1 className="text-4xl md:text-6xl font-semibold tracking-tight leading-[1.08]">
-                <span className="text-slate-100">Hoshi — </span>
-                <span className="text-neon">transparent ESG</span>
-                <span className="text-slate-100"> for real estate.</span>
-              </h1>
-              <p className="text-slate-300 mt-4 text-base md:text-lg max-w-2xl">
-                Evidence that moves value: scenario-adjusted service performance, comfort risk,
-                and forward ROI — shared by owners, occupiers, and suppliers.
-              </p>
-              <div className="mt-6 flex flex-wrap gap-3">
-                <button onClick={goApp} className="btn btn-primary">Launch prototype</button>
-                <a href="#how" className="btn btn-ghost">See how it works</a>
-              </div>
-              {/* KPIs */}
-              <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <Stat k="10×"  s="faster onboarding" />
-                <Stat k="92%"  s="data coverage target" />
-                <Stat k="0.42" s="avg. service index" />
-                <Stat k="€↗"  s="forward ROI insight" />
-              </div>
-              {/* trust strip */}
-              <div className="mt-5">
-                <div className="text-xs text-slate-400">Trusted across the ecosystem</div>
-                <LogoCloudStrip />
-              </div>
-              {/* small gauge for mobile only (don’t lead with a chart) */}
-              <div className="md:hidden mt-6">
-                <div className="bg-white rounded-full p-2 shadow-md inline-block overflow-visible">
-                  <DonutGauge value={0.07 - demoAvg} max={0.07} size={120} stroke={14} display={demoAvg.toFixed(2)} label="Good" />
-                </div>
-              </div>
-            </div>
+        {/* HERO (Band 1) — orb & logo strip removed */}
+<Band tone={1}>
+  <div className="grid grid-cols-1 gap-6 md:gap-10">
+    <div>
+      <div className="flex items-center gap-2 mb-3 md:mb-4">
+        <span className="chip">Prototype</span>
+        <span className="chip" style={{background:"rgba(148,163,184,.12)",color:"#e2e8f0",borderColor:"rgba(148,163,184,.3)"}}>
+          Dark UI · Blue→Green
+        </span>
+      </div>
 
-            {/* big ring is desktop-only */}
-            <HeroOrb value={demoAvg} />
-          </div>
-        </Band>
+      <h1 className="text-4xl md:text-6xl font-semibold tracking-tight leading-[1.08]">
+        <span className="text-slate-100">Hoshi — </span>
+        <span className="text-neon">transparent ESG</span>
+        <span className="text-slate-100"> for real estate.</span>
+      </h1>
+
+      <p className="text-slate-300 mt-4 text-base md:text-lg max-w-2xl">
+        Evidence that moves value: scenario-adjusted service performance, comfort risk,
+        and forward ROI — shared by owners, occupiers, and suppliers.
+      </p>
+
+      <div className="mt-6 flex flex-wrap gap-3">
+        <button onClick={goApp} className="btn btn-primary">Launch prototype</button>
+        <a href="#how" className="btn btn-ghost">See how it works</a>
+      </div>
+
+      {/* KPIs */}
+      <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <Stat k="10×"  s="faster onboarding" />
+        <Stat k="92%"  s="data coverage target" />
+        <Stat k="0.42" s="avg. service index" />
+        <Stat k="€↗"  s="forward ROI insight" />
+      </div>
+
+      {/* small gauge for mobile only (keep if you want the quick read) */}
+      <div className="md:hidden mt-6">
+        <div className="donut-wrap bg-white rounded-full p-2 shadow-md inline-block">
+          <DonutGauge
+            value={0.07 - 0.42}
+            max={0.07}
+            size={120}
+            stroke={14}
+            display={(0.42).toFixed(2)}
+            label="Good"
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+</Band>
+
+              
 
         {/* VALUE STRIPE (Band 2) */}
         <Band tone={2}>
