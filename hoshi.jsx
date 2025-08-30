@@ -968,7 +968,7 @@ function Building(){
     </div>
   );
 }
-  function Actions(){
+ function Actions({ goLineage }) {
   // --- helpers (local to this component so we don’t leak globals)
   const fmtGBP = n => "£" + Math.round(n).toLocaleString();
   const npv = (annual, years=7, rate=0.08, capex=0) => {
@@ -1153,12 +1153,36 @@ function Building(){
 
                 {/* CTAs */}
                 <div className="mt-4 flex flex-wrap gap-3">
-                  <button className="btn btn-ghost"
-                          onClick={()=>alert(
-                            `Lineage:\n• Baseline: ${a.lineage.baseline}\n• Method: ${a.lineage.method}\n• Factors: ${a.lineage.factors.join(", ")}`
-                          )}>
-                    View data lineage
-                  </button>
+                  <button className="btn btn-ghost"                  
+  onClick={()=>{
+    // "a" is the current action object in your .map(...)
+    const npvVal = typeof npv === "function"
+      ? npv(a.save, a.years, 0.08, a.capex)   // use your existing helper if present
+      : computeNPV(a.save, a.years, 0.08, a.capex);
+
+    goLineage({
+      id: a.id,
+      title: a.title,
+      status: a.status,
+      alarm: { type:a.alarm, category:a.category, window:a.window, rule:a.rule },
+      finance: {
+        capex:a.capex, save:a.save, years:a.years,
+        npv: npvVal, payback: (a.capex/a.save).toFixed(1),
+        beta:a.beta, confidence:a.confidence
+      },
+      impacts: {
+        indexDelta:a.indexDelta,
+        comfortDeltaPct:a.comfortDeltaPct,
+        co2Delta:a.co2Delta
+      },
+      lineage: a.lineage,  // { baseline, method, factors:[...] }
+      plan: a.plan || null // if you store plan details, they’ll show on Lineage
+    });
+  }}
+>
+  View data lineage
+</button>
+
                   {a.status!=="Planned" ? (
                     <button className="btn btn-primary" onClick={()=>openPlan(a)}>Add to plan</button>
                   ) : (
@@ -1237,106 +1261,116 @@ function Building(){
 }
 
 // REPLACE the whole Lineage() with this version
-function Lineage() {
-  const catalog = {
-    "fep-led-2025Q3": {
-      title: "LED retrofit",
-      inputs: [
-        "Supplier invoices (OCR v1.4)",
-        "Meter reads (AMR–E01)",
-        "Space area: 12,800 m² (Portfolio master v0.9)",
-      ],
-      factors: [
-        "Grid emissions factor: 0.18 kgCO₂e/kWh (BEIS 2024, v24.2)",
-        "Discount rate r = 8% (portfolio WACC proxy)",
-      ],
-      formulas: [
-        "Annual savings = baseline kWh × (retrofit saving rate)",
-        "NPV = -CapEx + Σ (Savings_t / (1+r)^t)",
-        "Service index = Σ w_i·m_i  (internal composite)",
-      ],
-      versions: [
-        "Extraction: 2025-08-01 • model v0.3",
-        "Composite index weights: preset Balanced v0.2",
-      ],
-    },
-    "ops-hvac-2025Q3": {
-      title: "HVAC schedule",
-      inputs: [
-        "BMS logs (weekdays 7–19h, weekends 9–16h)",
-        "Indoor T sensors (QA flagged: 2/38 missing)",
-      ],
-      factors: [
-        "Comfort threshold: 27°C (ASHRAE-adaptive band)",
-        "Tariff: TOU blended (supplier file 2025-Q2)",
-      ],
-      formulas: [
-        "Overheating hours = Σ max(0, T_indoor − T_thresh) over period",
-        "Expected savings = Δ runtime × kW × tariff",
-      ],
-      versions: [
-        "Schedule policy template v1.1",
-        "Comfort method v0.9 (adaptive)",
-      ],
-    },
-  };
+  function Lineage({ fromAction, goActions }){
+  const A = fromAction; // may be null if opened directly
 
-  const [focus, setFocus] = React.useState(window.hoshiLineageId || Object.keys(catalog)[0]);
-
-  React.useEffect(() => {
-    const onHash = () => {
-      if (window.hoshiLineageId) setFocus(window.hoshiLineageId);
-    };
-    window.addEventListener("hashchange", onHash);
-    return () => window.removeEventListener("hashchange", onHash);
-  }, []);
-
-  const entry = catalog[focus];
-
-  const Card = ({ title, children }) => (
-    <div className="rounded-xl p-3" style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}>
-      <div className="text-slate-300 text-sm">{title}</div>
-      <div className="mt-2 text-slate-100 text-sm">{children}</div>
+  const Card = ({title,children})=>(
+    <div className="rounded-xl p-4"
+         style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
+      <div className="text-slate-100 font-medium">{title}</div>
+      <div className="mt-2 text-sm text-slate-300">{children}</div>
     </div>
   );
 
   return (
     <div className="grid gap-4 md:gap-6">
       <Section
-        title="Data lineage"
-        desc="Inputs, factors, formulas, and model versions behind actions and metrics."
-        right={
-          <select
-            className="px-2 py-1 rounded-lg text-sm"
-            style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)", color: "var(--text)" }}
-            value={focus}
-            onChange={(e) => setFocus(e.target.value)}
-          >
-            {Object.entries(catalog).map(([id, e]) => (
-              <option key={id} value={id}>
-                {e.title}
-              </option>
-            ))}
-          </select>
-        }
+        title={"Data lineage" + (A? ` — ${A.title}` : "")}
+        desc="Inputs → transforms → factors → formulas → versions. This is how we make numbers audit-ready."
+        right={A && <button className="btn btn-ghost" onClick={goActions}>← Back to actions</button>}
       >
-        {entry ? (
+        {/* Why lineage matters */}
+        <div className="grid md:grid-cols-3 gap-3 md:gap-4 mb-3">
+          <Card title="Why this matters">
+            <ul className="list-disc pl-5 space-y-1">
+              <li>Builds trust: every KPI links to sources and methods.</li>
+              <li>Finance-grade: shows how savings/NPV were derived.</li>
+              <li>Governance: versioned factors & acceptance criteria.</li>
+            </ul>
+          </Card>
+          <Card title="What’s included">
+            <ul className="list-disc pl-5 space-y-1">
+              <li>Data sources (bills, meters, surveys, models).</li>
+              <li>Normalisation (HDD/CDD, occupancy, area).</li>
+              <li>Formulas & coefficients with version and date.</li>
+            </ul>
+          </Card>
+          <Card title="Client benefits">
+            <ul className="list-disc pl-5 space-y-1">
+              <li>Faster approvals: procurement & finance aligned.</li>
+              <li>Comparable metrics across assets & vendors.</li>
+              <li>Audit trail for ESG and assurance processes.</li>
+            </ul>
+          </Card>
+        </div>
+
+        {/* If we came from an action, show its snapshot */}
+        {A ? (
           <div className="grid md:grid-cols-2 gap-3 md:gap-4">
-            <Card title="Inputs">
-              <ul className="list-disc pl-5 space-y-1">{entry.inputs.map((x, i) => <li key={i}>{x}</li>)}</ul>
+            <Card title="Lineage snapshot">
+              <div className="grid grid-cols-1 gap-2">
+                <div><span className="text-slate-400">Alarm</span> · {A.alarm.type} — {A.alarm.category} ({A.alarm.window}; {A.alarm.rule})</div>
+                <div><span className="text-slate-400">Baseline</span> · {A.lineage?.baseline || "—"}</div>
+                <div><span className="text-slate-400">Method</span> · {A.lineage?.method || "—"}</div>
+                <div><span className="text-slate-400">Factors</span> · {(A.lineage?.factors||[]).join(", ") || "—"}</div>
+                <div className="flex flex-wrap gap-2 mt-1">
+                  <span className="chip">Δ index {A.impacts.indexDelta.toFixed(2)}</span>
+                  <span className="chip">Δ comfort {A.impacts.comfortDeltaPct}%</span>
+                  <span className="chip">Δ tCO₂e {A.impacts.co2Delta} /yr</span>
+                </div>
+              </div>
             </Card>
-            <Card title="Factors / assumptions">
-              <ul className="list-disc pl-5 space-y-1">{entry.factors.map((x, i) => <li key={i}>{x}</li>)}</ul>
+
+            <Card title="Verification & acceptance">
+              {A.plan ? (
+                <div className="grid gap-2">
+                  <div><span className="text-slate-400">Owner</span> · {A.plan.owner}</div>
+                  <div><span className="text-slate-400">Start</span> · {A.plan.start}</div>
+                  <div><span className="text-slate-400">Funding</span> · {A.plan.funding}</div>
+                  <div><span className="text-slate-400">M&V</span> · {A.plan.mv}</div>
+                  <div><span className="text-slate-400">Acceptance</span> · {A.plan.accept}</div>
+                  {A.plan.scope && <div><span className="text-slate-400">Scope</span> · {A.plan.scope}</div>}
+                </div>
+              ) : (
+                <div>
+                  Not planned yet. Use <span className="chip">Add to plan</span> in Actions to register
+                  owner, start, funding and M&V so this section populates automatically.
+                </div>
+              )}
             </Card>
-            <Card title="Formulas">
-              <ul className="list-disc pl-5 space-y-1">{entry.formulas.map((x, i) => <li key={i}>{x}</li>)}</ul>
+
+            <Card title="Trace (demo)">
+              <div className="text-xs">
+                <div className="grid grid-cols-[160px_1fr] gap-y-1">
+                  <div className="text-slate-400">Source</div><div>{A.lineage?.baseline || "FY24 bills"}</div>
+                  <div className="text-slate-400">Transforms</div><div>OCR → clean → normalise (HDD/CDD)</div>
+                  <div className="text-slate-400">Model</div><div>{A.lineage?.method || "Top-down regression"}</div>
+                  <div className="text-slate-400">Outputs</div><div>Δ index {A.impacts.indexDelta.toFixed(2)}; Δ tCO₂e {A.impacts.co2Delta}/yr</div>
+                  <div className="text-slate-400">Version</div><div>v0.2 · {new Date().toISOString().slice(0,10)}</div>
+                </div>
+              </div>
             </Card>
-            <Card title="Versions / provenance">
-              <ul className="list-disc pl-5 space-y-1">{entry.versions.map((x, i) => <li key={i}>{x}</li>)}</ul>
+
+            <Card title="Finance context">
+              <div className="grid grid-cols-2 gap-2">
+                <div><span className="text-slate-400">CapEx</span><div className="text-slate-100 font-semibold">£{A.finance.capex.toLocaleString()}</div></div>
+                <div><span className="text-slate-400">Savings /yr</span><div className="text-slate-100 font-semibold">£{A.finance.save.toLocaleString()}</div></div>
+                <div><span className="text-slate-400">NPV @8%</span><div className="text-emerald-300 font-semibold">£{A.finance.npv.toLocaleString()}</div></div>
+                <div><span className="text-slate-400">Payback</span><div className="text-slate-100 font-semibold">{A.finance.payback}y</div></div>
+                <div><span className="text-slate-400">β</span><div className="text-slate-100 font-semibold">{A.finance.beta.toFixed(2)}</div></div>
+                <div><span className="text-slate-400">Confidence</span><div className="text-slate-100 font-semibold">{Math.round(A.finance.confidence*100)}%</div></div>
+              </div>
             </Card>
           </div>
         ) : (
-          <div className="text-slate-300">Select an item to view lineage.</div>
+          // No context → general explainer
+          <div className="rounded-xl p-4"
+               style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
+            <div className="text-slate-300 text-sm">
+              Open this page from an action to see a complete lineage snapshot for that recommendation.
+              You’ll get: Source → Normalisation → Model → Version → M&V → Acceptance, with links to the portfolio/building data behind it.
+            </div>
+          </div>
         )}
       </Section>
     </div>
@@ -1363,13 +1397,19 @@ function App(){
     {key:"onboarding",label:"Onboarding",comp:<Onboarding/>},
     {key:"portfolio",label:"Portfolio",comp:<Portfolio/>},
     {key:"building",label:"Building",comp:<Building/>},
- { key: "actions", label: "Actions", comp: <Actions openLineage={() => setActive("lineage")} /> },
+//{key:"actions", label:"Actions", comp:<Actions/>},
+//{key:"lineage", label:"Lineage & Governance", comp:<Lineage/>},
+    {key:"actions", label:"Actions",
+  comp:<Actions goLineage={(payload)=>{ setLineageCtx(payload); setActive("lineage"); }}/>},
+
+{key:"lineage", label:"Lineage & Governance",
+  comp:<Lineage fromAction={lineageCtx} goActions={()=>setActive("actions")}/>},
     {key:"services",label:"Services",comp:<Services/>},     // NEW
-    {key:"lineage",label:"Lineage & Governance",comp:<Lineage/>},
     {key:"public",label:"Public BPS",comp:<PublicBPS/>},
   ];
   const [active,setActive]=useState("story");
-  const [open,setOpen]=useState(false);
+ const [open,setOpen]=useState(false);
+const [lineageCtx, setLineageCtx] = useState(null);
 
   const NavItem=({t})=>{
     const is=active===t.key;
