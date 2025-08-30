@@ -968,53 +968,111 @@ function Building(){
     </div>
   );
 }
-  // REPLACE the whole Actions() with this version
-function Actions({ openLineage }) {
-  // Example actions wired to alarms and value math
-  const items = [
+  function Actions(){
+  // --- helpers (local to this component so we don’t leak globals)
+  const fmtGBP = n => "£" + Math.round(n).toLocaleString();
+  const npv = (annual, years=7, rate=0.08, capex=0) => {
+    const pv = annual * (1 - Math.pow(1+rate, -years)) / rate;
+    return Math.round(pv - capex);
+  };
+
+  // --- demo actions (extended with impact + alarm links)
+  const [actions, setActions] = React.useState([
     {
-      id: "fep-led-2025Q3",
-      m: "LED retrofit",
-      trigger: { kind: "Overrun", metric: "Electricity", period: "Last 12m", detail: ">10% vs budget" },
+      id: 1,
+      title: "LED retrofit",
+      alarm: "Overrun",
+      category: "Electricity",
+      window: "Last 12m",
+      rule: ">10% vs budget",
       capex: 25000,
       save: 8500,
-      rate: 0.08,
-      yrs: 7,
-      beta: 0.6,
+      years: 7,
+      beta: 0.60,
       confidence: 0.70,
-      impact: { index: -0.03, comfort: -0.28, emissions: -6.5 }, // index (×10), comfort risk (Δ%), emissions (tCO₂e/yr)
+      // impacts (expected deltas)
+      indexDelta: -0.03,        // improves composite index (lower is better)
+      comfortDeltaPct: -28,     // reduces risk
+      co2Delta: -6.5,           // tCO2e/yr
       status: "To review",
+      plan: null,               // filled when “Add to plan”
+      lineage: {
+        baseline:"FY24 bills",
+        method:"Top-down regression adj. for HDD/CDD",
+        factors:["lamp efficacy","hours-of-use","maintenance"],
+      },
     },
     {
-      id: "ops-hvac-2025Q3",
-      m: "HVAC schedule",
-      trigger: { kind: "Comfort risk", metric: "Overheating hours", period: "Summer", detail: "> threshold" },
+      id: 2,
+      title: "HVAC schedule",
+      alarm: "Comfort risk",
+      category: "Overheating hours",
+      window: "Summer",
+      rule: "> threshold",
       capex: 1000,
       save: 4200,
-      rate: 0.08,
-      yrs: 3,
-      beta: 0.2,
+      years: 3,
+      beta: 0.20,
       confidence: 0.80,
-      impact: { index: -0.02, comfort: -0.18, emissions: -2.3 },
+      indexDelta: -0.02,
+      comfortDeltaPct: -18,
+      co2Delta: -2.3,
       status: "Approved",
+      plan: null,
+      lineage: {
+        baseline:"FY24 logger data",
+        method:"Schedule optimisation (BMS)",
+        factors:["occupied hours","supply temp","night purge"],
+      },
     },
-  ];
+  ]);
 
-  const money = n => `£${Math.round(n).toLocaleString()}`;
-  const percent = f => `${Math.round(f * 100)}%`;
-  const signed = (n, d = 0, unit = "") => `${n > 0 ? "+" : ""}${n.toFixed(d)}${unit}`;
-  const annuityPV = (r, n) => (1 - Math.pow(1 + r, -n)) / r;
-  const npv = (capex, save, r, n) => -capex + save * annuityPV(r, n);
+  // --- derived: planned roll-ups for a quick bar at the top
+  const planned = actions.filter(a => a.status === "Planned");
+  const plannedTotals = planned.reduce((s,a)=>({
+    capex: s.capex + a.capex,
+    save: s.save + a.save,
+    co2: s.co2 + a.co2Delta,
+    index: s.index + a.indexDelta,
+  }), {capex:0, save:0, co2:0, index:0});
 
-  const Badge = ({ tone = "neutral", children }) => {
-    const map = {
-      info: "bg-blue-500/15 text-blue-300 ring-1 ring-inset ring-blue-400/30",
-      success: "bg-emerald-500/15 text-emerald-300 ring-1 ring-inset ring-emerald-400/30",
-      warn: "bg-amber-500/15 text-amber-300 ring-1 ring-inset ring-amber-400/30",
-      danger: "bg-rose-500/15 text-rose-300 ring-1 ring-inset ring-rose-400/30",
-      neutral: "bg-slate-500/15 text-slate-300 ring-1 ring-inset ring-slate-400/30",
-    };
-    return <span className={"px-2 py-0.5 rounded-full text-xs " + map[tone]}>{children}</span>;
+  // --- modal state
+  const [open, setOpen] = React.useState(false);
+  const [draft, setDraft] = React.useState({
+    actionId:null, owner:"", start:"", funding:"CapEx", mv:"Bills (12m)", accept:"", scope:""
+  });
+
+  const openPlan = (a) => {
+    setDraft({
+      actionId: a.id,
+      owner:"",
+      start: new Date().toISOString().slice(0,7), // yyyy-mm
+      funding: "CapEx",
+      mv: "Bills (12m)",
+      accept: "≥ " + fmtGBP(a.save*0.85) + " saved/yr & Δindex ≤ " + a.indexDelta.toFixed(2),
+      scope: ""
+    });
+    setOpen(true);
+  };
+
+  const savePlan = () => {
+    setActions(xs => xs.map(a => a.id!==draft.actionId ? a : ({
+      ...a,
+      status: "Planned",
+      plan: {
+        owner: draft.owner || "Unassigned",
+        start: draft.start,
+        funding: draft.funding,
+        mv: draft.mv,
+        accept: draft.accept,
+        scope: draft.scope,
+        snapshot: {
+          capex: a.capex, save: a.save, years: a.years, beta: a.beta,
+          confidence: a.confidence, indexDelta: a.indexDelta, co2Delta: a.co2Delta
+        }
+      }
+    })));
+    setOpen(false);
   };
 
   return (
@@ -1023,88 +1081,157 @@ function Actions({ openLineage }) {
         title="Actions"
         desc="Each action originates from a monitored alarm and carries a finance view (NPV, payback) plus expected performance impact."
       >
-        <ul className="space-y-2">
-          {items.map((x) => {
-            const pay = x.save ? x.capex / x.save : null;
-            const nv = npv(x.capex, x.save, x.rate ?? 0.08, x.yrs ?? 5);
+        {/* Planned roll-up */}
+        {!!planned.length && (
+          <div className="rounded-xl p-3 mb-3 grid grid-cols-2 md:grid-cols-4 gap-3"
+               style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
+            <div><div className="text-xs text-slate-400">Planned CapEx</div>
+              <div className="text-slate-100 font-semibold">{fmtGBP(plannedTotals.capex)}</div></div>
+            <div><div className="text-xs text-slate-400">Planned savings /yr</div>
+              <div className="text-slate-100 font-semibold">{fmtGBP(plannedTotals.save)}</div></div>
+            <div><div className="text-xs text-slate-400">Planned Δ index</div>
+              <div className="text-emerald-300 font-semibold">{plannedTotals.index.toFixed(2)}</div></div>
+            <div><div className="text-xs text-slate-400">Planned Δ tCO₂e/yr</div>
+              <div className="text-emerald-300 font-semibold">{plannedTotals.co2.toFixed(1)}</div></div>
+          </div>
+        )}
+
+        {/* Action cards */}
+        <ul className="space-y-3">
+          {actions.map(a=>{
+            const theNpv = npv(a.save, a.years, 0.08, a.capex);
             return (
-              <li key={x.id} className="rounded-xl p-3 md:p-4" style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}>
-                {/* Header */}
+              <li key={a.id} className="rounded-2xl p-4 md:p-5"
+                  style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
                 <div className="flex items-start justify-between gap-3">
-                  <div className="text-slate-100 font-medium">{x.m}</div>
-                  <Badge tone={x.status === "Approved" ? "success" : x.status === "To review" ? "info" : "neutral"}>{x.status}</Badge>
+                  <div className="text-slate-100 font-medium">{a.title}</div>
+                  <span className="chip">{a.status}</span>
                 </div>
 
-                {/* Why this (alarm) */}
-                <div className="mt-2 text-xs text-slate-300 flex flex-wrap items-center gap-2">
-                  <span className="px-2 py-0.5 rounded-full bg-slate-500/15 ring-1 ring-inset ring-slate-400/30">
-                    Alarm: {x.trigger.kind}
-                  </span>
-                  <span className="px-2 py-0.5 rounded-full bg-slate-500/15 ring-1 ring-inset ring-slate-400/30">
-                    {x.trigger.metric}
-                  </span>
-                  <span className="px-2 py-0.5 rounded-full bg-slate-500/15 ring-1 ring-inset ring-slate-400/30">
-                    {x.trigger.period}
-                  </span>
-                  <span className="px-2 py-0.5 rounded-full bg-slate-500/15 ring-1 ring-inset ring-slate-400/30">
-                    {x.trigger.detail}
-                  </span>
+                {/* chips */}
+                <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                  <span className="chip">Alarm: {a.alarm}</span>
+                  <span className="chip">{a.category}</span>
+                  <span className="chip">{a.window}</span>
+                  <span className="chip">{a.rule}</span>
                 </div>
 
-                {/* Business case */}
-                <div className="mt-3 grid grid-cols-2 md:grid-cols-6 gap-2 text-sm">
-                  <div className="rounded-lg p-2" style={{ background: "rgba(148,163,184,.06)", border: "1px solid rgba(148,163,184,.18)" }}>
+                {/* metrics */}
+                <div className="mt-3 grid grid-cols-2 md:grid-cols-6 gap-3">
+                  <div className="rounded-xl p-3" style={{background:"rgba(148,163,184,.06)",border:"1px solid var(--stroke)"}}>
                     <div className="text-xs text-slate-400">CapEx</div>
-                    <div className="text-slate-100 font-medium">{money(x.capex)}</div>
+                    <div className="text-slate-100 font-semibold">{fmtGBP(a.capex)}</div>
                   </div>
-                  <div className="rounded-lg p-2" style={{ background: "rgba(148,163,184,.06)", border: "1px solid rgba(148,163,184,.18)" }}>
+                  <div className="rounded-xl p-3" style={{background:"rgba(148,163,184,.06)",border:"1px solid var(--stroke)"}}>
                     <div className="text-xs text-slate-400">Annual savings</div>
-                    <div className="text-slate-100 font-medium">{money(x.save)}</div>
+                    <div className="text-slate-100 font-semibold">{fmtGBP(a.save)}</div>
                   </div>
-                  <div className="rounded-lg p-2" style={{ background: "rgba(148,163,184,.06)", border: "1px solid rgba(148,163,184,.18)" }}>
-                    <div className="text-xs text-slate-400">NPV @ {Math.round((x.rate ?? 0.08) * 100)}% / {x.yrs}y</div>
-                    <div className={"font-medium " + (nv >= 0 ? "text-emerald-300" : "text-rose-300")}>{money(nv)}</div>
+                  <div className="rounded-xl p-3" style={{background:"rgba(148,163,184,.06)",border:"1px solid var(--stroke)"}}>
+                    <div className="text-xs text-slate-400">NPV @ 8% / {a.years}y</div>
+                    <div className="text-emerald-300 font-semibold">{fmtGBP(theNpv)}</div>
                   </div>
-                  <div className="rounded-lg p-2" style={{ background: "rgba(148,163,184,.06)", border: "1px solid rgba(148,163,184,.18)" }}>
+                  <div className="rounded-xl p-3" style={{background:"rgba(148,163,184,.06)",border:"1px solid var(--stroke)"}}>
                     <div className="text-xs text-slate-400">Simple payback</div>
-                    <div className="text-slate-100 font-medium">{pay ? pay.toFixed(1) + "y" : "–"}</div>
+                    <div className="text-slate-100 font-semibold">{(a.capex/a.save).toFixed(1)}y</div>
                   </div>
-                  <div className="rounded-lg p-2" style={{ background: "rgba(148,163,184,.06)", border: "1px solid rgba(148,163,184,.18)" }}>
+                  <div className="rounded-xl p-3" style={{background:"rgba(148,163,184,.06)",border:"1px solid var(--stroke)"}}>
                     <div className="text-xs text-slate-400">β / sensitivity</div>
-                    <div className="text-slate-100 font-medium">{x.beta.toFixed(2)}</div>
+                    <div className="text-slate-100 font-semibold">{a.beta.toFixed(2)}</div>
                   </div>
-                  <div className="rounded-lg p-2" style={{ background: "rgba(148,163,184,.06)", border: "1px solid rgba(148,163,184,.18)" }}>
+                  <div className="rounded-xl p-3" style={{background:"rgba(148,163,184,.06)",border:"1px solid var(--stroke)"}}>
                     <div className="text-xs text-slate-400">Confidence</div>
-                    <div className="text-slate-100 font-medium">{percent(x.confidence)}</div>
+                    <div className="text-slate-100 font-semibold">{Math.round(a.confidence*100)}%</div>
                   </div>
                 </div>
 
-                {/* Expected impact */}
-                <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
-                  <Badge tone="success">Δ service index {signed(x.impact.index, 2)}</Badge>
-                  <Badge tone="success">Δ comfort risk {signed(x.impact.comfort * 100, 0, "%")}</Badge>
-                  <Badge tone="success">Δ emissions {signed(x.impact.emissions, 1, " tCO₂e/yr")}</Badge>
+                {/* expected impacts */}
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <span className="chip">Δ service index {a.indexDelta.toFixed(2)}</span>
+                  <span className="chip">Δ comfort risk {a.comfortDeltaPct}%</span>
+                  <span className="chip">Δ emissions {a.co2Delta} tCO₂e/yr</span>
                 </div>
 
-                {/* Links */}
-                <div className="mt-3 flex items-center gap-2">
-                  <button
-                    className="btn btn-ghost"
-                    onClick={() => {
-                      // pass focus to the Lineage tab
-                      window.hoshiLineageId = x.id;
-                      if (typeof openLineage === "function") openLineage();
-                    }}
-                  >
+                {/* CTAs */}
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <button className="btn btn-ghost"
+                          onClick={()=>alert(
+                            `Lineage:\n• Baseline: ${a.lineage.baseline}\n• Method: ${a.lineage.method}\n• Factors: ${a.lineage.factors.join(", ")}`
+                          )}>
                     View data lineage
                   </button>
-                  <button className="btn btn-primary">Add to plan</button>
+                  {a.status!=="Planned" ? (
+                    <button className="btn btn-primary" onClick={()=>openPlan(a)}>Add to plan</button>
+                  ) : (
+                    <span className="text-xs text-slate-400 mt-2">Planned by {a.plan?.owner} · starts {a.plan?.start}</span>
+                  )}
                 </div>
               </li>
             );
           })}
         </ul>
       </Section>
+
+      {/* lightweight modal */}
+      {open && (
+        <div className="fixed inset-0 z-[3000] grid place-items-center"
+             style={{background:"rgba(0,0,0,.45)"}}>
+          <div className="w-[min(640px,92vw)] rounded-2xl p-5"
+               style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
+            <div className="text-slate-100 font-semibold text-lg">Add to plan</div>
+            <div className="text-slate-400 text-sm">Promote this action to the roadmap and register how we’ll verify it.</div>
+
+            <div className="grid md:grid-cols-2 gap-3 mt-4">
+              <div>
+                <label className="text-xs text-slate-400">Owner</label>
+                <input className="w-full mt-1 px-3 py-2 rounded-lg"
+                       style={{background:"var(--panel-2)",border:"1px solid var(--stroke)",color:"var(--text)"}}
+                       value={draft.owner} onChange={e=>setDraft({...draft,owner:e.target.value})}/>
+              </div>
+              <div>
+                <label className="text-xs text-slate-400">Start</label>
+                <input type="month" className="w-full mt-1 px-3 py-2 rounded-lg"
+                       style={{background:"var(--panel-2)",border:"1px solid var(--stroke)",color:"var(--text)"}}
+                       value={draft.start} onChange={e=>setDraft({...draft,start:e.target.value})}/>
+              </div>
+              <div>
+                <label className="text-xs text-slate-400">Funding</label>
+                <select className="w-full mt-1 px-3 py-2 rounded-lg"
+                        style={{background:"var(--panel-2)",border:"1px solid var(--stroke)",color:"var(--text)"}}
+                        value={draft.funding} onChange={e=>setDraft({...draft,funding:e.target.value})}>
+                  <option>CapEx</option><option>OpEx</option><option>No-cost ops</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-slate-400">M&V method</label>
+                <select className="w-full mt-1 px-3 py-2 rounded-lg"
+                        style={{background:"var(--panel-2)",border:"1px solid var(--stroke)",color:"var(--text)"}}
+                        value={draft.mv} onChange={e=>setDraft({...draft,mv:e.target.value})}>
+                  <option>Bills (12m)</option>
+                  <option>Interval meter (IPMVP C)</option>
+                  <option>Submeter w/ baseline model</option>
+                </select>
+              </div>
+              <div className="md:col-span-2">
+                <label className="text-xs text-slate-400">Acceptance criteria</label>
+                <input className="w-full mt-1 px-3 py-2 rounded-lg"
+                       style={{background:"var(--panel-2)",border:"1px solid var(--stroke)",color:"var(--text)"}}
+                       value={draft.accept} onChange={e=>setDraft({...draft,accept:e.target.value})}/>
+              </div>
+              <div className="md:col-span-2">
+                <label className="text-xs text-slate-400">Scope / notes (optional)</label>
+                <textarea rows={3} className="w-full mt-1 px-3 py-2 rounded-lg"
+                          style={{background:"var(--panel-2)",border:"1px solid var(--stroke)",color:"var(--text)"}}
+                          value={draft.scope} onChange={e=>setDraft({...draft,scope:e.target.value})}/>
+              </div>
+            </div>
+
+            <div className="mt-4 flex items-center justify-end gap-2">
+              <button className="btn btn-ghost" onClick={()=>setOpen(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={savePlan}>Save to plan</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
