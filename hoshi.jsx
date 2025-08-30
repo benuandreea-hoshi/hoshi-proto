@@ -968,27 +968,155 @@ function Building(){
     </div>
   );
 }
- 
 function Actions(){
-  const items = [
-    { m:"LED retrofit", capex:25000, save:8500, pay:1.8, status:"To review" },
-    { m:"HVAC schedule", capex:1000, save:4200, pay:0.4, status:"Approved" },
+  // Helper: sum of (estimated) index deltas for display (×10 like elsewhere)
+  const indexDeltaX10 = (a) =>
+    (Object.values((a.links?.index)||{}).reduce((s,v)=>s+v,0) * 10); // negative is better
+
+  // Demo actions wired to overrun categories + index drivers
+  const actions = [
+    {
+      id:1,
+      m:"LED retrofit",
+      capex:25000, save:8500, pay:1.8, status:"To review", confidence:.75,
+      links:{ overrun:["Electricity","Mechanical & Electrical"], index:{ electricity:-0.0030 } },
+      note:"Replace fluorescent with LED + controls (sensors/schedules)."
+    },
+    {
+      id:2,
+      m:"HVAC schedule",
+      capex:1000, save:4200, pay:0.4, status:"Approved", confidence:.85,
+      links:{ overrun:["Gas","HVAC"], index:{ hvac:-0.0015 } },
+      note:"Tighten occupied/unoccupied times; enable demand-based ventilation."
+    },
   ];
+
+  const totalAnnualSave = actions.reduce((s,a)=>s+a.save,0);
+
+  const [sortBy, setSortBy] = React.useState("roi"); // 'roi' | 'impact' | 'capex'
+  const sorted = [...actions].sort((a,b)=>{
+    const roiA = a.save/Math.max(1,a.capex), roiB = b.save/Math.max(1,b.capex);
+    if (sortBy==="roi")     return roiB - roiA;
+    if (sortBy==="impact")  return indexDeltaX10(a) - indexDeltaX10(b); // more negative first
+    if (sortBy==="capex")   return a.capex - b.capex;
+    return 0;
+  });
+
+  // little pill
+  const Chip = ({children}) => (
+    <span className="chip whitespace-nowrap">{children}</span>
+  );
+
+  // little metric inline
+  const Pill = ({k,v,sub})=>(
+    <div className="px-2 py-1 rounded-lg"
+         style={{background:"rgba(148,163,184,.10)",border:"1px solid var(--stroke)"}}>
+      <span className="text-slate-300 text-[11px]">{k}</span>
+      <span className="ml-1 text-slate-100 font-medium">{v}</span>
+      {sub && <span className="ml-1 text-slate-400 text-[11px]">{sub}</span>}
+    </div>
+  );
+
   return (
     <div className="grid gap-4 md:gap-6">
-      <Section title="Actions">
+      <Section
+        title="Actions"
+        desc="Concrete measures to cut spend and improve the Service Performance index. Each action shows money impact (CapEx, savings, payback) and the estimated index change. Overrun links show which budget lines this action addresses."
+        right={
+          <div className="hidden md:flex items-center gap-2">
+            <span className="text-slate-300 text-xs">Sort</span>
+            <select
+              className="px-2 py-1 rounded-lg text-sm"
+              style={{background:"var(--panel-2)",border:"1px solid var(--stroke)",color:"var(--text)"}}
+              value={sortBy}
+              onChange={e=>setSortBy(e.target.value)}
+            >
+              <option value="roi">Best ROI</option>
+              <option value="impact">Biggest Index impact</option>
+              <option value="capex">Lowest CapEx</option>
+            </select>
+          </div>
+        }
+      >
+        {/* roll-up */}
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <Pill k="Annual savings (est.)" v={`£${totalAnnualSave.toLocaleString()}`} />
+          <Pill k="Actions" v={actions.length} />
+          <Pill k="Sort" v={
+            sortBy==="roi"?"Best ROI":sortBy==="impact"?"Biggest Index impact":"Lowest CapEx"
+          } />
+        </div>
+
+        {/* list */}
         <ul className="space-y-2">
-          {items.map((x,i)=>(
-            <li key={i} className="rounded-xl p-3" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
-              <div className="text-slate-100 font-medium">{x.m}</div>
-              <div className="text-xs text-slate-400">CapEx £{x.capex.toLocaleString()} • Save £{x.save.toLocaleString()} • Payback {x.pay}y • {x.status}</div>
-            </li>
-          ))}
+          {sorted.map(a=>{
+            const idx = indexDeltaX10(a); // e.g. −0.03 (×10 display)
+            const idxText = (idx>=0?`+${idx.toFixed(2)}`:idx.toFixed(2));
+            const statusTone = a.status==="Approved" ? "success"
+                              : a.status==="To review" ? "info" : "neutral";
+            return (
+              <li key={a.id} className="rounded-xl p-3 md:p-4"
+                  style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-slate-100 font-medium">{a.m}</div>
+                    <div className="text-xs text-slate-400 mt-0.5">{a.note}</div>
+                  </div>
+                  <span className="hidden md:inline-flex">
+                    <Badge tone={statusTone}>{a.status}</Badge>
+                  </span>
+                </div>
+
+                {/* impact row */}
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <Pill k="CapEx"   v={`£${a.capex.toLocaleString()}`} />
+                  <Pill k="Saves"   v={`£${a.save.toLocaleString()}/y`} />
+                  <Pill k="Payback" v={`${a.pay}y`} />
+                  <Pill k="Index Δ" v={idxText} sub="(×10)" />
+                  <Pill k="Confidence" v={`${Math.round(a.confidence*100)}%`} />
+                </div>
+
+                {/* links */}
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <span className="text-xs text-slate-400">Links:</span>
+                  <Chip>Overruns: {a.links?.overrun?.join(", ")||"—"}</Chip>
+                  {a.links?.index && (
+                    <Chip>
+                      Index drivers:&nbsp;
+                      {Object.keys(a.links.index).map((k,i)=>(
+                        <span key={k}>
+                          {k}{i<Object.keys(a.links.index).length-1?", ":""}
+                        </span>
+                      ))}
+                    </Chip>
+                  )}
+                </div>
+
+                {/* mobile status */}
+                <div className="mt-2 md:hidden">
+                  <Badge tone={statusTone}>{a.status}</Badge>
+                </div>
+              </li>
+            );
+          })}
         </ul>
+
+        {/* how this ties in */}
+        <div className="mt-4 rounded-xl p-3 text-sm"
+             style={{background:"rgba(148,163,184,.06)",border:"1px solid var(--stroke)"}}>
+          <div className="text-slate-100 font-medium mb-1">How Actions connect</div>
+          <ul className="text-slate-300 list-disc pl-5 space-y-1">
+            <li><b>Overruns</b>: the “Overruns” tags match the budget lines in <em>Building</em>. Pick actions that reduce those first.</li>
+            <li><b>Service index</b>: “Index Δ” shows the estimated change to the composite index (×10 scale) like in <em>Services</em>.</li>
+            <li>Prioritise by ROI, then by Index impact if two actions have similar payback.</li>
+          </ul>
+        </div>
       </Section>
     </div>
   );
 }
+
+   
 
 function Lineage(){
   return (
