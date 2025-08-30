@@ -99,99 +99,62 @@ function DonutGauge({ value=0, max=1, size=120, stroke=14, label, display }) {
     </svg>
   );
 }
-// == HeroOrb (desktop-only, stronger contrast ring)
-function HeroOrb({ value = 0.42, label = "Composite index" }) {
-  const size = 420;           // overall canvas
-  const core = 260;           // inner plate
-  const stroke = 22;          // gauge thickness
-  const r = (core - stroke) / 2;
-  const c = 2 * Math.PI * r;
-  const pct = Math.max(0, Math.min(1, value));
-  const dash = c * pct;
+// desktop-only hero orb (keep rings; center number via HTML overlay)
+function HeroOrb({ value = 0.42, label = "Good" }) {
+  const size = 520;          // overall canvas
+  const stroke = 28;         // ring thickness
+  const r = (size / 2) - stroke;
+  const circ = 2 * Math.PI * r;
+  const pct = Math.max(0, Math.min(1, value));     // 0..1
+  const dash = `${circ * pct} ${circ * (1 - pct)}`;
 
   return (
     <div className="hidden md:flex items-center justify-center relative w-full">
-      {/* soft background glow so text reads */}
-      <div
-        className="absolute inset-0 -z-10 rounded-[999px]"
-        style={{
-          background:
-            "radial-gradient(60% 60% at 60% 45%, rgba(16,185,129,.18), transparent 60%)," +
-            "radial-gradient(70% 70% at 40% 55%, rgba(59,130,246,.20), transparent 70%)",
-          filter: "blur(6px)",
-        }}
-      />
+      {/* RINGS */}
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-        {/* large decorative outer ring */}
         <defs>
-          <linearGradient id="orbGrad" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#10b981" />
-            <stop offset="100%" stopColor="#3b82f6" />
+          <linearGradient id="heroGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#0ea5e9" />
+            <stop offset="100%" stopColor="#0ea5e9" stopOpacity="0.25" />
           </linearGradient>
         </defs>
+
+        {/* large decorative outer ring */}
         <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={size / 2 - 28}
-          fill="none"
-          stroke="url(#orbGrad)"
-          strokeOpacity="0.33"
-          strokeWidth="28"
+          cx={size/2} cy={size/2} r={r + 70}
+          fill="none" stroke="url(#heroGrad)" strokeWidth="28" strokeOpacity="0.33"
         />
-        {/* inner plate + gauge */}
-        <g transform={`translate(${(size - core) / 2},${(size - core) / 2})`}>
+
+        {/* inner plate */}
+        <circle
+          cx={size/2} cy={size/2} r={r}
+          fill="none" stroke="#1f2937" strokeWidth={stroke} strokeOpacity="0.28"
+        />
+
+        {/* value arc */}
+        <g transform={`translate(${size/2}, ${size/2}) rotate(-90)`}>
           <circle
-            cx={core / 2}
-            cy={core / 2}
-            r={core / 2}
-            fill="#090f1ccc"
-            stroke="#1f2a33"
-            strokeWidth="1"
-          />
-          <circle
-            cx={core / 2}
-            cy={core / 2}
             r={r}
-            fill="none"
-            stroke="#e5e7eb"
-            strokeOpacity="0.28"
-            strokeWidth={stroke}
+            fill="none" stroke="#10b981" strokeWidth={stroke} strokeLinecap="round"
+            strokeDasharray={dash}
           />
-          <g transform={`translate(${core / 2},${core / 2}) rotate(-90)`}>
-            <circle
-              r={r}
-              fill="none"
-              stroke="#10b981"
-              strokeWidth={stroke}
-              strokeLinecap="round"
-              strokeDasharray={`${dash} ${c - dash}`}
-            />
-          </g>
-          <text
-            x="50%"
-            y="50%"
-            dominantBaseline="middle"
-            textAnchor="middle"
-            fontSize="64"
-            fontWeight="800"
-            fill="#e2e8f0"
-          >
-            {value.toFixed(2)}
-          </text>
-          <text
-            x="50%"
-            y={core / 2 + 40}
-            textAnchor="middle"
-            fontSize="18"
-            fill="#a9b1c4"
-          >
-            Good
-          </text>
         </g>
       </svg>
+
+      {/* PERFECTLY CENTERED LABEL + NUMBER */}
+      <div className="absolute inset-0 grid place-items-center pointer-events-none">
+        <div className="text-center">
+          <div className="text-slate-300 text-lg mb-1">{label}</div>
+          <div className="text-[88px] leading-none font-semibold text-white">
+            {value.toFixed(2)}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
+
+ 
 function Story({ goApp }) {
   // tiny sparkline + demo
   const roiSpark = [2, 3, 2, 4, 5, 4, 6, 7, 6, 7, 8, 7];
