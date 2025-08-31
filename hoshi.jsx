@@ -1632,7 +1632,7 @@ function Blog({ openPortfolio, openBuilding }) {
       readingMins: 5,
       tags: ["Getting started", "Investors", "Operators"],
       label: "Intro",
-      img: PEOPLE_SRC, // placeholder hero image (you can swap per-article later)
+      img: LOGO_SRC, // placeholder hero image (you can swap per-article later)
     },
   ];
 
@@ -1862,14 +1862,12 @@ function Blog({ openPortfolio, openBuilding }) {
           <div className="flex-1">
             <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-sky-400 to-emerald-400">
-                Plain-English explainers
+              The Hoshi field guide,
               </span>{" "}
-              for finance, risk, and governance.
+              for insightful articles.
             </h2>
             <p className="text-slate-300 mt-2 max-w-2xl">
-              Short reads that tie Hoshi’s UI to capital decisions: NPV, β,
-              systematic vs idiosyncratic, data lineage, and the governance loop
-              from alarms → actions → M&amp;V.
+              The concepts, metrics, and governance patterns behind a factor-aware platform for buildings and portfolios.
             </p>
             <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-400">
               <span className="chip">Getting started</span>
