@@ -420,6 +420,58 @@ function Story({ goApp }) {
           </div>
         </Band>
 
+        {/* Commonwealth of People */}
+<Section
+  title="Commonwealth of People"
+  desc="A governance lens that aligns owners, occupiers, suppliers and investors — so ROI, comfort and carbon are measured the same way and value is shared fairly."
+>
+  <div className="grid md:grid-cols-2 gap-4 md:gap-6">
+    {/* Image */}
+    <div className="rounded-2xl overflow-hidden"
+         style={{background:"var(--panel-2)", border:"1px solid var(--stroke)"}}>
+      <img
+        src={PEOPLE_SRC}
+        alt="Commonwealth of People"
+        className="w-full h-full object-cover"
+        loading="lazy"
+        decoding="async"
+      />
+    </div>
+
+    {/* Copy */}
+    <div className="rounded-2xl p-4 md:p-5"
+         style={{background:"var(--panel-2)", border:"1px solid var(--stroke)"}}>
+      <div className="text-slate-100 font-medium">What it is</div>
+      <p className="text-slate-300 mt-1">
+        A simple social contract for the built environment: evidence first, value shared.
+        Data lineage, transparent methods and acceptance criteria make results portable
+        across partners and audits.
+      </p>
+
+      <div className="mt-4 text-slate-100 font-medium">Why it matters</div>
+      <ul className="text-slate-300 list-disc pl-5 mt-1 space-y-1">
+        <li><b>Trustable numbers:</b> baselines, factors and formulas are visible and versioned.</li>
+        <li><b>Aligned incentives:</b> outcomes speak finance (NPV, payback) and risk (β, confidence).</li>
+        <li><b>Accountability:</b> actions carry M&amp;V and acceptance criteria — not just promises.</li>
+      </ul>
+
+      <div className="mt-4 text-slate-100 font-medium">How Hoshi uses it</div>
+      <ul className="text-slate-300 list-disc pl-5 mt-1 space-y-1">
+        <li><b>Lineage &amp; governance:</b> every metric links to baseline → method → factors.</li>
+        <li><b>Forward Energy Premium (FEP):</b> ROI is split into systematic (β) vs idiosyncratic drivers.</li>
+        <li><b>Plan &amp; verify:</b> each Action defines owner, start, funding, M&amp;V and acceptance criteria.</li>
+      </ul>
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        <span className="chip">Evidence-first</span>
+        <span className="chip">Shared value</span>
+        <span className="chip">Audit-ready</span>
+      </div>
+    </div>
+  </div>
+</Section>
+
+
         {/* HOW IT WORKS (Band 2) */}
         <Band tone={2} id="how">
           <h3 className="text-slate-50 text-lg font-semibold mb-3">How it works</h3>
