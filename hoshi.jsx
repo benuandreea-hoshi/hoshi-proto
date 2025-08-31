@@ -1691,7 +1691,7 @@ function Blog({ openPortfolio, openBuilding }) {
       label: "Governance",
       title: "Commonwealth of People",
       summary:
-        "Why real estate needs a different kind of order: a practical frame for real-estate governance, so that operating choices become decision-grade capital signals.",
+        "Why real estate needs a different kind of order; a practical frame for real-estate governance where choices become decision-grade capital signals.",
       img: PEOPLE_SRC,
       readingMins: 7,
       tags: ["Hobbes", "Commonwealth Cost of Carbon", "Sustainability", "Eco ledger", "Governance"],
