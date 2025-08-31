@@ -1891,7 +1891,10 @@ function Blog({ openPortfolio, openBuilding }) {
             className="text-left rounded-2xl overflow-hidden hover:shadow-lg transition-shadow"
             style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}
           >
-            <div className="h-36 md:h-40 w-full overflow-hidden">
+       <div
+  className="w-full overflow-hidden"
+  style={{ height: "clamp(260px, 42vw, 460px)" }}
+>
               <img
                 src={a.img || LOGO_SRC}
                 alt=""
