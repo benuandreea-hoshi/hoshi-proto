@@ -1610,6 +1610,15 @@ function PublicBPS({ goLineage = ()=>{}, goActions = ()=>{} }){
     </svg>
   ),
 };
+// add the Blog icon without risking object-literal commas/braces
+ICONS.blog = function BlogIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" strokeWidth="2" />
+      <path d="M7 8h10M7 12h10M7 16h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+};
 
 /* --------------------- BLOG TAB --------------------- */
 function Blog({ goPortfolio, goBuilding }) {
