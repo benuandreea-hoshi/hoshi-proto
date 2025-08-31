@@ -1621,8 +1621,8 @@ ICONS.blog = function BlogIcon() {
 };
 
 /* --------------------- BLOG TAB --------------------- */
-function Blog({ goPortfolio, goBuilding }) {
-  // simple registry (1st article preloaded)
+function Blog({ openPortfolio, openBuilding }) {
+  // Registry of articles (we start with one; add more objects later)
   const BLOG = [
     {
       slug: "hoshi-in-5-minutes",
@@ -1631,9 +1631,12 @@ function Blog({ goPortfolio, goBuilding }) {
         "From utility bills to decision-grade signals (NPV, β, systematic vs idiosyncratic).",
       readingMins: 5,
       tags: ["Getting started", "Investors", "Operators"],
+      label: "Intro",
+      img: PEOPLE_SRC, // placeholder hero image (you can swap per-article later)
     },
   ];
 
+  const [view, setView] = React.useState("home"); // 'home' | 'article'
   const [active, setActive] = React.useState(BLOG[0].slug);
   const article = BLOG.find((b) => b.slug === active);
 
@@ -1641,7 +1644,48 @@ function Blog({ goPortfolio, goBuilding }) {
     <span className="chip whitespace-nowrap">{children}</span>
   );
 
-  // article body as JSX so you can style/tweak freely
+  // tiny animated orbit (CSS-only, lightweight)
+  const Orbit = () => (
+    <div className="relative h-36 md:h-40">
+      <div
+        className="absolute inset-0 rounded-full opacity-20"
+        style={{
+          border: "1px solid var(--stroke)",
+          boxShadow:
+            "0 0 80px rgba(56,189,248,.15), inset 0 0 80px rgba(16,185,129,.08)",
+        }}
+      />
+      <div
+        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full animate-spin"
+        style={{
+          width: 120,
+          height: 120,
+          border: "1px dashed rgba(56,189,248,.35)",
+          animationDuration: "16s",
+        }}
+      />
+      <div
+        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full animate-spin"
+        style={{
+          width: 180,
+          height: 180,
+          border: "1px dashed rgba(16,185,129,.35)",
+          animationDuration: "24s",
+          animationDirection: "reverse",
+        }}
+      />
+      <div
+        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full"
+        style={{
+          background:
+            "radial-gradient(circle at 30% 30%, #60a5fa, #34d399 70%)",
+          boxShadow: "0 0 18px rgba(56,189,248,.65)",
+        }}
+      />
+    </div>
+  );
+
+  // ---------- article body (unchanged core content) ----------
   const ArticleBody = () => (
     <div className="prose prose-invert max-w-none">
       {/* TLDR */}
@@ -1705,8 +1749,8 @@ function Blog({ goPortfolio, goBuilding }) {
           systematic vs idiosyncratic split + lineage.
         </li>
         <li>
-          <b>Act (with governance):</b> every alarm becomes an Action with
-          M&amp;V and acceptance criteria.
+          <b>Act (with governance):</b> every alarm becomes an Action with M&amp;V
+          and acceptance criteria.
         </li>
       </ol>
 
@@ -1735,7 +1779,7 @@ function Blog({ goPortfolio, goBuilding }) {
           data lineage and acceptance criteria.
         </li>
         <li>
-          <b>Earth-first framing:</b> align with a “Commonwealth Cost of Carbon”
+          <b>Earth-first framing:</b> align with a “commonwealth cost of carbon”
           lens rather than box-ticking.
         </li>
       </ul>
@@ -1802,69 +1846,109 @@ function Blog({ goPortfolio, goBuilding }) {
         style={{ background: "rgba(148,163,184,.06)", border: "1px solid var(--stroke)" }}
       >
         <div className="text-slate-400 text-sm">
-          <b>Source notes:</b> Ecosystem Alarm Management, by Aidan T Parkinson (https://github.com/aidan-parkinson/corporation-sole).
+          <b>Source notes:</b> Ecosystem Alarm Management by Aidan T Parkinson (and your Thesis).
         </div>
       </div>
     </div>
   );
 
-  // layout (no Section header, to avoid the “Blog” heading)
-  return (
-    <div className="grid gap-4 md:gap-6">
-      <div className="card p-5 md:p-6">
-        <div className="grid gap-4">
-          {/* tiny list (only one for now, but future-proofed) */}
-          <div className="mb-3 flex gap-2 flex-wrap">
-            {BLOG.map((b) => (
-              <button
-                key={b.slug}
-                className={
-                  "chip " +
-                  (active === b.slug
-                    ? "bg-blue-500/20 text-blue-200 border-blue-400/40"
-                    : "")
-                }
-                onClick={() => setActive(b.slug)}
-              >
-                {b.title}
-              </button>
-            ))}
-          </div>
-
-          {/* meta */}
-          <div className="flex items-center gap-2 mb-3 text-xs text-slate-400">
-            <TagPill>{article.readingMins} min read</TagPill>
-            {article.tags.map((t, i) => (
-              <TagPill key={i}>{t}</TagPill>
-            ))}
-          </div>
-
-          {/* body */}
-          <div
-            className="rounded-2xl p-4 md:p-5"
-            style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}
-          >
-            <h1 className="text-slate-50 text-2xl md:text-3xl font-semibold">
-              {article.title}
-            </h1>
-            <p className="text-slate-300 mt-1">{article.summary}</p>
-
-            <div className="mt-4">
-              <ArticleBody />
+  // ---------- HOME (landing) ----------
+  const Home = () => (
+    <Section title="Hoshi Blog">
+      {/* Hero */}
+      <div className="rounded-2xl p-5 md:p-6 mb-4 relative overflow-hidden"
+           style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}>
+        <div className="md:flex items-center gap-6">
+          <div className="flex-1">
+            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-sky-400 to-emerald-400">
+                Plain-English explainers
+              </span>{" "}
+              for finance, risk, and governance.
+            </h2>
+            <p className="text-slate-300 mt-2 max-w-2xl">
+              Short reads that tie Hoshi’s UI to capital decisions: NPV, β,
+              systematic vs idiosyncratic, data lineage, and the governance loop
+              from alarms → actions → M&amp;V.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-400">
+              <span className="chip">Getting started</span>
+              <span className="chip">Investors</span>
+              <span className="chip">Operators</span>
+              <span className="chip">Governance</span>
             </div>
-
-            {/* in-article CTA */}
-            <div className="mt-6 flex flex-wrap gap-3">
-              <button className="btn btn-primary" onClick={goPortfolio}>
-                Open Portfolio
-              </button>
-              <button className="btn btn-ghost" onClick={goBuilding}>
-                Open Building
-              </button>
-            </div>
+          </div>
+          <div className="hidden md:block w-[220px] shrink-0">
+            <Orbit />
           </div>
         </div>
       </div>
+
+      {/* Cards */}
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+        {BLOG.map((a) => (
+          <button
+            key={a.slug}
+            onClick={() => { setActive(a.slug); setView("article"); }}
+            className="text-left rounded-2xl overflow-hidden hover:shadow-lg transition-shadow"
+            style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}
+          >
+            <div className="h-36 md:h-40 w-full overflow-hidden">
+              <img
+                src={a.img || LOGO_SRC}
+                alt=""
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="chip">{a.label}</span>
+                <span className="text-xs text-slate-400">{a.readingMins} min read</span>
+              </div>
+              <div className="text-slate-50 font-semibold text-lg leading-snug">
+                {a.title}
+              </div>
+              <div className="text-slate-400 text-sm mt-1">{a.summary}</div>
+              <div className="mt-3 flex gap-2 flex-wrap">
+                {a.tags.map((t, i) => (
+                  <span key={i} className="chip">{t}</span>
+                ))}
+              </div>
+            </div>
+          </button>
+        ))}
+      </div>
+    </Section>
+  );
+
+  // ---------- ARTICLE ----------
+  const Article = () => (
+    <Section title={article.title} desc={article.summary}>
+      <div className="mb-3 flex items-center gap-2 text-xs text-slate-400">
+        <TagPill>{article.readingMins} min read</TagPill>
+        {article.tags.map((t, i) => (
+          <TagPill key={i}>{t}</TagPill>
+        ))}
+      </div>
+
+      <div className="rounded-2xl p-4 md:p-5"
+           style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}>
+        <ArticleBody />
+
+        {/* in-article CTAs */}
+        <div className="mt-6 flex flex-wrap gap-3">
+          <button className="btn btn-primary" onClick={openPortfolio}>Open Portfolio</button>
+          <button className="btn btn-ghost" onClick={openBuilding}>Open Building</button>
+          <button className="btn btn-ghost" onClick={() => setView("home")}>Back to Blog</button>
+        </div>
+      </div>
+    </Section>
+  );
+
+  // render
+  return (
+    <div className="grid gap-4 md:gap-6">
+      {view === "home" ? <Home /> : <Article />}
     </div>
   );
 }
