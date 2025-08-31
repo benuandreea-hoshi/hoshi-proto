@@ -1639,7 +1639,7 @@ function Blog({ openPortfolio, openBuilding }) {
   const [view, setView] = React.useState("home"); // 'home' | 'article'
   const [active, setActive] = React.useState(BLOG[0].slug);
   const article = BLOG.find((b) => b.slug === active);
-
+   const CARD_IMG_H = "clamp(260px, 42vw, 460px)";
   const TagPill = ({ children }) => (
     <span className="chip whitespace-nowrap">{children}</span>
   );
@@ -1846,7 +1846,7 @@ function Blog({ openPortfolio, openBuilding }) {
         style={{ background: "rgba(148,163,184,.06)", border: "1px solid var(--stroke)" }}
       >
         <div className="text-slate-400 text-sm">
-          <b>Source notes:</b> Ecosystem Alarm Management by Aidan T Parkinson (and your Thesis).
+          <b>Source notes:</b> Ecosystem Alarm Management by Aidan T Parkinson (https://github.com/aidan-parkinson/corporation-sole).
         </div>
       </div>
     </div>
