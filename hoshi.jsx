@@ -1674,36 +1674,34 @@ ICONS.blog = function BlogIcon() {
 
 /* --------------------- BLOG TAB --------------------- */
 function Blog({ openPortfolio, openBuilding }) {
-
- // simple registry (now with two articles)
-const BLOG = [
-  {
-    slug: "hoshi-in-5-minutes",
-    label: "Getting started",
-    title: "Hoshi in 5 minutes",
-    summary:
-      "From utility bills to decision-grade signals (NPV, β, systematic vs idiosyncratic).",
-    img: LOGO_SRC,
-    readingMins: 5,
-    tags: ["Investors", "Operators", "Signals"],
-  },
-  {
-    slug: "commonwealth-of-people",
-    label: "Governance",
-    title: "Commonwealth of People",
-    summary:
-      "Why real estate needs a different kind of order. A practical frame for real-estate governance: a shared floor of ecological rules, and an audit-ready ledger of promises, so operating choices become decision-grade capital signals.",
-    img: PEOPLE_SRC, // <-- use the People image here
-    readingMins: 7,
-    tags: ["Hobbes", "Commonwealth Cost of Carbon", "Sustainability", "Eco ledger", "Governance"],
-  },
-];
-
+  // simple registry (two articles)
+  const BLOG = [
+    {
+      slug: "hoshi-in-5-minutes",
+      label: "Getting started",
+      title: "Hoshi in 5 minutes",
+      summary:
+        "From utility bills to decision-grade signals (NPV, β, systematic vs idiosyncratic).",
+      img: LOGO_SRC,
+      readingMins: 5,
+      tags: ["Investors", "Operators", "Signals"],
+    },
+    {
+      slug: "commonwealth-of-people",
+      label: "Governance",
+      title: "Commonwealth of People",
+      summary:
+        "Why real estate needs a different kind of order. A practical frame for real-estate governance: a shared floor of ecological rules, and an audit-ready ledger of promises, so operating choices become decision-grade capital signals.",
+      img: PEOPLE_SRC,
+      readingMins: 7,
+      tags: ["Hobbes", "Commonwealth Cost of Carbon", "Sustainability", "Eco ledger", "Governance"],
+    },
+  ];
 
   const [view, setView] = React.useState("home"); // 'home' | 'article'
   const [active, setActive] = React.useState(BLOG[0].slug);
   const article = BLOG.find((b) => b.slug === active);
-   const CARD_IMG_H = "clamp(260px, 42vw, 460px)";
+
   const TagPill = ({ children }) => (
     <span className="chip whitespace-nowrap">{children}</span>
   );
@@ -1749,362 +1747,195 @@ const BLOG = [
     </div>
   );
 
-   // article body as JSX so you can style/tweak freely
-const ArticleBody = () => {
-  if (active === "commonwealth-of-people") {
+  // article body as JSX so you can style/tweak freely
+  const ArticleBody = () => {
+    if (active === "commonwealth-of-people") {
+      return (
+        <div className="prose prose-invert max-w-none">
+          {/* hero image */}
+          {article?.img && (
+            <div className="rounded-xl overflow-hidden border mb-4" style={{ borderColor: "var(--stroke)" }}>
+              <img src={article.img} alt="" className="w-full h-48 md:h-64 object-cover" />
+            </div>
+          )}
+
+          {/* Body */}
+          <p className="text-slate-300">
+            Real estate runs on promises across many hands—owners, lenders, tenants, facilities
+            teams, ESCOs, insurers. Each party optimizes locally—reduce a bill here, tick an ESG
+            box there—yet the risks that matter most (energy volatility, overheating, carbon
+            liability, reputational blow-ups) sit in the gaps between those hands. Data platforms
+            help, but they mostly live at the edges of the problem.
+          </p>
+
+          <ul className="list-disc pl-6 text-slate-300">
+            <li><b>Market data</b> (think CoStar) tells you what space is worth relative to peers, not how your building’s comfort/energy choices expose you to ecological or policy shocks.</li>
+            <li><b>ESG reporters</b> (think Measurabl) lift disclosures to investor-grade, but they rarely turn meter data into enforceable operating commitments with payback, verification, and recourse.</li>
+            <li><b>Analytics/BMS</b> finds anomalies, yet “fix the spike” is not the same as governing a portfolio against a public carbon floor and showing ROI in capital terms.</li>
+          </ul>
+
+          <p className="text-slate-300">
+            The result is familiar: fragmentation, blame-shifting, and slow response to shared risks.
+            In equities you can diversify idiosyncratic risk away. In property you can’t; you hold a
+            few large, quirky assets for a long time. That’s why Hoshi proposes a new framework:
+            a <b>Commonwealth of People</b>.
+          </p>
+
+          <h3 className="text-slate-50 text-lg font-semibold mt-6">What “Commonwealth of People” actually means</h3>
+          <p className="text-slate-300">
+            Forget the historical British bloc. Here, a <b>commonwealth</b> is a covenant: free
+            societies agreeing to a <b>shared floor of rules</b> so the things we all depend on—the
+            carbon cycle, electric grids, breathable air—don’t get managed as an afterthought. States
+            keep sovereignty; civil associations (engineering bodies, civic groups, tenant alliances)
+            supply evidence and critique; but the floor is <b>public, published, and non-optional</b>.
+          </p>
+          <p className="text-slate-300">
+            In everyday terms: the biosphere is critical infrastructure. If it fails, every contract
+            in real estate becomes harder or impossible to honour. So we adopt a common floor that
+            says, “certain ecological obligations are not negotiable,” and we make that floor
+            practical with clear prices, alarms, rulings, and audit-ready records of the promises
+            we rely on.
+          </p>
+
+          <h3 className="text-slate-50 text-lg font-semibold mt-6">The instruments, in real-estate practice</h3>
+
+          <h4 className="text-slate-100 font-medium mt-4">1) CCC — the Commonwealth Cost of Carbon</h4>
+          <p className="text-slate-300"><b>CCC</b> is a public carbon rate—owned by the commonwealth, not by a firm—that everyone can reference. It’s the floor you build into underwriting, budgeting, and lease design.</p>
+          <p className="text-slate-300"><b>How it changes a decision:</b> A gas-heavy office shows a 4-year payback for a heat-pump retrofit at today’s tariffs. When you value avoided emissions at the CCC, the project’s NPV improves and the decision stops depending on fuel price luck.</p>
+          <p className="text-slate-300"><b>Where it lands in documents:</b> a lease addendum can state, “Operating plans and capex appraisal will apply the Commonwealth Cost of Carbon at the prevailing public rate.” Now tenants, owners, and auditors are aligned on the price floor that governs decisions—not an internal carbon price that changes with the CFO’s mood.</p>
+
+          <h4 className="text-slate-100 font-medium mt-4">2) A shared ecological ledger (assured promises)</h4>
+          <p className="text-slate-300">The ledger records <b>assured promises</b>: property-like commitments with baselines, methods, factors, licenses, and version history. It’s how you make a claim safe to rely on.</p>
+          <p className="text-slate-300"><b>Example:</b> “36.2 tCO₂e last year” links to baseline (FY24 bills), method (top-down regression with HDD/CDD), factors (emissions factors vX.Y), and license (who can reuse the method). If a factor updates, the ledger shows the new calculation and preserves the prior version. Tenants and lenders don’t have to trust a slide; they can inspect the promise.</p>
+
+          <h4 className="text-slate-100 font-medium mt-4">3) Public alarms and rulings</h4>
+          <p className="text-slate-300">When an obligation is breached—exceeding electricity budget, overheating thresholds, or CCC-aware carbon bounds—an <b>alarm</b> fires with a shared priority (P1 critical → P4 optimization). <b>Rulings</b> are the professionally reviewed playbooks that say “what good looks like” and how success will be verified.</p>
+          <p className="text-slate-300"><b>Example:</b> “P2 Electricity Overrun (12-month window). Ruling R-E.12 applies: optimize schedules and lighting; M&amp;V by bills (12m) with weather normalization; acceptance = ≥15% reduction vs modeled baseline.” The ruling isn’t a suggestion; it’s a promise template that becomes enforceable once commissioned.</p>
+
+          <h4 className="text-slate-100 font-medium mt-4">4) Executive function (fairness without technocracy)</h4>
+          <p className="text-slate-300">Authority needs legitimacy. Rulings are <b>peer-reviewed</b> by professional associations, justified in plain vocabulary (baseline, method, factors), and <b>commissioned in situ</b> before they bite. Disputes can be escalated; everything is explainable.</p>
+          <p className="text-slate-300"><b>Example:</b> A local engineering society proposes a better regression for mixed-mode buildings. After trials, the ruling is updated and versioned. Your portfolio benefits from the improvement without losing auditability.</p>
+
+          <h3 className="text-slate-50 text-lg font-semibold mt-6">A building-level vignette</h3>
+          <p className="text-slate-300">
+            You manage “1 King Street.” Mid-year, a P2 Electricity Overrun alarm triggers. In Hoshi,
+            that alarm becomes a candidate <b>Action</b>: “LED retrofit + schedule optimization.” The
+            Action shows CapEx (£25k), savings (£8.5k/yr), NPV @ 8%, β/sensitivity to grid prices, and
+            expected deltas: service index ↓0.03, comfort risk ↓, emissions −6.5 tCO₂e/yr. Because CCC
+            is part of the appraisal floor, the business case is resilient to fuel price noise.
+          </p>
+          <p className="text-slate-300">
+            You click “Add to plan.” The system captures <b>M&amp;V</b> (“Bills 12m, weather-normalized”),
+            <b> acceptance criteria</b> (“≥£7.2k/yr saved, Δindex ≤ −0.03”), and assigns an owner and start
+            date. A tenant rep asks, “why should we trust this?” You open <b>Lineage &amp; Governance</b>:
+            baseline, method, and factors are all there, versioned and licensed. The promise is
+            inspectable, not merely asserted.
+          </p>
+          <p className="text-slate-300">
+            That sequence—<b>Alarm → Action → Plan → M&amp;V → Lineage</b>—is how a philosophical idea
+            becomes an operating rhythm your lenders, tenants, and auditors can live with.
+          </p>
+
+          <h3 className="text-slate-50 text-lg font-semibold mt-6">How this differs from the tools you already know</h3>
+          <ul className="list-disc pl-6 text-slate-300">
+            <li><b>Versus market-data platforms (e.g., CoStar):</b> those excel at pricing space relative to comps. Hoshi complements that by turning inside-the-building choices (comfort, energy, maintenance) into capital signals under a public ecological floor.</li>
+            <li><b>Versus ESG reporting platforms (e.g., Measurabl):</b> those make disclosures investor-grade. Hoshi’s focus is the governance loop that produces the numbers: public alarms, peer-reviewed rulings, M&amp;V, and lineage—so decisions are enforceable, not just reportable.</li>
+            <li><b>Versus pure analytics/BMS:</b> anomaly detection is great, but portfolios also need common priorities, acceptance criteria, and a ledger of promises that travel into leases, financing, and valuation.</li>
+          </ul>
+
+          <p className="text-slate-300 mt-4">
+            Together, the Commonwealth frame plus these instruments let a portfolio manage <b>idiosyncratic
+            risk</b> (the risk you can’t diversify because you own this building) and show <b>decision-grade ROI</b>
+            that respects the commons.
+          </p>
+
+          <h3 className="text-slate-50 text-lg font-semibold mt-6">Why it matters now</h3>
+          <p className="text-slate-300">
+            Rates are higher, energy is noisy, policy is tightening, and tenants are less tolerant of poor
+            comfort. Waiting for voluntary coordination to fix shared risks has a track record: it doesn’t.
+            A <b>Commonwealth of People</b> gives the sector a shared floor—a public carbon rate to price
+            decisions, alarms and rulings to enforce them fairly, and a ledger to prove the promises we rely
+            on. It’s not a world-government fantasy; it’s the minimum order that keeps our contracts meaningful.
+          </p>
+        </div>
+      );
+    }
+
+    // default: “Hoshi in 5 minutes”
     return (
       <div className="prose prose-invert max-w-none">
-        {/* hero image */}
-        {article?.img && (
-          <div className="rounded-xl overflow-hidden border mb-4"
-               style={{ borderColor: "var(--stroke)" }}>
-            <img src={article.img} alt="" className="w-full h-48 md:h-64 object-cover" />
+        <div className="rounded-xl p-4 mb-4" style={{background:"rgba(148,163,184,.06)",border:"1px solid var(--stroke)"}}>
+          <div className="text-slate-100 font-semibold">TL;DR (60 seconds)</div>
+          <p className="text-slate-300 text-sm mt-1">
+            Hoshi turns messy building data (bills, meters, comfort logs) into <b>decision-grade signals</b>:
+            <b> NPV</b> (money), <b>β</b>/<b> sensitivity</b> (exposure to market-wide drivers),
+            and a split between <b>systematic</b> and <b>idiosyncratic</b> risk. Real estate can’t just
+            “diversify away” idiosyncratic risk; buildings are few, large, and unique, so we measure and manage it.
+          </p>
+        </div>
+
+        <h3 className="text-slate-50 text-lg font-semibold">Why translate energy &amp; comfort into ROI and risk?</h3>
+        <ul className="list-disc pl-6 text-slate-300">
+          <li><b>Finance speaks NPV.</b> We express outcomes as present value so ops and capital can align.</li>
+          <li><b>Markets price exposure.</b> β shows how much results move with shared forces (prices, policy, climate).</li>
+          <li><b>Idiosyncratic ≠ ignorable.</b> You don’t hold 500 micro-assets; building-specific risk must be managed.</li>
+        </ul>
+
+        <h3 className="text-slate-50 text-lg font-semibold mt-6">What Hoshi actually does (the pipeline)</h3>
+        <ol className="list-decimal pl-6 text-slate-300">
+          <li><b>Ingest:</b> email PDFs/CSVs or connect meters; normalise units and periods.</li>
+          <li><b>Clean &amp; compare:</b> compute intensity, spend, tCO₂e, comfort risk, coverage.</li>
+          <li><b>Turn into signals:</b> NPV / payback; β/sensitivity; a factor-aware composite for forward ROI.</li>
+          <li><b>Make it scenario-aware:</b> stress test prices, policy, and climate (2030/2050) to see what holds up.</li>
+          <li><b>Publish:</b> the <i>Building Performance Sheet</i> (BPS) with systematic vs idiosyncratic split + lineage.</li>
+          <li><b>Act (with governance):</b> every alarm becomes an Action with M&amp;V and acceptance criteria.</li>
+        </ol>
+
+        <h3 className="text-slate-50 text-lg font-semibold mt-6">Why you can’t just diversify idiosyncratic risk away</h3>
+        <p className="text-slate-300">
+          In equities, idiosyncratic noise averages out across many small holdings. In property it doesn’t:
+          each building is material and unique. That’s why Hoshi makes the <b>asset-specific</b> drivers visible and actionable.
+        </p>
+
+        <h3 className="text-slate-50 text-lg font-semibold mt-6">What makes Hoshi different</h3>
+        <ul className="list-disc pl-6 text-slate-300">
+          <li><b>Signals, not just scores:</b> NPV, β, systematic vs idiosyncratic — built for capital decisions.</li>
+          <li><b>Alarm → Action → M&amp;V loop:</b> evidence-first governance with data lineage and acceptance criteria.</li>
+          <li><b>Earth-first framing:</b> align with a “commonwealth cost of carbon” lens rather than box-ticking.</li>
+        </ul>
+
+        <h3 className="text-slate-50 text-lg font-semibold mt-6">Mini walk-through (2 minutes)</h3>
+        <ul className="list-disc pl-6 text-slate-300">
+          <li><b>Portfolio:</b> sort by intensity or coverage; pick a likely underperformer.</li>
+          <li><b>Building:</b> see spend/tCO₂e, overruns and comfort risk; inspect the composite index.</li>
+          <li><b>Actions:</b> LED retrofit with CapEx, savings, <b>NPV</b>, <b>β</b>, confidence, and expected Δ in service index, comfort risk, and tCO₂e/yr; add to plan with <b>M&amp;V</b>.</li>
+          <li><b>Lineage &amp; Governance:</b> jump to baseline, methods and factors so auditors and partners can trust the numbers.</li>
+        </ul>
+
+        <h3 className="text-slate-50 text-lg font-semibold mt-6">Micro-glossary</h3>
+        <div className="grid md:grid-cols-3 gap-3">
+          <div className="rounded-xl p-3" style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}>
+            <div className="text-slate-100 font-medium">NPV</div>
+            <div className="text-slate-400 text-sm">Today’s value of expected savings minus cost.</div>
           </div>
-        )}
+          <div className="rounded-xl p-3" style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}>
+            <div className="text-slate-100 font-medium">β / sensitivity</div>
+            <div className="text-slate-400 text-sm">How outcomes move with shared drivers (systematic exposure).</div>
+          </div>
+          <div className="rounded-xl p-3" style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}>
+            <div className="text-slate-100 font-medium">Systematic vs idiosyncratic</div>
+            <div className="text-slate-400 text-sm">Market-wide vs asset-specific; property must manage the latter.</div>
+          </div>
+        </div>
 
-        {/* Body */}
-        <p className="text-slate-300">
-          Real estate runs on promises across many hands—owners, lenders, tenants, facilities
-          teams, ESCOs, insurers. Each party optimizes locally—reduce a bill here, tick an ESG
-          box there—yet the risks that matter most (energy volatility, overheating, carbon
-          liability, reputational blow-ups) sit in the gaps between those hands. Data platforms
-          help, but they mostly live at the edges of the problem.
-        </p>
-
-        <ul className="list-disc pl-6 text-slate-300">
-          <li>
-            <b>Market data</b> (think CoStar) tells you what space is worth relative to peers,
-            not how your building’s comfort/energy choices expose you to ecological or policy shocks.
-          </li>
-          <li>
-            <b>ESG reporters</b> (think Measurabl) lift disclosures to investor-grade, but they
-            rarely turn meter data into enforceable operating commitments with payback, verification,
-            and recourse.
-          </li>
-          <li>
-            <b>Analytics/BMS</b> finds anomalies, yet “fix the spike” is not the same as governing
-            a portfolio against a public carbon floor and showing ROI in capital terms.
-          </li>
-        </ul>
-
-        <p className="text-slate-300">
-          The result is familiar: fragmentation, blame-shifting, and slow response to shared risks.
-          In equities you can diversify idiosyncratic risk away. In property you can’t; you hold a
-          few large, quirky assets for a long time. That’s why Hoshi proposes a new framework:
-          a <b>Commonwealth of People</b>.
-        </p>
-
-        <h3 className="text-slate-50 text-lg font-semibold mt-6">
-          What “Commonwealth of People” actually means
-        </h3>
-        <p className="text-slate-300">
-          Forget the historical British bloc. Here, a <b>commonwealth</b> is a covenant: free
-          societies agreeing to a <b>shared floor of rules</b> so the things we all depend on—the
-          carbon cycle, electric grids, breathable air—don’t get managed as an afterthought. States
-          keep sovereignty; civil associations (engineering bodies, civic groups, tenant alliances)
-          supply evidence and critique; but the floor is <b>public, published, and non-optional</b>.
-        </p>
-        <p className="text-slate-300">
-          In everyday terms: the biosphere is critical infrastructure. If it fails, every contract
-          in real estate becomes harder or impossible to honour. So we adopt a common floor that
-          says, “certain ecological obligations are not negotiable,” and we make that floor
-          practical with clear prices, alarms, rulings, and audit-ready records of the promises
-          we rely on.
-        </p>
-
-        <h3 className="text-slate-50 text-lg font-semibold mt-6">
-          The instruments, in real-estate practice
-        </h3>
-
-        <h4 className="text-slate-100 font-medium mt-4">
-          1) CCC — the Commonwealth Cost of Carbon
-        </h4>
-        <p className="text-slate-300">
-          <b>CCC</b> is a public carbon rate—owned by the commonwealth, not by a firm—that everyone
-          can reference. It’s the floor you build into underwriting, budgeting, and lease design.
-        </p>
-        <p className="text-slate-300">
-          <b>How it changes a decision:</b> A gas-heavy office shows a 4-year payback for a heat-pump
-          retrofit at today’s tariffs. When you value avoided emissions at the CCC, the project’s
-          NPV improves and the decision stops depending on fuel price luck.
-        </p>
-        <p className="text-slate-300">
-          <b>Where it lands in documents:</b> a lease addendum can state, “Operating plans and capex
-          appraisal will apply the Commonwealth Cost of Carbon at the prevailing public rate.” Now
-          tenants, owners, and auditors are aligned on the price floor that governs decisions—not an
-          internal carbon price that changes with the CFO’s mood.
-        </p>
-
-        <h4 className="text-slate-100 font-medium mt-4">
-          2) A shared ecological ledger (assured promises)
-        </h4>
-        <p className="text-slate-300">
-          The ledger records <b>assured promises</b>: property-like commitments with baselines,
-          methods, factors, licenses, and version history. It’s how you make a claim safe to rely on.
-        </p>
-        <p className="text-slate-300">
-          <b>Example:</b> “36.2 tCO₂e last year” links to baseline (FY24 bills), method (top-down
-          regression with HDD/CDD), factors (emissions factors vX.Y), and license (who can reuse the
-          method). If a factor updates, the ledger shows the new calculation and preserves the prior
-          version. Tenants and lenders don’t have to trust a slide; they can inspect the promise.
-        </p>
-
-        <h4 className="text-slate-100 font-medium mt-4">
-          3) Public alarms and rulings
-        </h4>
-        <p className="text-slate-300">
-          When an obligation is breached—exceeding electricity budget, overheating thresholds, or
-          CCC-aware carbon bounds—an <b>alarm</b> fires with a shared priority (P1 critical → P4
-          optimization). <b>Rulings</b> are the professionally reviewed playbooks that say “what good
-          looks like” and how success will be verified.
-        </p>
-        <p className="text-slate-300">
-          <b>Example:</b> “P2 Electricity Overrun (12-month window). Ruling R-E.12 applies: optimize
-          schedules and lighting; M&amp;V by bills (12m) with weather normalization; acceptance =
-          ≥15% reduction vs modeled baseline.” The ruling isn’t a suggestion; it’s a promise template
-          that becomes enforceable once commissioned.
-        </p>
-
-        <h4 className="text-slate-100 font-medium mt-4">
-          4) Executive function (fairness without technocracy)
-        </h4>
-        <p className="text-slate-300">
-          Authority needs legitimacy. Rulings are <b>peer-reviewed</b> by professional associations,
-          justified in plain vocabulary (baseline, method, factors), and <b>commissioned in situ</b>
-          before they bite. Disputes can be escalated; everything is explainable.
-        </p>
-        <p className="text-slate-300">
-          <b>Example:</b> A local engineering society proposes a better regression for mixed-mode
-          buildings. After trials, the ruling is updated and versioned. Your portfolio benefits from
-          the improvement without losing auditability.
-        </p>
-
-        <h3 className="text-slate-50 text-lg font-semibold mt-6">
-          A building-level vignette
-        </h3>
-        <p className="text-slate-300">
-          You manage “1 King Street.” Mid-year, a P2 Electricity Overrun alarm triggers. In Hoshi,
-          that alarm becomes a candidate <b>Action</b>: “LED retrofit + schedule optimization.” The
-          Action shows CapEx (£25k), savings (£8.5k/yr), NPV @ 8%, β/sensitivity to grid prices, and
-          expected deltas: service index ↓0.03, comfort risk ↓, emissions −6.5 tCO₂e/yr. Because CCC
-          is part of the appraisal floor, the business case is resilient to fuel price noise.
-        </p>
-        <p className="text-slate-300">
-          You click “Add to plan.” The system captures <b>M&amp;V</b> (“Bills 12m, weather-normalized”),
-          <b> acceptance criteria</b> (“≥£7.2k/yr saved, Δindex ≤ −0.03”), and assigns an owner and start
-          date. A tenant rep asks, “why should we trust this?” You open <b>Lineage &amp; Governance</b>:
-          baseline, method, and factors are all there, versioned and licensed. The promise is
-          inspectable, not merely asserted.
-        </p>
-        <p className="text-slate-300">
-          That sequence—<b>Alarm → Action → Plan → M&amp;V → Lineage</b>—is how a philosophical idea
-          becomes an operating rhythm your lenders, tenants, and auditors can live with.
-        </p>
-
-        <h3 className="text-slate-50 text-lg font-semibold mt-6">
-          How this differs from the tools you already know
-        </h3>
-        <ul className="list-disc pl-6 text-slate-300">
-          <li>
-            <b>Versus market-data platforms (e.g., CoStar):</b> those excel at pricing space relative to
-            comps. Hoshi complements that by turning inside-the-building choices (comfort, energy,
-            maintenance) into capital signals under a public ecological floor.
-          </li>
-          <li>
-            <b>Versus ESG reporting platforms (e.g., Measurabl):</b> those make disclosures investor-grade.
-            Hoshi’s focus is the governance loop that produces the numbers: public alarms, peer-reviewed
-            rulings, M&amp;V, and lineage—so decisions are enforceable, not just reportable.
-          </li>
-          <li>
-            <b>Versus pure analytics/BMS:</b> anomaly detection is great, but portfolios also need common
-            priorities, acceptance criteria, and a ledger of promises that travel into leases, financing,
-            and valuation.
-          </li>
-        </ul>
-
-        <p className="text-slate-300 mt-4">
-          Together, the Commonwealth frame plus these instruments let a portfolio manage <b>idiosyncratic
-          risk</b> (the risk you can’t diversify because you own this building) and show <b>decision-grade ROI</b>
-          that respects the commons.
-        </p>
-
-        <h3 className="text-slate-50 text-lg font-semibold mt-6">Why it matters now</h3>
-        <p className="text-slate-300">
-          Rates are higher, energy is noisy, policy is tightening, and tenants are less tolerant of poor
-          comfort. Waiting for voluntary coordination to fix shared risks has a track record: it doesn’t.
-          A <b>Commonwealth of People</b> gives the sector a shared floor—a public carbon rate to price
-          decisions, alarms and rulings to enforce them fairly, and a ledger to prove the promises we rely
-          on. It’s not a world-government fantasy; it’s the minimum order that keeps our contracts meaningful.
-        </p>
+        <div className="mt-6 rounded-xl p-3" style={{ background: "rgba(148,163,184,.06)", border: "1px solid var(--stroke)" }}>
+          <div className="text-slate-400 text-sm">
+            <b>Source notes:</b> Ecosystem Alarm Management by Aidan T Parkinson (https://github.com/aidan-parkinson/corporation-sole).
+          </div>
+        </div>
       </div>
     );
-  }
-
-  // default: the existing “Hoshi in 5 minutes” article
-  return (
-    <div className="prose prose-invert max-w-none">
-      <div className="rounded-xl p-4 mb-4" style={{background:"rgba(148,163,184,.06)",border:"1px solid var(--stroke)"}}>
-        <div className="text-slate-100 font-semibold">TL;DR (60 seconds)</div>
-        <p className="text-slate-300 text-sm mt-1">
-          Hoshi turns messy building data (bills, meters, comfort logs) into <b>decision-grade signals</b>:
-          <b> NPV</b> (money), <b>β</b>/<b> sensitivity</b> (exposure to market-wide drivers),
-          and a split between <b>systematic</b> and <b>idiosyncratic</b> risk. Real estate can’t just
-          “diversify away” idiosyncratic risk; buildings are few, large, and unique, so we measure and manage it.
-        </p>
-      </div>
-      {/* ...keep the rest of your original "Hoshi in 5 minutes" body here ... */}
-    </div>
-  );
-};
-
-
-      {/* Why translate */}
-      <h3 className="text-slate-50 text-lg font-semibold">
-        Why translate energy &amp; comfort into ROI and risk?
-      </h3>
-      <ul className="list-disc pl-6 text-slate-300">
-        <li>
-          <b>Finance speaks NPV.</b> We express outcomes as present value so ops
-          and capital can align.
-        </li>
-        <li>
-          <b>Markets price exposure.</b> β shows how much results move with
-          shared forces (prices, policy, climate).
-        </li>
-        <li>
-          <b>Idiosyncratic ≠ ignorable.</b> You don’t hold 500 micro-assets;
-          building-specific risk must be managed.
-        </li>
-      </ul>
-
-      {/* Pipeline */}
-      <h3 className="text-slate-50 text-lg font-semibold mt-6">
-        What Hoshi actually does (the pipeline)
-      </h3>
-      <ol className="list-decimal pl-6 text-slate-300">
-        <li>
-          <b>Ingest:</b> email PDFs/CSVs or connect meters; normalise units and
-          periods.
-        </li>
-        <li>
-          <b>Clean &amp; compare:</b> compute intensity, spend, tCO₂e, comfort
-          risk, coverage.
-        </li>
-        <li>
-          <b>Turn into signals:</b> NPV / payback; β/sensitivity; a factor-aware
-          composite for forward ROI.
-        </li>
-        <li>
-          <b>Make it scenario-aware:</b> stress test prices, policy, and climate
-          (2030/2050) to see what holds up.
-        </li>
-        <li>
-          <b>Publish:</b> the <i>Building Performance Sheet</i> (BPS) with
-          systematic vs idiosyncratic split + lineage.
-        </li>
-        <li>
-          <b>Act (with governance):</b> every alarm becomes an Action with M&amp;V
-          and acceptance criteria.
-        </li>
-      </ol>
-
-      {/* Can’t diversify away */}
-      <h3 className="text-slate-50 text-lg font-semibold mt-6">
-        Why you can’t just diversify idiosyncratic risk away
-      </h3>
-      <p className="text-slate-300">
-        In equities, idiosyncratic noise averages out across many small
-        holdings. In property it doesn’t: each building is material and unique.
-        That’s why Hoshi makes the <b>asset-specific</b> drivers visible and
-        actionable.
-      </p>
-
-      {/* Different vs others */}
-      <h3 className="text-slate-50 text-lg font-semibold mt-6">
-        What makes Hoshi different
-      </h3>
-      <ul className="list-disc pl-6 text-slate-300">
-        <li>
-          <b>Signals, not just scores:</b> NPV, β, systematic vs idiosyncratic —
-          built for capital decisions.
-        </li>
-        <li>
-          <b>Alarm → Action → M&amp;V loop:</b> evidence-first governance with
-          data lineage and acceptance criteria.
-        </li>
-        <li>
-          <b>Earth-first framing:</b> align with a “commonwealth cost of carbon”
-          lens rather than box-ticking.
-        </li>
-      </ul>
-
-      {/* Walkthrough */}
-      <h3 className="text-slate-50 text-lg font-semibold mt-6">
-        Mini walk-through (2 minutes)
-      </h3>
-      <ul className="list-disc pl-6 text-slate-300">
-        <li>
-          <b>Portfolio:</b> sort by intensity or coverage; pick a likely
-          underperformer.
-        </li>
-        <li>
-          <b>Building:</b> see spend/tCO₂e, overruns and comfort risk; inspect
-          the composite index.
-        </li>
-        <li>
-          <b>Actions:</b> e.g., LED retrofit with CapEx, savings, <b>NPV</b>,{" "}
-          <b>β</b>, confidence, and expected Δ in service index, comfort risk,
-          and tCO₂e/yr; add to plan with <b>M&amp;V</b>.
-        </li>
-        <li>
-          <b>Lineage &amp; Governance:</b> jump to baseline, methods and factors
-          so auditors and partners can trust the numbers.
-        </li>
-      </ul>
-
-      {/* Glossary */}
-      <h3 className="text-slate-50 text-lg font-semibold mt-6">Micro-glossary</h3>
-      <div className="grid md:grid-cols-3 gap-3">
-        <div
-          className="rounded-xl p-3"
-          style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}
-        >
-          <div className="text-slate-100 font-medium">NPV</div>
-          <div className="text-slate-400 text-sm">
-            Today’s value of expected savings minus cost.
-          </div>
-        </div>
-        <div
-          className="rounded-xl p-3"
-          style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}
-        >
-          <div className="text-slate-100 font-medium">β / sensitivity</div>
-          <div className="text-slate-400 text-sm">
-            How outcomes move with shared drivers (systematic exposure).
-          </div>
-        </div>
-        <div
-          className="rounded-xl p-3"
-          style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}
-        >
-          <div className="text-slate-100 font-medium">Systematic vs idiosyncratic</div>
-          <div className="text-slate-400 text-sm">
-            Market-wide vs asset-specific; property must manage the latter.
-          </div>
-        </div>
-      </div>
-
-      {/* Sources */}
-      <div
-        className="mt-6 rounded-xl p-3"
-        style={{ background: "rgba(148,163,184,.06)", border: "1px solid var(--stroke)" }}
-      >
-        <div className="text-slate-400 text-sm">
-          <b>Source notes:</b> Ecosystem Alarm Management by Aidan T Parkinson (https://github.com/aidan-parkinson/corporation-sole).
-        </div>
-      </div>
-    </div>
-  );
+  };
 
   // ---------- HOME (landing) ----------
   const Home = () => (
@@ -2116,7 +1947,7 @@ const ArticleBody = () => {
           <div className="flex-1">
             <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-sky-400 to-emerald-400">
-              The Hoshi field guide,
+                The Hoshi field guide,
               </span>{" "}
               for insightful articles.
             </h2>
@@ -2145,29 +1976,18 @@ const ArticleBody = () => {
             className="text-left rounded-2xl overflow-hidden hover:shadow-lg transition-shadow"
             style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}
           >
-       <div
-  className="w-full overflow-hidden"
-  style={{ height: "clamp(260px, 42vw, 460px)" }}
->
-              <img
-                src={a.img || LOGO_SRC}
-                alt=""
-                className="w-full h-full object-cover"
-              />
+            <div className="w-full overflow-hidden" style={{ height: "clamp(260px, 42vw, 460px)" }}>
+              <img src={a.img || LOGO_SRC} alt="" className="w-full h-full object-cover" />
             </div>
             <div className="p-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="chip">{a.label}</span>
                 <span className="text-xs text-slate-400">{a.readingMins} min read</span>
               </div>
-              <div className="text-slate-50 font-semibold text-lg leading-snug">
-                {a.title}
-              </div>
+              <div className="text-slate-50 font-semibold text-lg leading-snug">{a.title}</div>
               <div className="text-slate-400 text-sm mt-1">{a.summary}</div>
               <div className="mt-3 flex gap-2 flex-wrap">
-                {a.tags.map((t, i) => (
-                  <span key={i} className="chip">{t}</span>
-                ))}
+                {a.tags.map((t, i) => <span key={i} className="chip">{t}</span>)}
               </div>
             </div>
           </button>
@@ -2181,13 +2001,10 @@ const ArticleBody = () => {
     <Section title={article.title} desc={article.summary}>
       <div className="mb-3 flex items-center gap-2 text-xs text-slate-400">
         <TagPill>{article.readingMins} min read</TagPill>
-        {article.tags.map((t, i) => (
-          <TagPill key={i}>{t}</TagPill>
-        ))}
+        {article.tags.map((t, i) => <TagPill key={i}>{t}</TagPill>)}
       </div>
 
-      <div className="rounded-2xl p-4 md:p-5"
-           style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}>
+      <div className="rounded-2xl p-4 md:p-5" style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}>
         <ArticleBody />
 
         {/* in-article CTAs */}
@@ -2207,7 +2024,6 @@ const ArticleBody = () => {
     </div>
   );
 }
-
 /* ------------------- END BLOG TAB ------------------- */
 
 
