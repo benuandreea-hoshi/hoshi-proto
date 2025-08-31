@@ -420,56 +420,66 @@ function Story({ goApp }) {
           </div>
         </Band>
 
-        {/* Commonwealth of People */}
-<Section
-  title="Commonwealth of People"
-  desc="A governance lens that aligns owners, occupiers, suppliers and investors; so ROI, comfort and carbon are measured the same way and value is shared fairly."
->
-  <div className="grid md:grid-cols-2 gap-4 md:gap-6">
+      {/* COMMONWEALTH OF PEOPLE (Band 3) */}
+<Band tone={3} id="commonwealth">
+  <div className="grid md:grid-cols-2 gap-4 md:gap-6 items-start">
     {/* Image */}
-    <div className="rounded-2xl overflow-hidden"
-         style={{background:"var(--panel-2)", border:"1px solid var(--stroke)"}}>
+    <div className="rounded-2xl overflow-hidden border"
+         style={{ borderColor: "var(--stroke)" }}>
       <img
         src={PEOPLE_SRC}
         alt="Commonwealth of People"
-        className="w-full h-full object-cover"
-        loading="lazy"
-        decoding="async"
+        className="w-full h-56 md:h-full object-cover"
       />
     </div>
 
     {/* Copy */}
-    <div className="rounded-2xl p-4 md:p-5"
-         style={{background:"var(--panel-2)", border:"1px solid var(--stroke)"}}>
-      <div className="text-slate-100 font-medium">What it is</div>
-      <p className="text-slate-300 mt-1">
-        A simple social contract for the built environment: evidence first, value shared.
-        Data lineage, transparent methods and acceptance criteria make results portable
-        across partners and audits.
+    <div>
+      <h3 className="text-slate-50 text-lg font-semibold">Commonwealth of People</h3>
+
+      <p className="text-slate-300 mt-2">
+        A covenant between free societies to keep order over the things no single firm controls:
+        the carbon cycle, shared grids, breathable air, all by setting a <b>public, non-optional floor
+        of ecological rules</b> that sits above private contracts.
       </p>
 
-      <div className="mt-4 text-slate-100 font-medium">Why it matters</div>
-      <ul className="text-slate-300 list-disc pl-5 mt-1 space-y-1">
-        <li><b>Trustable numbers:</b> baselines, factors and formulas are visible and versioned.</li>
-        <li><b>Aligned incentives:</b> outcomes speak finance (NPV, payback) and risk (β, confidence).</li>
-        <li><b>Accountability:</b> actions carry M&amp;V and acceptance criteria; not just promises.</li>
-      </ul>
+      <p className="text-slate-300 mt-3">
+        <b>Why real estate needs it </b> Buildings are few, large, and long-lived. You can’t
+        diversify away a single tower’s comfort or carbon exposure. With owners, tenants, facilities management (building operations) teams,
+        insurers and lenders optimizing locally, <b>the risks that matter live in the gaps</b>.
+        A commonwealth supplies the referee where voluntary coordination is lacking.
+      </p>
 
-      <div className="mt-4 text-slate-100 font-medium">How Hoshi uses it</div>
-      <ul className="text-slate-300 list-disc pl-5 mt-1 space-y-1">
-        <li><b>Lineage &amp; governance:</b> every metric links to baseline → method → factors.</li>
-        <li><b>Forward Energy Premium (FEP):</b> ROI is split into systematic (β) vs idiosyncratic drivers.</li>
-        <li><b>Plan &amp; verify:</b> each Action defines owner, start, funding, M&amp;V and acceptance criteria.</li>
-      </ul>
+      <p className="text-slate-300 mt-3">
+        <b>The core idea </b> Following Hobbes: where there’s no common authority, promises fail.
+        The framework updates this for ecology: keep state sovereignty and civic pluralism, but agree to a
+        <b> shared sovereign standard for the commons</b> so peace and promise-keeping remain possible
+        when the “infrastructure of life” is at stake.
+      </p>
 
-      <div className="mt-4 flex flex-wrap gap-2">
-        <span className="chip">Evidence-first</span>
-        <span className="chip">Shared value</span>
-        <span className="chip">Audit-ready</span>
-      </div>
+      <p className="text-slate-300 mt-3">
+        <b>What sits in the commonwealth </b> A <b>public floor of obligations</b> (published,
+        explainable, enforceable), a canonical <b>Commonwealth Cost of Carbon (CCC)</b> everyone can
+        reference in underwriting and leases, and a <b>governed record of promises</b> where claims
+        carry baseline, method, and factors, with versions you can audit.
+      </p>
+
+      <p className="text-slate-300 mt-3">
+        <b>How legitimacy is kept </b> Authority is bound to <b>peer review and transparent
+        reasons</b>, baselines, methods and factors in plain view, so rulings can be contested,
+        improved and adopted without turning the center into a black box.
+      </p>
+
+      <p className="text-slate-300 mt-3">
+        <b>What changes for practice </b> Instead of ad-hoc pledges and shifting internal prices,
+        decisions line up against a <b>public floor</b>; obligations are <b>inspectable</b> (not just
+        asserted); and responsibility is <b>portable</b> across partners, audits and time. That’s the
+        order in which real estate can keep its promises to people, and to the planet.
+      </p>
     </div>
   </div>
-</Section>
+</Band>
+
 
 
         {/* HOW IT WORKS (Band 2) */}
