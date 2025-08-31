@@ -444,34 +444,22 @@ function Story({ goApp }) {
       </p>
 
       <p className="text-slate-300 mt-3">
-        <b>Why real estate needs it </b> Buildings are few, large, and long-lived. You can’t
+        <b>Why real estate needs it. </b> Buildings are few, large, and long-lived. You can’t
         diversify away a single tower’s comfort or carbon exposure. With owners, tenants, facilities management (building operations) teams,
         insurers and lenders optimizing locally, <b>the risks that matter live in the gaps</b>.
         A commonwealth supplies the referee where voluntary coordination is lacking.
       </p>
 
       <p className="text-slate-300 mt-3">
-        <b>The core idea </b> Following Hobbes: where there’s no common authority, promises fail.
-        The framework updates this for ecology: keep state sovereignty and civic pluralism, but agree to a
-        <b> shared sovereign standard for the commons</b> so peace and promise-keeping remain possible
-        when the “infrastructure of life” is at stake.
-      </p>
-
-      <p className="text-slate-300 mt-3">
-        <b>What sits in the commonwealth </b> A <b>public floor of obligations</b> (published,
+        <b>What sits in the commonwealth? </b> A <b>public floor of obligations</b> (published,
         explainable, enforceable), a canonical <b>Commonwealth Cost of Carbon (CCC)</b> everyone can
         reference in underwriting and leases, and a <b>governed record of promises</b> where claims
         carry baseline, method, and factors, with versions you can audit.
       </p>
 
-      <p className="text-slate-300 mt-3">
-        <b>How legitimacy is kept </b> Authority is bound to <b>peer review and transparent
-        reasons</b>, baselines, methods and factors in plain view, so rulings can be contested,
-        improved and adopted without turning the center into a black box.
-      </p>
 
       <p className="text-slate-300 mt-3">
-        <b>What changes for practice </b> Instead of ad-hoc pledges and shifting internal prices,
+        <b>What changes for practice? </b> Instead of ad-hoc pledges and shifting internal prices,
         decisions line up against a <b>public floor</b>; obligations are <b>inspectable</b> (not just
         asserted); and responsibility is <b>portable</b> across partners, audits and time. That’s the
         order in which real estate can keep its promises to people, and to the planet.
