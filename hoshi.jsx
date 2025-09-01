@@ -1,6 +1,49 @@
 const LOGO_SRC   = "https://cdn.prod.website-files.com/68a8baf20ad5978747d9d44d/68a8fe47145ebb756d01c372_hoshi.jpeg";
 const PEOPLE_SRC = "https://cdn.prod.website-files.com/68a8baf20ad5978747d9d44d/68a8fe75f8001bf82851cd0f_commonwealthOfPeoples.jpeg";
 const {useMemo,useState,useRef,useEffect} = React;
+
+/* ===== Hoshi helpers (currency + finance) ===== */
+function getCurrency() {
+  if (typeof window === "undefined") return "GBP";
+  return window.localStorage.getItem("hoshi.currency") || "GBP";
+}
+function currencySymbol(cur) {
+  return ({ GBP: "£", EUR: "€", USD: "$", JPY: "¥" }[cur]) || (cur + " ");
+}
+function fmtMoney(n, cur = getCurrency(), maxFrac = 0) {
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency: cur,
+      maximumFractionDigits: maxFrac,
+    }).format(n);
+  } catch (e) {
+    return currencySymbol(cur) + Math.round(n).toLocaleString();
+  }
+}
+/* NPV/IRR helpers — lightweight, good enough for MVP */
+function calcNPV(rate, cashflows /* array: t=0..N */) {
+  return cashflows.reduce((acc, cf, t) => acc + cf / Math.pow(1 + rate, t), 0);
+}
+function calcIRR(cashflows, guess = 0.1) {
+  // Newton-Raphson; clamp to avoid explosions
+  let r = guess;
+  for (let i = 0; i < 50; i++) {
+    let npv = 0, d = 0;
+    for (let t = 0; t < cashflows.length; t++) {
+      const denom = Math.pow(1 + r, t);
+      npv += cashflows[t] / denom;
+      if (t > 0) d -= (t * cashflows[t]) / Math.pow(1 + r, t + 1);
+    }
+    const step = npv / d;
+    if (!isFinite(step)) break;
+    const next = r - step;
+    if (Math.abs(next - r) < 1e-6) return next;
+    r = Math.max(-0.99, next);
+  }
+  return r;
+}
+
 // --- Demo actions shared by Actions() and PublicBPS() ---
 const ACTIONS = [
   {
@@ -670,7 +713,18 @@ function Onboarding(){
         <div><label className="text-sm text-slate-300">Portfolio name</label><input className="mt-1" style={inputStyle} placeholder="Acme Real Estate"/></div>
         <div className="grid grid-cols-2 gap-4">
           <div><label className="text-sm text-slate-300">Area units</label><select className="mt-1" style={inputStyle}><option>m²</option><option>ft²</option></select></div>
-          <div><label className="text-sm text-slate-300">Currency</label><select className="mt-1" style={inputStyle}><option>GBP</option><option>EUR</option></select></div>
+         <label className="text-sm text-slate-300">Currency</label>
+<select
+  className="mt-1"
+  style={inputStyle}
+  defaultValue={typeof window !== "undefined" ? (window.localStorage.getItem("hoshi.currency") || "GBP") : "GBP"}
+  onChange={(e) => window.localStorage.setItem("hoshi.currency", e.target.value)}
+>
+  <option>GBP</option>
+  <option>EUR</option>
+  <option>USD</option>
+</select>
+
         </div>
       </div>
       <div className="mt-4 flex justify-end"><button onClick={next} className="btn btn-primary">Next</button></div>
@@ -1198,95 +1252,96 @@ function Building(){
     </div>
   );
 }
- function Actions({ goLineage }) {
+ // REPLACE your whole Actions() with this version
+function Actions({ goLineage }) {
   // --- helpers (local to this component so we don’t leak globals)
-  const fmtGBP = n => "£" + Math.round(n).toLocaleString();
-  const npv = (annual, years=7, rate=0.08, capex=0) => {
-    const pv = annual * (1 - Math.pow(1+rate, -years)) / rate;
+  const npv = (annual, years = 7, rate = 0.08, capex = 0) => {
+    const pv = annual * (1 - Math.pow(1 + rate, -years)) / rate; // annuity PV
     return Math.round(pv - capex);
   };
+  const fmt = (n) => (typeof fmtGBP === "function" ? fmtGBP(n) : ("£" + Math.round(n).toLocaleString()));
 
- // --- lineage defaults for demo ids (led/hvac)
-const DEFAULT_LINEAGE = {
-  led: {
-    baseline: "FY24 bills",
-    method: "Top-down regression adj. for HDD/CDD",
-    factors: ["lamp efficacy", "hours-of-use", "maintenance"],
-  },
-  hvac: {
-    baseline: "FY24 logger data",
-    method: "Schedule optimisation (BMS)",
-    factors: ["occupied hours", "supply temp", "night purge"],
-  }
-};
-
-// Turn a compact ACTION row into the richer shape your UI expects
-const enrich = (a) => {
-  const [alarmType, alarmCat] = (a.alarm || "").split("•").map(s => s && s.trim());
-  const isOverrun = (alarmType || "").toLowerCase().includes("overrun");
-
-  return {
-    id: a.id,
-    title: a.title,
-
-    // chips
-    alarm: alarmType || a.alarm || "Alarm",
-    category: alarmCat || (a.id === "led" ? "Electricity" : "Overheating hours"),
-    window: a.window || (a.id === "hvac" ? "Summer" : "Last 12m"),
-    rule: a.rule || (isOverrun ? ">10% vs budget" : "> threshold"),
-
-    // finance
-    capex: a.capex,
-    save: a.save,
-    years: a.years ?? (a.pay ? Math.max(1, Math.round(a.pay)) : 7),
-    beta: a.beta,
-    confidence: a.confidence, // 0..1
-
-    // impacts
-    indexDelta: a.deltaIndex,                          // “Δ service index”
-    comfortDeltaPct: a.comfortDeltaPct ?? (a.id==="hvac" ? -18 : -28),
-    co2Delta: a.co2Delta ?? (a.id==="led" ? -6.5 : -2.3),
-
-    // admin
-    status: a.status || "To review",
-    plan: null,
-    lineage: a.lineage || DEFAULT_LINEAGE[a.id] || { baseline: "FY data", method: "Modelled", factors: [] },
+  // --- lineage defaults for demo ids (led/hvac)
+  const DEFAULT_LINEAGE = {
+    led: {
+      baseline: "FY24 bills",
+      method: "Top-down regression adj. for HDD/CDD",
+      factors: ["lamp efficacy", "hours-of-use", "maintenance"],
+    },
+    hvac: {
+      baseline: "FY24 logger data",
+      method: "Schedule optimisation (BMS)",
+      factors: ["occupied hours", "supply temp", "night purge"],
+    }
   };
-};
 
-// *** this replaces your previous useState([...]) ***
-const [actions, setActions] = React.useState(() => ACTIONS.map(enrich));
+  // Turn a compact ACTION row into the richer shape your UI expects
+  const enrich = (a) => {
+    const [alarmType, alarmCat] = (a.alarm || "").split("•").map(s => s && s.trim());
+    const isOverrun = (alarmType || "").toLowerCase().includes("overrun");
+
+    return {
+      id: a.id,
+      title: a.title,
+
+      // chips
+      alarm: alarmType || a.alarm || "Alarm",
+      category: alarmCat || (a.id === "led" ? "Electricity" : "Overheating hours"),
+      window: a.window || (a.id === "hvac" ? "Summer" : "Last 12m"),
+      rule: a.rule || (isOverrun ? ">10% vs budget" : "> threshold"),
+
+      // finance inputs
+      capex: a.capex,
+      save: a.save,
+      years: a.years ?? (a.pay ? Math.max(1, Math.round(a.pay)) : 7),
+      beta: a.beta,
+      confidence: a.confidence, // 0..1
+
+      // impacts
+      indexDelta: a.deltaIndex,
+      comfortDeltaPct: a.comfortDeltaPct ?? (a.id === "hvac" ? -18 : -28),
+      co2Delta: a.co2Delta ?? (a.id === "led" ? -6.5 : -2.3),
+
+      // admin
+      status: a.status || "To review",
+      plan: null,
+      lineage: a.lineage || DEFAULT_LINEAGE[a.id] || { baseline: "FY data", method: "Modelled", factors: [] },
+    };
+  };
+
+  // Seed from your ACTIONS array
+  const [actions, setActions] = React.useState(() => ACTIONS.map(enrich));
 
   // --- derived: planned roll-ups for a quick bar at the top
   const planned = actions.filter(a => a.status === "Planned");
-  const plannedTotals = planned.reduce((s,a)=>({
+  const plannedTotals = planned.reduce((s, a) => ({
     capex: s.capex + a.capex,
     save: s.save + a.save,
     co2: s.co2 + a.co2Delta,
     index: s.index + a.indexDelta,
-  }), {capex:0, save:0, co2:0, index:0});
+  }), { capex: 0, save: 0, co2: 0, index: 0 });
 
   // --- modal state
   const [open, setOpen] = React.useState(false);
   const [draft, setDraft] = React.useState({
-    actionId:null, owner:"", start:"", funding:"CapEx", mv:"Bills (12m)", accept:"", scope:""
+    actionId: null, owner: "", start: "", funding: "CapEx", mv: "Bills (12m)", accept: "", scope: ""
   });
 
   const openPlan = (a) => {
     setDraft({
       actionId: a.id,
-      owner:"",
-      start: new Date().toISOString().slice(0,7), // yyyy-mm
+      owner: "",
+      start: new Date().toISOString().slice(0, 7), // yyyy-mm
       funding: "CapEx",
       mv: "Bills (12m)",
-      accept: "≥ " + fmtGBP(a.save*0.85) + " saved/yr & Δindex ≤ " + a.indexDelta.toFixed(2),
+      accept: `≥ ${fmt(a.save * 0.85)} saved/yr & Δindex ≤ ${a.indexDelta.toFixed(2)}`,
       scope: ""
     });
     setOpen(true);
   };
 
   const savePlan = () => {
-    setActions(xs => xs.map(a => a.id!==draft.actionId ? a : ({
+    setActions(xs => xs.map(a => a.id !== draft.actionId ? a : ({
       ...a,
       status: "Planned",
       plan: {
@@ -1314,11 +1369,11 @@ const [actions, setActions] = React.useState(() => ACTIONS.map(enrich));
         {/* Planned roll-up */}
         {!!planned.length && (
           <div className="rounded-xl p-3 mb-3 grid grid-cols-2 md:grid-cols-4 gap-3"
-               style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
+               style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}>
             <div><div className="text-xs text-slate-400">Planned CapEx</div>
-              <div className="text-slate-100 font-semibold">{fmtGBP(plannedTotals.capex)}</div></div>
+              <div className="text-slate-100 font-semibold">{fmt(plannedTotals.capex)}</div></div>
             <div><div className="text-xs text-slate-400">Planned savings /yr</div>
-              <div className="text-slate-100 font-semibold">{fmtGBP(plannedTotals.save)}</div></div>
+              <div className="text-slate-100 font-semibold">{fmt(plannedTotals.save)}</div></div>
             <div><div className="text-xs text-slate-400">Planned Δ index</div>
               <div className="text-emerald-300 font-semibold">{plannedTotals.index.toFixed(2)}</div></div>
             <div><div className="text-xs text-slate-400">Planned Δ tCO₂e/yr</div>
@@ -1328,11 +1383,11 @@ const [actions, setActions] = React.useState(() => ACTIONS.map(enrich));
 
         {/* Action cards */}
         <ul className="space-y-3">
-          {actions.map(a=>{
+          {actions.map(a => {
             const theNpv = npv(a.save, a.years, 0.08, a.capex);
             return (
               <li key={a.id} className="rounded-2xl p-4 md:p-5"
-                  style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
+                  style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}>
                 <div className="flex items-start justify-between gap-3">
                   <div className="text-slate-100 font-medium">{a.title}</div>
                   <span className="chip">{a.status}</span>
@@ -1348,29 +1403,29 @@ const [actions, setActions] = React.useState(() => ACTIONS.map(enrich));
 
                 {/* metrics */}
                 <div className="mt-3 grid grid-cols-2 md:grid-cols-6 gap-3">
-                  <div className="rounded-xl p-3" style={{background:"rgba(148,163,184,.06)",border:"1px solid var(--stroke)"}}>
+                  <div className="rounded-xl p-3" style={{ background: "rgba(148,163,184,.06)", border: "1px solid var(--stroke)" }}>
                     <div className="text-xs text-slate-400">CapEx</div>
-                    <div className="text-slate-100 font-semibold">{fmtGBP(a.capex)}</div>
+                    <div className="text-slate-100 font-semibold">{fmt(a.capex)}</div>
                   </div>
-                  <div className="rounded-xl p-3" style={{background:"rgba(148,163,184,.06)",border:"1px solid var(--stroke)"}}>
+                  <div className="rounded-xl p-3" style={{ background: "rgba(148,163,184,.06)", border: "1px solid var(--stroke)" }}>
                     <div className="text-xs text-slate-400">Annual savings</div>
-                    <div className="text-slate-100 font-semibold">{fmtGBP(a.save)}</div>
+                    <div className="text-slate-100 font-semibold">{fmt(a.save)}</div>
                   </div>
-                  <div className="rounded-xl p-3" style={{background:"rgba(148,163,184,.06)",border:"1px solid var(--stroke)"}}>
+                  <div className="rounded-xl p-3" style={{ background: "rgba(148,163,184,.06)", border: "1px solid var(--stroke)" }}>
                     <div className="text-xs text-slate-400">NPV @ 8% / {a.years}y</div>
-                    <div className="text-emerald-300 font-semibold">{fmtGBP(theNpv)}</div>
+                    <div className="text-emerald-300 font-semibold">{fmt(theNpv)}</div>
                   </div>
-                  <div className="rounded-xl p-3" style={{background:"rgba(148,163,184,.06)",border:"1px solid var(--stroke)"}}>
+                  <div className="rounded-xl p-3" style={{ background: "rgba(148,163,184,.06)", border: "1px solid var(--stroke)" }}>
                     <div className="text-xs text-slate-400">Simple payback</div>
-                    <div className="text-slate-100 font-semibold">{(a.capex/a.save).toFixed(1)}y</div>
+                    <div className="text-slate-100 font-semibold">{(a.capex / a.save).toFixed(1)}y</div>
                   </div>
-                  <div className="rounded-xl p-3" style={{background:"rgba(148,163,184,.06)",border:"1px solid var(--stroke)"}}>
+                  <div className="rounded-xl p-3" style={{ background: "rgba(148,163,184,.06)", border: "1px solid var(--stroke)" }}>
                     <div className="text-xs text-slate-400">β / sensitivity</div>
                     <div className="text-slate-100 font-semibold">{a.beta.toFixed(2)}</div>
                   </div>
-                  <div className="rounded-xl p-3" style={{background:"rgba(148,163,184,.06)",border:"1px solid var(--stroke)"}}>
+                  <div className="rounded-xl p-3" style={{ background: "rgba(148,163,184,.06)", border: "1px solid var(--stroke)" }}>
                     <div className="text-xs text-slate-400">Confidence</div>
-                    <div className="text-slate-100 font-semibold">{Math.round(a.confidence*100)}%</div>
+                    <div className="text-slate-100 font-semibold">{Math.round(a.confidence * 100)}%</div>
                   </div>
                 </div>
 
@@ -1383,36 +1438,31 @@ const [actions, setActions] = React.useState(() => ACTIONS.map(enrich));
 
                 {/* CTAs */}
                 <div className="mt-4 flex flex-wrap gap-3">
-      <button
-  className="btn btn-ghost"
-  onClick={() => {
-    goLineage({
-      id: a.id,
-      title: a.title,
-      status: a.status,
-      alarm: { type: a.alarm, category: a.category, window: a.window, rule: a.rule },
-      finance: {
-        capex: a.capex, save: a.save, years: a.years,
-        npv: theNpv,                           // <- reuse computed value
-        payback: (a.capex / a.save).toFixed(1),
-        beta: a.beta, confidence: a.confidence
-      },
-      impacts: {
-        indexDelta: a.indexDelta,
-        comfortDeltaPct: a.comfortDeltaPct,
-        co2Delta: a.co2Delta
-      },
-      lineage: a.lineage,
-      plan: a.plan || null
-    });
-  }}
->
-  View data lineage
-</button>
+                  <button
+                    className="btn btn-ghost"
+                    onClick={() => {
+                      goLineage({
+                        id: a.id,
+                        title: a.title,
+                        status: a.status,
+                        alarm: { type: a.alarm, category: a.category, window: a.window, rule: a.rule },
+                        finance: {
+                          capex: a.capex, save: a.save, years: a.years,
+                          npv: theNpv,
+                          payback: (a.capex / a.save).toFixed(1),
+                          beta: a.beta, confidence: a.confidence
+                        },
+                        impacts: { indexDelta: a.indexDelta, comfortDeltaPct: a.comfortDeltaPct, co2Delta: a.co2Delta },
+                        lineage: a.lineage,
+                        plan: a.plan || null
+                      });
+                    }}
+                  >
+                    View data lineage
+                  </button>
 
-
-                  {a.status!=="Planned" ? (
-                    <button className="btn btn-primary" onClick={()=>openPlan(a)}>Add to plan</button>
+                  {a.status !== "Planned" ? (
+                    <button className="btn btn-primary" onClick={() => openPlan(a)}>Add to plan</button>
                   ) : (
                     <span className="text-xs text-slate-400 mt-2">Planned by {a.plan?.owner} · starts {a.plan?.start}</span>
                   )}
@@ -1425,10 +1475,9 @@ const [actions, setActions] = React.useState(() => ACTIONS.map(enrich));
 
       {/* lightweight modal */}
       {open && (
-        <div className="fixed inset-0 z-[3000] grid place-items-center"
-             style={{background:"rgba(0,0,0,.45)"}}>
+        <div className="fixed inset-0 z-[3000] grid place-items-center" style={{ background: "rgba(0,0,0,.45)" }}>
           <div className="w-[min(640px,92vw)] rounded-2xl p-5"
-               style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
+               style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}>
             <div className="text-slate-100 font-semibold text-lg">Add to plan</div>
             <div className="text-slate-400 text-sm">Promote this action to the roadmap and register how we’ll verify it.</div>
 
@@ -1436,28 +1485,28 @@ const [actions, setActions] = React.useState(() => ACTIONS.map(enrich));
               <div>
                 <label className="text-xs text-slate-400">Owner</label>
                 <input className="w-full mt-1 px-3 py-2 rounded-lg"
-                       style={{background:"var(--panel-2)",border:"1px solid var(--stroke)",color:"var(--text)"}}
-                       value={draft.owner} onChange={e=>setDraft({...draft,owner:e.target.value})}/>
+                       style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)", color: "var(--text)" }}
+                       value={draft.owner} onChange={e => setDraft({ ...draft, owner: e.target.value })} />
               </div>
               <div>
                 <label className="text-xs text-slate-400">Start</label>
                 <input type="month" className="w-full mt-1 px-3 py-2 rounded-lg"
-                       style={{background:"var(--panel-2)",border:"1px solid var(--stroke)",color:"var(--text)"}}
-                       value={draft.start} onChange={e=>setDraft({...draft,start:e.target.value})}/>
+                       style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)", color: "var(--text)" }}
+                       value={draft.start} onChange={e => setDraft({ ...draft, start: e.target.value })} />
               </div>
               <div>
                 <label className="text-xs text-slate-400">Funding</label>
                 <select className="w-full mt-1 px-3 py-2 rounded-lg"
-                        style={{background:"var(--panel-2)",border:"1px solid var(--stroke)",color:"var(--text)"}}
-                        value={draft.funding} onChange={e=>setDraft({...draft,funding:e.target.value})}>
+                        style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)", color: "var(--text)" }}
+                        value={draft.funding} onChange={e => setDraft({ ...draft, funding: e.target.value })}>
                   <option>CapEx</option><option>OpEx</option><option>No-cost ops</option>
                 </select>
               </div>
               <div>
                 <label className="text-xs text-slate-400">M&V method</label>
                 <select className="w-full mt-1 px-3 py-2 rounded-lg"
-                        style={{background:"var(--panel-2)",border:"1px solid var(--stroke)",color:"var(--text)"}}
-                        value={draft.mv} onChange={e=>setDraft({...draft,mv:e.target.value})}>
+                        style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)", color: "var(--text)" }}
+                        value={draft.mv} onChange={e => setDraft({ ...draft, mv: e.target.value })}>
                   <option>Bills (12m)</option>
                   <option>Interval meter (IPMVP C)</option>
                   <option>Submeter w/ baseline model</option>
@@ -1466,141 +1515,24 @@ const [actions, setActions] = React.useState(() => ACTIONS.map(enrich));
               <div className="md:col-span-2">
                 <label className="text-xs text-slate-400">Acceptance criteria</label>
                 <input className="w-full mt-1 px-3 py-2 rounded-lg"
-                       style={{background:"var(--panel-2)",border:"1px solid var(--stroke)",color:"var(--text)"}}
-                       value={draft.accept} onChange={e=>setDraft({...draft,accept:e.target.value})}/>
+                       style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)", color: "var(--text)" }}
+                       value={draft.accept} onChange={e => setDraft({ ...draft, accept: e.target.value })} />
               </div>
               <div className="md:col-span-2">
                 <label className="text-xs text-slate-400">Scope / notes (optional)</label>
                 <textarea rows={3} className="w-full mt-1 px-3 py-2 rounded-lg"
-                          style={{background:"var(--panel-2)",border:"1px solid var(--stroke)",color:"var(--text)"}}
-                          value={draft.scope} onChange={e=>setDraft({...draft,scope:e.target.value})}/>
+                          style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)", color: "var(--text)" }}
+                          value={draft.scope} onChange={e => setDraft({ ...draft, scope: e.target.value })} />
               </div>
             </div>
 
             <div className="mt-4 flex items-center justify-end gap-2">
-              <button className="btn btn-ghost" onClick={()=>setOpen(false)}>Cancel</button>
+              <button className="btn btn-ghost" onClick={() => setOpen(false)}>Cancel</button>
               <button className="btn btn-primary" onClick={savePlan}>Save to plan</button>
             </div>
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-// REPLACE the whole Lineage() with this version
-  function Lineage({ fromAction, goActions }){
-  const A = fromAction; // may be null if opened directly
-
-  const Card = ({title,children})=>(
-    <div className="rounded-xl p-4"
-         style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
-      <div className="text-slate-100 font-medium">{title}</div>
-      <div className="mt-2 text-sm text-slate-300">{children}</div>
-    </div>
-  );
-
-  return (
-    <div className="grid gap-4 md:gap-6">
-      <Section
-        title={"Data lineage" + (A? ` — ${A.title}` : "")}
-        desc="Inputs → transforms → factors → formulas → versions. This is how we make numbers audit-ready."
-        right={A && <button className="btn btn-ghost" onClick={goActions}>← Back to actions</button>}
-      >
-        {/* Why lineage matters */}
-        <div className="grid md:grid-cols-3 gap-3 md:gap-4 mb-3">
-          <Card title="Why this matters">
-            <ul className="list-disc pl-5 space-y-1">
-              <li>Builds trust: every KPI links to sources and methods.</li>
-              <li>Finance-grade: shows how savings/NPV were derived.</li>
-              <li>Governance: versioned factors & acceptance criteria.</li>
-            </ul>
-          </Card>
-          <Card title="What’s included">
-            <ul className="list-disc pl-5 space-y-1">
-              <li>Data sources (bills, meters, surveys, models).</li>
-              <li>Normalisation (HDD/CDD, occupancy, area).</li>
-              <li>Formulas & coefficients with version and date.</li>
-            </ul>
-          </Card>
-          <Card title="Client benefits">
-            <ul className="list-disc pl-5 space-y-1">
-              <li>Faster approvals: procurement & finance aligned.</li>
-              <li>Comparable metrics across assets & vendors.</li>
-              <li>Audit trail for ESG and assurance processes.</li>
-            </ul>
-          </Card>
-        </div>
-
-        {/* If we came from an action, show its snapshot */}
-        {A ? (
-          <div className="grid md:grid-cols-2 gap-3 md:gap-4">
-            <Card title="Lineage snapshot">
-              <div className="grid grid-cols-1 gap-2">
-                <div><span className="text-slate-400">Alarm</span> · {A.alarm.type} — {A.alarm.category} ({A.alarm.window}; {A.alarm.rule})</div>
-                <div><span className="text-slate-400">Baseline</span> · {A.lineage?.baseline || "—"}</div>
-                <div><span className="text-slate-400">Method</span> · {A.lineage?.method || "—"}</div>
-                <div><span className="text-slate-400">Factors</span> · {(A.lineage?.factors||[]).join(", ") || "—"}</div>
-                <div className="flex flex-wrap gap-2 mt-1">
-                  <span className="chip">Δ index {A.impacts.indexDelta.toFixed(2)}</span>
-                  <span className="chip">Δ comfort {A.impacts.comfortDeltaPct}%</span>
-                  <span className="chip">Δ tCO₂e {A.impacts.co2Delta} /yr</span>
-                </div>
-              </div>
-            </Card>
-
-            <Card title="Verification & acceptance">
-              {A.plan ? (
-                <div className="grid gap-2">
-                  <div><span className="text-slate-400">Owner</span> · {A.plan.owner}</div>
-                  <div><span className="text-slate-400">Start</span> · {A.plan.start}</div>
-                  <div><span className="text-slate-400">Funding</span> · {A.plan.funding}</div>
-                  <div><span className="text-slate-400">M&V</span> · {A.plan.mv}</div>
-                  <div><span className="text-slate-400">Acceptance</span> · {A.plan.accept}</div>
-                  {A.plan.scope && <div><span className="text-slate-400">Scope</span> · {A.plan.scope}</div>}
-                </div>
-              ) : (
-                <div>
-                  Not planned yet. Use <span className="chip">Add to plan</span> in Actions to register
-                  owner, start, funding and M&V so this section populates automatically.
-                </div>
-              )}
-            </Card>
-
-            <Card title="Trace (demo)">
-              <div className="text-xs">
-                <div className="grid grid-cols-[160px_1fr] gap-y-1">
-                  <div className="text-slate-400">Source</div><div>{A.lineage?.baseline || "FY24 bills"}</div>
-                  <div className="text-slate-400">Transforms</div><div>OCR → clean → normalise (HDD/CDD)</div>
-                  <div className="text-slate-400">Model</div><div>{A.lineage?.method || "Top-down regression"}</div>
-                  <div className="text-slate-400">Outputs</div><div>Δ index {A.impacts.indexDelta.toFixed(2)}; Δ tCO₂e {A.impacts.co2Delta}/yr</div>
-                  <div className="text-slate-400">Version</div><div>v0.2 · {new Date().toISOString().slice(0,10)}</div>
-                </div>
-              </div>
-            </Card>
-
-            <Card title="Finance context">
-              <div className="grid grid-cols-2 gap-2">
-                <div><span className="text-slate-400">CapEx</span><div className="text-slate-100 font-semibold">£{A.finance.capex.toLocaleString()}</div></div>
-                <div><span className="text-slate-400">Savings /yr</span><div className="text-slate-100 font-semibold">£{A.finance.save.toLocaleString()}</div></div>
-                <div><span className="text-slate-400">NPV @8%</span><div className="text-emerald-300 font-semibold">£{A.finance.npv.toLocaleString()}</div></div>
-                <div><span className="text-slate-400">Payback</span><div className="text-slate-100 font-semibold">{A.finance.payback}y</div></div>
-                <div><span className="text-slate-400">β</span><div className="text-slate-100 font-semibold">{A.finance.beta.toFixed(2)}</div></div>
-                <div><span className="text-slate-400">Confidence</span><div className="text-slate-100 font-semibold">{Math.round(A.finance.confidence*100)}%</div></div>
-              </div>
-            </Card>
-          </div>
-        ) : (
-          // No context → general explainer
-          <div className="rounded-xl p-4"
-               style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
-            <div className="text-slate-300 text-sm">
-              Open this page from an action to see a complete lineage snapshot for that recommendation.
-              You’ll get: Source → Normalisation → Model → Version → M&V → Acceptance, with links to the portfolio/building data behind it.
-            </div>
-          </div>
-        )}
-      </Section>
     </div>
   );
 }
