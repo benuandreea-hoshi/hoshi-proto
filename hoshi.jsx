@@ -201,7 +201,7 @@ function HeroOrb({ value = 0.42, label = "Good" }) {
     </div>
   );
 }
-  function CommonwealthCarousel({ onLearnMore }) {
+ function CommonwealthCarousel({ onLearnMore }) {
   const ref = React.useRef(null);
   const [idx, setIdx] = React.useState(0);
 
@@ -297,18 +297,19 @@ function HeroOrb({ value = 0.42, label = "Good" }) {
   };
 
   return (
-    <div className="grid md:grid-cols-2 gap-3 md:gap-6 items-stretch">
-      {/* left: image — clamp height on mobile so it doesn’t dominate */}
-      <div
-        className="rounded-2xl overflow-hidden border"
-        style={{ borderColor: "var(--stroke)", height: "clamp(180px, 36vw, 420px)" }}
-      >
-        <img src={PEOPLE_SRC} alt="Commonwealth of People" className="w-full h-full object-cover" />
+    <div className="grid gap-3 md:gap-6 md:grid-cols-2 items-start">
+      {/* left: image (cap height on mobile) */}
+      <div className="rounded-2xl overflow-hidden border" style={{ borderColor: "var(--stroke)" }}>
+        <img
+          src={PEOPLE_SRC}
+          alt="Commonwealth of People"
+          className="block w-full h-48 sm:h-56 md:h-full object-cover"
+        />
       </div>
 
       {/* right: carousel */}
       <div
-        className="relative rounded-2xl p-3 md:p-5"
+        className="relative rounded-2xl p-3 md:p-5 min-w-0 overflow-hidden"
         style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}
       >
         {/* header */}
@@ -337,18 +338,20 @@ function HeroOrb({ value = 0.42, label = "Good" }) {
           {slides.map((s) => (
             <div
               key={s.key}
-              className="shrink-0 snap-start w-full rounded-xl p-3 md:p-4"
+              className="shrink-0 snap-start basis-full max-w-full min-w-0 rounded-xl p-3 md:p-4"
               style={{ background: "rgba(148,163,184,.06)", border: "1px solid var(--stroke)" }}
             >
               <div className="flex items-start gap-2.5 md:gap-3">
                 <span className="mt-0.5 md:mt-1 text-slate-300">{s.icon}</span>
-                <div>
+                <div className="min-w-0">
                   <div className="font-semibold text-base md:text-lg">
                     <span className="bg-clip-text text-transparent bg-gradient-to-r from-sky-400 to-emerald-400">
                       {s.title}
                     </span>
                   </div>
-                  <p className="text-slate-300 mt-1 text-sm md:text-[0.95rem] leading-relaxed">{s.body}</p>
+                  <p className="text-slate-300 mt-1 text-sm md:text-[0.95rem] leading-relaxed">
+                    {s.body}
+                  </p>
                 </div>
               </div>
             </div>
@@ -356,8 +359,8 @@ function HeroOrb({ value = 0.42, label = "Good" }) {
         </div>
 
         {/* dots + CTA */}
-        <div className="mt-2 md:mt-3 flex items-center justify-between">
-          <div className="flex gap-1">
+        <div className="mt-2 md:mt-3 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex gap-1 order-2 md:order-1">
             {slides.map((_, i) => (
               <span
                 key={i}
@@ -371,7 +374,7 @@ function HeroOrb({ value = 0.42, label = "Good" }) {
             ))}
           </div>
           <button
-            className="btn btn-primary text-sm md:text-base px-3 py-1.5 md:px-4 md:py-2"
+            className="btn btn-primary order-1 md:order-2 w-full md:w-auto text-sm md:text-base px-3 py-1.5 md:px-4 md:py-2"
             onClick={onLearnMore}
           >
             Learn more
@@ -381,7 +384,6 @@ function HeroOrb({ value = 0.42, label = "Good" }) {
     </div>
   );
 }
-
 
  
 function Story({ goApp, goBlog }) {
