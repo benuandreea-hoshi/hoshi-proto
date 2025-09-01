@@ -492,6 +492,45 @@ function Story({ goApp, goBlog }) {
     </svg>
   );
 
+  // --- finance trio for "What you get" (local to Story) ---
+const fmtMoney = (n) =>
+  new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency:
+      (typeof window !== "undefined" &&
+        (window.localStorage.getItem("hoshi.currency") || "GBP")) || "GBP",
+    maximumFractionDigits: 0,
+  }).format(n);
+
+const FinanceStat = ({ label, value }) => (
+  <div
+    className="rounded-xl p-3"
+    style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}
+  >
+    <div className="text-xs text-slate-400 mb-1">{label}</div>
+    <div className="text-slate-100 font-semibold">{value}</div>
+  </div>
+);
+
+// compute once for the demo
+const { payback, npv10, irr } = React.useMemo(() => {
+  const capex = 1_350_000;
+  const baselineAnnual = 1_200_000;
+  const savingsPct = 0.09;
+  const opex = 50_000;
+  const years = 10;
+
+  const annualSavings = baselineAnnual * savingsPct;
+  const flows = [-capex, ...Array.from({ length: years }, () => annualSavings - opex)];
+
+  return {
+    payback: annualSavings > 0 ? capex / annualSavings : Infinity,
+    npv10: calcNPV(0.08, flows), // assumes calcNPV is defined at top of file (as in Actions)
+    irr: calcIRR(flows),          // assumes calcIRR is defined at top of file (as in Actions)
+  };
+}, []);
+
+
   return (
     <div className="min-h-[calc(100vh-80px)]">
       <div className="max-w-7xl mx-auto px-5 md:px-6">
@@ -637,6 +676,21 @@ function Story({ goApp, goBlog }) {
             </div>
           </div>
 
+        {/* What you get — finance at a glance */}
+<div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
+  <FinanceStat
+    label="Payback"
+    value={Number.isFinite(payback) ? `${payback.toFixed(1)}y` : "—"}
+  />
+  <FinanceStat
+    label="NPV (10y)"
+    value={fmtMoney(npv10)}
+  />
+  <FinanceStat
+    label="IRR (10y)"
+    value={`${(irr * 100).toFixed(1)}%`}
+  />
+</div>
           {/* compact value grid */}
           <div className="mt-4 grid md:grid-cols-4 gap-3 md:gap-4">
             <div className="usp-card"><div className="flex items-start gap-3"><span className="usp-ico"><IcoFEP/></span><div><div className="text-slate-100 font-medium">Forward Energy Premium</div><div className="text-slate-400 text-sm">Decision-grade ROI signal with β split.</div></div></div></div>
