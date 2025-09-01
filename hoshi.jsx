@@ -421,137 +421,85 @@ function Story({ goApp }) {
         </Band>
 
       {/* COMMONWEALTH OF PEOPLE (Band 3) */}
+{/* COMMONWEALTH OF PEOPLE (Band 3) — compact 3-card layout */}
 <Band tone={3} id="commonwealth">
-  <div className="grid md:grid-cols-2 gap-4 md:gap-6 items-start">
+  <div className="grid md:grid-cols-12 gap-4 md:gap-6 items-stretch">
     {/* Image */}
-    <div className="rounded-2xl overflow-hidden border"
+    <div className="md:col-span-5 rounded-2xl overflow-hidden border"
          style={{ borderColor: "var(--stroke)" }}>
       <img
         src={PEOPLE_SRC}
         alt="Commonwealth of People"
+        loading="lazy"
         className="w-full h-56 md:h-full object-cover"
       />
     </div>
 
-    {/* Copy */}
-    <div>
+    {/* Copy + cards */}
+    <div className="md:col-span-7 flex flex-col">
       <h3 className="text-slate-50 text-lg font-semibold">Commonwealth of People</h3>
 
-     {/* Pill legend (optional) */}
-<div className="mb-3 flex flex-wrap gap-2">
-  <span className="chip">Public floor</span>
-  <span className="chip">Commonwealth Cost of Carbon</span>
-  <span className="chip">Governed ledger</span>
-  <span className="chip">Portable responsibility</span>
-</div>
-
-{/* 2×2 idea cards */}
-<div className="grid md:grid-cols-2 gap-3">
-  {/* Card 1 — What it is */}
-  <div className="rounded-xl p-4" style={{background:"var(--panel-2)", border:"1px solid var(--stroke)"}}>
-    <div className="flex items-start gap-3">
-      <span className="shrink-0 mt-1">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
-          <circle cx="12" cy="12" r="9" stroke="currentColor" opacity=".5"/>
-          <path d="M3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18" stroke="currentColor"/>
-        </svg>
-      </span>
-      <div>
-        <div className="font-semibold">
-          <span className="bg-clip-text text-transparent bg-gradient-to-r from-sky-400 to-emerald-400">
-            What it is
-          </span>
-        </div>
-        <p className="text-slate-300 mt-1">
-          A covenant between free societies to keep order over the things no single firm controls:
-          the carbon cycle, shared grids, breathable air, all by setting a <b>public, non-optional floor
-          of ecological rules</b> that sits above private contracts.
-        </p>
+      {/* Pills */}
+      <div className="mb-3 flex flex-wrap gap-2">
+        <span className="chip">Public floor</span>
+        <span className="chip">Commonwealth Cost of Carbon</span>
+        <span className="chip">Governed ledger</span>
+        <span className="chip">Portable responsibility</span>
       </div>
-    </div>
-  </div>
 
-  {/* Card 2 — Why real estate needs it */}
-  <div className="rounded-xl p-4" style={{background:"var(--panel-2)", border:"1px solid var(--stroke)"}}>
-    <div className="flex items-start gap-3">
-      <span className="shrink-0 mt-1">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
-          <rect x="5" y="3" width="6" height="18" rx="1.5" stroke="currentColor"/>
-          <rect x="13" y="7" width="6" height="14" rx="1.5" stroke="currentColor" opacity=".6"/>
-          <path d="M7.5 7h1.5M7.5 11h1.5M15.5 11h1.5" stroke="currentColor"/>
-        </svg>
-      </span>
-      <div>
-        <div className="font-semibold">
-          <span className="bg-clip-text text-transparent bg-gradient-to-r from-sky-400 to-emerald-400">
-            Why real estate needs it
-          </span>
+      {/* 1 row of 3 cards (equal height) */}
+      <div className="grid md:grid-cols-3 gap-3 auto-rows-fr items-stretch">
+        {/* Card 1 — What it is */}
+        <div className="rounded-xl p-4 h-full" style={{background:"var(--panel-2)", border:"1px solid var(--stroke)"}}>
+          <h4 className="font-semibold">
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-sky-400 to-emerald-400">
+              What it is
+            </span>
+          </h4>
+          <p className="text-slate-300 mt-1">
+            A covenant between free societies to keep order over the things no single firm controls:
+            the carbon cycle, shared grids, breathable air, by setting a <b>public, non-optional floor
+            of ecological rules</b> above private contracts.
+          </p>
         </div>
-        <p className="text-slate-300 mt-1">
-          Buildings are few, large, and long-lived. You can’t diversify away a single tower’s
-          comfort or carbon exposure. With owners, tenants, <b>building operations teams</b>,
-          insurers and lenders optimizing locally, <b>the risks that matter live in the gaps</b>.
-          A commonwealth supplies the referee where voluntary coordination is lacking.
-        </p>
-      </div>
-    </div>
-  </div>
 
-  {/* Card 3 — What sits in the commonwealth */}
-  <div className="rounded-xl p-4" style={{background:"var(--panel-2)", border:"1px solid var(--stroke)"}}>
-    <div className="flex items-start gap-3">
-      <span className="shrink-0 mt-1">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
-          <rect x="4" y="5" width="16" height="14" rx="2" stroke="currentColor"/>
-          <path d="M8 9h8M8 13h8M8 17h6" stroke="currentColor"/>
-        </svg>
-      </span>
-      <div>
-        <div className="font-semibold">
-          <span className="bg-clip-text text-transparent bg-gradient-to-r from-sky-400 to-emerald-400">
-            What sits in the commonwealth
-          </span>
+        {/* Card 2 — Why real estate needs it */}
+        <div className="rounded-xl p-4 h-full" style={{background:"var(--panel-2)", border:"1px solid var(--stroke)"}}>
+          <h4 className="font-semibold">
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-sky-400 to-emerald-400">
+              Why real estate needs it
+            </span>
+          </h4>
+          <p className="text-slate-300 mt-1">
+            Buildings are few, large, and long-lived; you can’t diversify away a single tower’s comfort
+            or carbon exposure. With owners, tenants, <b>building operations teams</b>, insurers and
+            lenders optimizing locally, <b>the risks that matter live in the gaps</b>. The commonwealth
+            provides the referee when voluntary coordination is missing.
+          </p>
         </div>
-        <p className="text-slate-300 mt-1">
-          A <b>public floor of obligations</b> (published, explainable, enforceable), a canonical
-          <b> Commonwealth Cost of Carbon (CCC)</b> everyone can reference in underwriting and
-          leases, and a <b>governed record of promises</b> where claims carry baseline, method,
-          and factors, with versions you can audit.
-        </p>
-      </div>
-    </div>
-  </div>
 
-  {/* Card 4 — What changes for practice */}
-  <div className="rounded-xl p-4" style={{background:"var(--panel-2)", border:"1px solid var(--stroke)"}}>
-    <div className="flex items-start gap-3">
-      <span className="shrink-0 mt-1">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
-          <path d="M6 12l3 3 9-9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-      </span>
-      <div>
-        <div className="font-semibold">
-          <span className="bg-clip-text text-transparent bg-gradient-to-r from-sky-400 to-emerald-400">
-            What changes for practice
-          </span>
+        {/* Card 3 — What sits in the commonwealth */}
+        <div className="rounded-xl p-4 h-full" style={{background:"var(--panel-2)", border:"1px solid var(--stroke)"}}>
+          <h4 className="font-semibold">
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-sky-400 to-emerald-400">
+              What sits in the commonwealth
+            </span>
+          </h4>
+          <p className="text-slate-300 mt-1">
+            A <b>public floor of obligations</b> (published, explainable, enforceable), a canonical
+            <b> Commonwealth Cost of Carbon (CCC)</b> for underwriting and leases, and a <b>governed
+            record of promises</b> with baseline, method, and factors—versioned for audit.
+          </p>
+          <p className="text-slate-300 mt-2">
+            <b>In practice:</b> decisions line up against a public floor; obligations are
+            <b> inspectable</b> (not just asserted); responsibility is <b>portable</b> across partners,
+            audits, and time.
+          </p>
         </div>
-        <p className="text-slate-300 mt-1">
-          Instead of ad-hoc pledges and shifting internal prices, decisions line up against a
-          <b> public floor</b>; obligations are <b>inspectable</b> (not just asserted); and
-          responsibility is <b>portable</b> across partners, audits and time. That’s the order in
-          which real estate can keep its promises to people, and to the planet.
-        </p>
       </div>
-    </div>
-  </div>
-</div>
-
     </div>
   </div>
 </Band>
-
-
 
         {/* HOW IT WORKS (Band 2) */}
         <Band tone={2} id="how">
