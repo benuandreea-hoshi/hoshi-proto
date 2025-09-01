@@ -201,6 +201,175 @@ function HeroOrb({ value = 0.42, label = "Good" }) {
     </div>
   );
 }
+function CommonwealthCarousel({ onLearnMore }) {
+  const ref = React.useRef(null);
+  const [idx, setIdx] = React.useState(0);
+  const slides = React.useMemo(()=>[
+    {
+      key:"what",
+      icon:(
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+          <circle cx="12" cy="12" r="9" stroke="currentColor" opacity=".5"/>
+          <path d="M3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18" stroke="currentColor"/>
+        </svg>
+      ),
+      title:"What it is",
+      body:(
+        <>
+          A covenant between free societies to keep order over the things no single firm controls:
+          the carbon cycle, shared grids, breathable air, by setting a{" "}
+          <b>public, non-optional floor of ecological rules</b> that sits above private contracts.
+        </>
+      )
+    },
+    {
+      key:"why",
+      icon:(
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+          <rect x="5" y="3" width="6" height="18" rx="1.5" stroke="currentColor"/>
+          <rect x="13" y="7" width="6" height="14" rx="1.5" stroke="currentColor" opacity=".6"/>
+          <path d="M7.5 7h1.5M7.5 11h1.5M15.5 11h1.5" stroke="currentColor"/>
+        </svg>
+      ),
+      title:"Why real estate needs it",
+      body:(
+        <>
+          Buildings are few, large, and long-lived. You can’t diversify away one tower’s comfort or carbon exposure.
+          With owners, tenants, <b>building operations teams</b>, insurers and lenders optimizing locally,{" "}
+          <b>the risks that matter live in the gaps</b>. The commonwealth supplies the referee where voluntary
+          coordination is missing.
+        </>
+      )
+    },
+    {
+      key:"what-sits",
+      icon:(
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+          <rect x="4" y="5" width="16" height="14" rx="2" stroke="currentColor"/>
+          <path d="M8 9h8M8 13h8M8 17h6" stroke="currentColor"/>
+        </svg>
+      ),
+      title:"What sits in the commonwealth",
+      body:(
+        <>
+          A <b>public floor of obligations</b> (published, explainable, enforceable), a canonical{" "}
+          <b>Commonwealth Cost of Carbon (CCC)</b> everyone can reference in underwriting and leases, and a{" "}
+          <b>governed record of promises</b> where claims carry baseline, method, and factors, with versions you can audit.
+        </>
+      )
+    },
+    {
+      key:"practice",
+      icon:(
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+          <path d="M6 12l3 3 9-9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      ),
+      title:"What changes for practice",
+      body:(
+        <>
+          Instead of ad-hoc pledges and shifting internal prices, decisions line up against a{" "}
+          <b>public floor</b>; obligations are <b>inspectable</b> (not just asserted); and responsibility is{" "}
+          <b>portable</b> across partners, audits and time.
+        </>
+      )
+    }
+  ],[]);
+
+  // scroll-snap state sync
+  React.useEffect(()=>{
+    const el = ref.current;
+    if(!el) return;
+    const onScroll = ()=> {
+      const w = el.clientWidth;
+      const i = Math.round(el.scrollLeft / w);
+      setIdx(i);
+    };
+    el.addEventListener("scroll", onScroll, {passive:true});
+    return ()=> el.removeEventListener("scroll", onScroll);
+  },[]);
+
+  const go = (dir)=> {
+    const el = ref.current;
+    if(!el) return;
+    const w = el.clientWidth;
+    el.scrollBy({ left: dir * (w + 16), behavior: "smooth" });
+  };
+
+  return (
+    <div className="grid md:grid-cols-2 gap-4 md:gap-6 items-stretch">
+      {/* left: image */}
+      <div className="rounded-2xl overflow-hidden border"
+           style={{borderColor:"var(--stroke)"}}>
+        <img src={PEOPLE_SRC} alt="Commonwealth of People"
+             className="w-full h-full object-cover"/>
+      </div>
+
+      {/* right: carousel */}
+      <div className="relative rounded-2xl p-4 md:p-5"
+           style={{background:"var(--panel-2)", border:"1px solid var(--stroke)"}}>
+        {/* header */}
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <div className="text-slate-50 font-semibold">Commonwealth of People</div>
+            <div className="mt-2 flex flex-wrap gap-2 text-xs">
+              <span className="chip">Public floor</span>
+              <span className="chip">Commonwealth Cost of Carbon</span>
+              <span className="chip">Governed ledger</span>
+              <span className="chip">Portable responsibility</span>
+            </div>
+          </div>
+          <div className="hidden md:flex items-center gap-2">
+            <button className="btn btn-ghost" onClick={()=>go(-1)} aria-label="Previous">‹</button>
+            <button className="btn btn-ghost" onClick={()=>go(1)} aria-label="Next">›</button>
+          </div>
+        </div>
+
+        {/* rail */}
+        <div
+          ref={ref}
+          className="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar"
+          style={{scrollbarWidth:"none"}}
+        >
+          {slides.map((s,i)=>(
+            <div key={s.key}
+                 className="shrink-0 snap-start w-full rounded-xl p-4"
+                 style={{background:"rgba(148,163,184,.06)", border:"1px solid var(--stroke)"}}>
+              <div className="flex items-start gap-3">
+                <span className="mt-1 text-slate-300">{s.icon}</span>
+                <div>
+                  <div className="font-semibold">
+                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-sky-400 to-emerald-400">
+                      {s.title}
+                    </span>
+                  </div>
+                  <p className="text-slate-300 mt-1">{s.body}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* dots + CTA */}
+        <div className="mt-3 flex items-center justify-between">
+          <div className="flex gap-1">
+            {slides.map((_,i)=>(
+              <span key={i}
+                    className="inline-block rounded-full"
+                    style={{
+                      width:8, height:8,
+                      background: i===idx ? "var(--text)" : "rgba(148,163,184,.45)"
+                    }}/>
+            ))}
+          </div>
+          <button className="btn btn-primary" onClick={onLearnMore}>
+            Learn more
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
  
 function Story({ goApp }) {
@@ -420,86 +589,26 @@ function Story({ goApp }) {
           </div>
         </Band>
 
-      {/* COMMONWEALTH OF PEOPLE (Band 3) */}
-{/* COMMONWEALTH OF PEOPLE (Band 3) — compact 3-card layout */}
+{/* COMMONWEALTH OF PEOPLE (carousel) */}
 <Band tone={3} id="commonwealth">
-  <div className="grid md:grid-cols-12 gap-4 md:gap-6 items-stretch">
-    {/* Image */}
-    <div className="md:col-span-5 rounded-2xl overflow-hidden border"
-         style={{ borderColor: "var(--stroke)" }}>
-      <img
-        src={PEOPLE_SRC}
-        alt="Commonwealth of People"
-        loading="lazy"
-        className="w-full h-56 md:h-full object-cover"
-      />
-    </div>
-
-    {/* Copy + cards */}
-    <div className="md:col-span-7 flex flex-col">
-      <h3 className="text-slate-50 text-lg font-semibold">Commonwealth of People</h3>
-
-      {/* Pills */}
-      <div className="mb-3 flex flex-wrap gap-2">
-        <span className="chip">Public floor</span>
-        <span className="chip">Commonwealth Cost of Carbon</span>
-        <span className="chip">Governed ledger</span>
-        <span className="chip">Portable responsibility</span>
-      </div>
-
-      {/* 1 row of 3 cards (equal height) */}
-      <div className="grid md:grid-cols-3 gap-3 auto-rows-fr items-stretch">
-        {/* Card 1 — What it is */}
-        <div className="rounded-xl p-4 h-full" style={{background:"var(--panel-2)", border:"1px solid var(--stroke)"}}>
-          <h4 className="font-semibold">
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-sky-400 to-emerald-400">
-              What it is
-            </span>
-          </h4>
-          <p className="text-slate-300 mt-1">
-            A covenant between free societies to keep order over the things no single firm controls:
-            the carbon cycle, shared grids, breathable air, by setting a <b>public, non-optional floor
-            of ecological rules</b> above private contracts.
-          </p>
-        </div>
-
-        {/* Card 2 — Why real estate needs it */}
-        <div className="rounded-xl p-4 h-full" style={{background:"var(--panel-2)", border:"1px solid var(--stroke)"}}>
-          <h4 className="font-semibold">
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-sky-400 to-emerald-400">
-              Why real estate needs it
-            </span>
-          </h4>
-          <p className="text-slate-300 mt-1">
-            Buildings are few, large, and long-lived; you can’t diversify away a single tower’s comfort
-            or carbon exposure. With owners, tenants, <b>building operations teams</b>, insurers and
-            lenders optimizing locally, <b>the risks that matter live in the gaps</b>. The commonwealth
-            provides the referee when voluntary coordination is missing.
-          </p>
-        </div>
-
-        {/* Card 3 — What sits in the commonwealth */}
-        <div className="rounded-xl p-4 h-full" style={{background:"var(--panel-2)", border:"1px solid var(--stroke)"}}>
-          <h4 className="font-semibold">
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-sky-400 to-emerald-400">
-              What sits in the commonwealth
-            </span>
-          </h4>
-          <p className="text-slate-300 mt-1">
-            A <b>public floor of obligations</b> (published, explainable, enforceable), a canonical
-            <b> Commonwealth Cost of Carbon (CCC)</b> for underwriting and leases, and a <b>governed
-            record of promises</b> with baseline, method, and factors—versioned for audit.
-          </p>
-          <p className="text-slate-300 mt-2">
-            <b>In practice:</b> decisions line up against a public floor; obligations are
-            <b> inspectable</b> (not just asserted); responsibility is <b>portable</b> across partners,
-            audits, and time.
-          </p>
-        </div>
-      </div>
-    </div>
-  </div>
+  <CommonwealthCarousel
+    onLearnMore={()=>{
+      // hand off to Blog → “Commonwealth of People”
+      if (typeof window !== "undefined") {
+        window.__blogIntent = "commonwealth-of-people";
+      }
+      // if your App sets tabs via setActive("blog"), wire Story to accept goBlog
+      // and pass it down here; otherwise this falls back to hash navigation.
+      if (typeof goBlog === "function") {
+        goBlog("commonwealth-of-people");
+      } else {
+        // harmless fallback if you haven't wired goBlog yet
+        alert("Open the Blog tab → Commonwealth of People");
+      }
+    }}
+  />
 </Band>
+
 
         {/* HOW IT WORKS (Band 2) */}
         <Band tone={2} id="how">
