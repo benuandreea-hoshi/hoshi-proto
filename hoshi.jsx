@@ -372,7 +372,7 @@ function CommonwealthCarousel({ onLearnMore }) {
 }
 
  
-function Story({ goApp }) {
+function Story({ goApp, goBlog }) {
   // tiny sparkline + demo
   const roiSpark = [2, 3, 2, 4, 5, 4, 6, 7, 6, 7, 8, 7];
   const demoAvg = 0.42;
@@ -591,18 +591,19 @@ function Story({ goApp }) {
 
 {/* COMMONWEALTH OF PEOPLE (carousel) */}
 <Band tone={3} id="commonwealth">
-<CommonwealthCarousel onLearnMore={goBlog} />
-      // if your App sets tabs via setActive("blog"), wire Story to accept goBlog
-      // and pass it down here; otherwise this falls back to hash navigation.
+  <CommonwealthCarousel
+    onLearnMore={() => {
+      // open the Blog tab (no popup)
       if (typeof goBlog === "function") {
-        goBlog("commonwealth-of-people");
+        goBlog(); // App already wires this to setActive("blog")
       } else {
-        // harmless fallback if you haven't wired goBlog yet
-        alert("Open the Blog tab → Commonwealth of People");
+        // safe fallback if Story is ever used standalone
+        window.location.hash = "#blog";
       }
     }}
   />
 </Band>
+
 
 
         {/* HOW IT WORKS (Band 2) */}
