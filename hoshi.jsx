@@ -201,20 +201,21 @@ function HeroOrb({ value = 0.42, label = "Good" }) {
     </div>
   );
 }
-function CommonwealthCarousel({ onLearnMore }) {
+  function CommonwealthCarousel({ onLearnMore }) {
   const ref = React.useRef(null);
   const [idx, setIdx] = React.useState(0);
-  const slides = React.useMemo(()=>[
+
+  const slides = React.useMemo(() => [
     {
-      key:"what",
-      icon:(
+      key: "what",
+      icon: (
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-          <circle cx="12" cy="12" r="9" stroke="currentColor" opacity=".5"/>
-          <path d="M3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18" stroke="currentColor"/>
+          <circle cx="12" cy="12" r="9" stroke="currentColor" opacity=".5" />
+          <path d="M3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18" stroke="currentColor" />
         </svg>
       ),
-      title:"What it is",
-      body:(
+      title: "What it is",
+      body: (
         <>
           A covenant between free societies to keep order over the things no single firm controls:
           the carbon cycle, shared grids, breathable air, by setting a{" "}
@@ -223,16 +224,16 @@ function CommonwealthCarousel({ onLearnMore }) {
       )
     },
     {
-      key:"why",
-      icon:(
+      key: "why",
+      icon: (
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-          <rect x="5" y="3" width="6" height="18" rx="1.5" stroke="currentColor"/>
-          <rect x="13" y="7" width="6" height="14" rx="1.5" stroke="currentColor" opacity=".6"/>
-          <path d="M7.5 7h1.5M7.5 11h1.5M15.5 11h1.5" stroke="currentColor"/>
+          <rect x="5" y="3" width="6" height="18" rx="1.5" stroke="currentColor" />
+          <rect x="13" y="7" width="6" height="14" rx="1.5" stroke="currentColor" opacity=".6" />
+          <path d="M7.5 7h1.5M7.5 11h1.5M15.5 11h1.5" stroke="currentColor" />
         </svg>
       ),
-      title:"Why real estate needs it",
-      body:(
+      title: "Why real estate needs it",
+      body: (
         <>
           Buildings are few, large, and long-lived. You can’t diversify away one tower’s comfort or carbon exposure.
           With owners, tenants, <b>building operations teams</b>, insurers and lenders optimizing locally,{" "}
@@ -242,15 +243,15 @@ function CommonwealthCarousel({ onLearnMore }) {
       )
     },
     {
-      key:"what-sits",
-      icon:(
+      key: "what-sits",
+      icon: (
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-          <rect x="4" y="5" width="16" height="14" rx="2" stroke="currentColor"/>
-          <path d="M8 9h8M8 13h8M8 17h6" stroke="currentColor"/>
+          <rect x="4" y="5" width="16" height="14" rx="2" stroke="currentColor" />
+          <path d="M8 9h8M8 13h8M8 17h6" stroke="currentColor" />
         </svg>
       ),
-      title:"What sits in the commonwealth",
-      body:(
+      title: "What sits in the commonwealth",
+      body: (
         <>
           A <b>public floor of obligations</b> (published, explainable, enforceable), a canonical{" "}
           <b>Commonwealth Cost of Carbon (CCC)</b> everyone can reference in underwriting and leases, and a{" "}
@@ -259,14 +260,14 @@ function CommonwealthCarousel({ onLearnMore }) {
       )
     },
     {
-      key:"practice",
-      icon:(
+      key: "practice",
+      icon: (
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-          <path d="M6 12l3 3 9-9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M6 12l3 3 9-9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       ),
-      title:"What changes for practice",
-      body:(
+      title: "What changes for practice",
+      body: (
         <>
           Instead of ad-hoc pledges and shifting internal prices, decisions line up against a{" "}
           <b>public floor</b>; obligations are <b>inspectable</b> (not just asserted); and responsibility is{" "}
@@ -274,45 +275,47 @@ function CommonwealthCarousel({ onLearnMore }) {
         </>
       )
     }
-  ],[]);
+  ], []);
 
-  // scroll-snap state sync
-  React.useEffect(()=>{
+  // keep dots in sync while swiping
+  React.useEffect(() => {
     const el = ref.current;
-    if(!el) return;
-    const onScroll = ()=> {
+    if (!el) return;
+    const onScroll = () => {
       const w = el.clientWidth;
-      const i = Math.round(el.scrollLeft / w);
-      setIdx(i);
+      setIdx(Math.round(el.scrollLeft / w));
     };
-    el.addEventListener("scroll", onScroll, {passive:true});
-    return ()=> el.removeEventListener("scroll", onScroll);
-  },[]);
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, []);
 
-  const go = (dir)=> {
+  const go = (dir) => {
     const el = ref.current;
-    if(!el) return;
+    if (!el) return;
     const w = el.clientWidth;
-    el.scrollBy({ left: dir * (w + 16), behavior: "smooth" });
+    el.scrollBy({ left: dir * (w + 12), behavior: "smooth" });
   };
 
   return (
-    <div className="grid md:grid-cols-2 gap-4 md:gap-6 items-stretch">
-      {/* left: image */}
-      <div className="rounded-2xl overflow-hidden border"
-           style={{borderColor:"var(--stroke)"}}>
-        <img src={PEOPLE_SRC} alt="Commonwealth of People"
-             className="w-full h-full object-cover"/>
+    <div className="grid md:grid-cols-2 gap-3 md:gap-6 items-stretch">
+      {/* left: image — clamp height on mobile so it doesn’t dominate */}
+      <div
+        className="rounded-2xl overflow-hidden border"
+        style={{ borderColor: "var(--stroke)", height: "clamp(180px, 36vw, 420px)" }}
+      >
+        <img src={PEOPLE_SRC} alt="Commonwealth of People" className="w-full h-full object-cover" />
       </div>
 
       {/* right: carousel */}
-      <div className="relative rounded-2xl p-4 md:p-5"
-           style={{background:"var(--panel-2)", border:"1px solid var(--stroke)"}}>
+      <div
+        className="relative rounded-2xl p-3 md:p-5"
+        style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}
+      >
         {/* header */}
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between mb-2 md:mb-3">
           <div>
-            <div className="text-slate-50 font-semibold">Commonwealth of People</div>
-            <div className="mt-2 flex flex-wrap gap-2 text-xs">
+            <div className="text-slate-50 font-semibold text-lg md:text-xl">Commonwealth of People</div>
+            <div className="mt-1 md:mt-2 hidden sm:flex flex-wrap gap-2 text-xs">
               <span className="chip">Public floor</span>
               <span className="chip">Commonwealth Cost of Carbon</span>
               <span className="chip">Governed ledger</span>
@@ -320,30 +323,32 @@ function CommonwealthCarousel({ onLearnMore }) {
             </div>
           </div>
           <div className="hidden md:flex items-center gap-2">
-            <button className="btn btn-ghost" onClick={()=>go(-1)} aria-label="Previous">‹</button>
-            <button className="btn btn-ghost" onClick={()=>go(1)} aria-label="Next">›</button>
+            <button className="btn btn-ghost" onClick={() => go(-1)} aria-label="Previous">‹</button>
+            <button className="btn btn-ghost" onClick={() => go(1)} aria-label="Next">›</button>
           </div>
         </div>
 
         {/* rail */}
         <div
           ref={ref}
-          className="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar"
-          style={{scrollbarWidth:"none"}}
+          className="flex gap-3 overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar -mx-1 px-1"
+          style={{ scrollbarWidth: "none" }}
         >
-          {slides.map((s,i)=>(
-            <div key={s.key}
-                 className="shrink-0 snap-start w-full rounded-xl p-4"
-                 style={{background:"rgba(148,163,184,.06)", border:"1px solid var(--stroke)"}}>
-              <div className="flex items-start gap-3">
-                <span className="mt-1 text-slate-300">{s.icon}</span>
+          {slides.map((s) => (
+            <div
+              key={s.key}
+              className="shrink-0 snap-start w-full rounded-xl p-3 md:p-4"
+              style={{ background: "rgba(148,163,184,.06)", border: "1px solid var(--stroke)" }}
+            >
+              <div className="flex items-start gap-2.5 md:gap-3">
+                <span className="mt-0.5 md:mt-1 text-slate-300">{s.icon}</span>
                 <div>
-                  <div className="font-semibold">
+                  <div className="font-semibold text-base md:text-lg">
                     <span className="bg-clip-text text-transparent bg-gradient-to-r from-sky-400 to-emerald-400">
                       {s.title}
                     </span>
                   </div>
-                  <p className="text-slate-300 mt-1">{s.body}</p>
+                  <p className="text-slate-300 mt-1 text-sm md:text-[0.95rem] leading-relaxed">{s.body}</p>
                 </div>
               </div>
             </div>
@@ -351,18 +356,24 @@ function CommonwealthCarousel({ onLearnMore }) {
         </div>
 
         {/* dots + CTA */}
-        <div className="mt-3 flex items-center justify-between">
+        <div className="mt-2 md:mt-3 flex items-center justify-between">
           <div className="flex gap-1">
-            {slides.map((_,i)=>(
-              <span key={i}
-                    className="inline-block rounded-full"
-                    style={{
-                      width:8, height:8,
-                      background: i===idx ? "var(--text)" : "rgba(148,163,184,.45)"
-                    }}/>
+            {slides.map((_, i) => (
+              <span
+                key={i}
+                className="inline-block rounded-full"
+                style={{
+                  width: 8,
+                  height: 8,
+                  background: i === idx ? "var(--text)" : "rgba(148,163,184,.45)"
+                }}
+              />
             ))}
           </div>
-          <button className="btn btn-primary" onClick={onLearnMore}>
+          <button
+            className="btn btn-primary text-sm md:text-base px-3 py-1.5 md:px-4 md:py-2"
+            onClick={onLearnMore}
+          >
             Learn more
           </button>
         </div>
@@ -370,6 +381,7 @@ function CommonwealthCarousel({ onLearnMore }) {
     </div>
   );
 }
+
 
  
 function Story({ goApp, goBlog }) {
