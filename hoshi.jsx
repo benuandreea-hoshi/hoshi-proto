@@ -429,6 +429,8 @@ function HeroOrb({ value = 0.42, label = "Good" }) {
 }
 
  
+
+
 function Story({ goApp, goBlog }) {
   // tiny sparkline + demo
   const roiSpark = [2, 3, 2, 4, 5, 4, 6, 7, 6, 7, 8, 7];
@@ -441,35 +443,21 @@ function Story({ goApp, goBlog }) {
       <div className="s">{s}</div>
     </div>
   );
-  const LogoCloudStrip = () => (
-    <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
-      {["TenantCo","LandlordCo","SupplyOne","GridIQ","GreenCap","Cetra"].map((n,i)=>(
-        <div key={i}
-          className="px-3 py-2 rounded-lg text-center text-xs text-slate-300"
-          style={{background:"rgba(148,163,184,.06)",border:"1px solid rgba(148,163,184,.18)"}}
-        >{n}</div>
-      ))}
-    </div>
-  );
+
   const Band = ({ tone = 1, children, id }) => {
-    // three subtle tints to “reset” the eye between sections
     const bg = [
       "linear-gradient(180deg,#0c111b 0%,#0b1320 100%)",
       "linear-gradient(180deg,#0b1320 0%,#0b1626 100%)",
       "linear-gradient(180deg,#0b1626 0%,#0b1a2d 100%)",
     ][Math.max(0, Math.min(2, tone - 1))];
     return (
-      <section
-        id={id}
-        className="rounded-2xl p-5 md:p-6 border"
-        style={{ background: bg, border: "1px solid var(--stroke)" }}
-      >
+      <section id={id} className="rounded-2xl p-5 md:p-6 border" style={{ background: bg, border: "1px solid var(--stroke)" }}>
         {children}
       </section>
     );
   };
 
-  // icons for “what you get”
+  // icons
   const IcoFEP = () => (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
       <path d="M4 18V6m0 12h16M8 14l3 3 5-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -492,94 +480,74 @@ function Story({ goApp, goBlog }) {
     </svg>
   );
 
-  // --- finance trio for "What you get" (local to Story) ---
-const fmtMoney = (n) =>
-  new Intl.NumberFormat("en-GB", {
-    style: "currency",
-    currency:
-      (typeof window !== "undefined" &&
-        (window.localStorage.getItem("hoshi.currency") || "GBP")) || "GBP",
-    maximumFractionDigits: 0,
-  }).format(n);
+  // money formatter (single copy)
+  const fmtMoney = (n) =>
+    new Intl.NumberFormat("en-GB", {
+      style: "currency",
+      currency:
+        (typeof window !== "undefined" &&
+          (window.localStorage.getItem("hoshi.currency") || "GBP")) || "GBP",
+      maximumFractionDigits: 0,
+    }).format(n);
 
-const FinanceStat = ({ label, value }) => (
-  <div
-    className="rounded-xl p-3"
-    style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}
-  >
-    <div className="text-xs text-slate-400 mb-1">{label}</div>
-    <div className="text-slate-100 font-semibold">{value}</div>
-  </div>
-);
-  // --- demo inputs used only for Story's "Illustrative outcome"
-const DEMO = { 
-  capex: 250_000,            // LED + controls + schedule tuning
-  baselineAnnual: 1_200_000, // current utilities
-  savingsPct: 0.12,          // 12% reduction
-  opex: 15_000,              // added service contracts
-  years: 10,
-  rate: 0.08                 // 10y NPV @ 8%
-};
-
-// money formatter reusing saved currency
-const fmtMoney = (n) => new Intl.NumberFormat("en-GB", {
-  style: "currency",
-  currency:
-    (typeof window !== "undefined" &&
-      (window.localStorage.getItem("hoshi.currency") || "GBP")) || "GBP",
-  maximumFractionDigits: 0,
-}).format(n);
-
-const [showAssump, setShowAssump] = React.useState(false);
-
-// compute once for the demo
-const { payback, npv10, irr, annualSavings } = React.useMemo(() => {
-  const s = DEMO.baselineAnnual * DEMO.savingsPct;
-  const flows = [-DEMO.capex, ...Array.from({ length: DEMO.years }, () => (s - DEMO.opex))];
-  return {
-    annualSavings: s,
-    payback: s > 0 ? DEMO.capex / s : Infinity,
-    npv10: calcNPV(DEMO.rate, flows),
-    irr: calcIRR(flows),
+  // demo inputs used for "Illustrative outcome"
+  const DEMO = {
+    capex: 250_000,
+    baselineAnnual: 1_200_000,
+    savingsPct: 0.12,
+    opex: 15_000,
+    years: 10,
+    rate: 0.08,
   };
-}, []);
+
+  const [showAssump, setShowAssump] = React.useState(false);
+
+  // compute once for the demo
+  const { payback, npv10, irr, annualSavings } = React.useMemo(() => {
+    const s = DEMO.baselineAnnual * DEMO.savingsPct;
+    const flows = [-DEMO.capex, ...Array.from({ length: DEMO.years }, () => (s - DEMO.opex))];
+    return {
+      annualSavings: s,
+      payback: s > 0 ? DEMO.capex / s : Infinity,
+      npv10: calcNPV(DEMO.rate, flows), // assumes calcNPV helper exists globally
+      irr: calcIRR(flows),               // assumes calcIRR helper exists globally
+    };
+  }, []);
 
   return (
     <div className="min-h-[calc(100vh-80px)]">
       <div className="max-w-7xl mx-auto px-5 md:px-6">
-        {/* HERO (Band 1) — orb & logo strip removed */}
-<Band tone={1}>
-  <div className="grid grid-cols-1 gap-6 md:gap-10">
-    <div>
-      <div className="flex items-center gap-2 mb-3 md:mb-4">
-        <span className="chip">Prototype</span>
-        <span className="chip" style={{background:"rgba(148,163,184,.12)",color:"#e2e8f0",borderColor:"rgba(148,163,184,.3)"}}>
-          Dark UI · Blue→Green
-        </span>
-      </div>
+        {/* HERO */}
+        <Band tone={1}>
+          <div className="grid grid-cols-1 gap-6 md:gap-10">
+            <div>
+              <div className="flex items-center gap-2 mb-3 md:mb-4">
+                <span className="chip">Prototype</span>
+                <span className="chip" style={{background:"rgba(148,163,184,.12)",color:"#e2e8f0",borderColor:"rgba(148,163,184,.3)"}}>
+                  Dark UI · Blue→Green
+                </span>
+              </div>
 
-      <h1 className="text-4xl md:text-6xl font-semibold tracking-tight leading-[1.08]">
-        <span className="text-slate-100">Hoshi — </span>
-        <span className="text-neon">transparent ESG</span>
-        <span className="text-slate-100"> for real estate.</span>
-      </h1>
+              <h1 className="text-4xl md:text-6xl font-semibold tracking-tight leading-[1.08]">
+                <span className="text-slate-100">Hoshi — </span>
+                <span className="text-neon">transparent ESG</span>
+                <span className="text-slate-100"> for real estate.</span>
+              </h1>
 
-      <p className="text-slate-300 mt-4 text-base md:text-lg max-w-2xl">
-        Evidence that moves value: scenario-adjusted service performance, comfort risk,
-        and forward ROI — shared by owners, occupiers, and suppliers.
-      </p>
+              <p className="text-slate-300 mt-4 text-base md:text-lg max-w-2xl">
+                Evidence that moves value: scenario-adjusted service performance, comfort risk,
+                and forward ROI — shared by owners, occupiers, and suppliers.
+              </p>
 
-      <div className="mt-6 flex flex-wrap gap-3">
-        <button onClick={goApp} className="btn btn-primary">Launch prototype</button>
-        <a href="#how" className="btn btn-ghost">See how it works</a>
-      </div>
-    </div>
-  </div>
-</Band>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <button onClick={goApp} className="btn btn-primary">Launch prototype</button>
+                <a href="#how" className="btn btn-ghost">See how it works</a>
+              </div>
+            </div>
+          </div>
+        </Band>
 
-              
-
-        {/* VALUE STRIPE (Band 2) */}
+        {/* VALUE STRIPE */}
         <Band tone={2}>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
             <Stat k="10×" s="faster onboarding" />
@@ -589,7 +557,7 @@ const { payback, npv10, irr, annualSavings } = React.useMemo(() => {
           </div>
         </Band>
 
-        {/* WHO IT BENEFITS (Band 3) */}
+        {/* WHO IT BENEFITS */}
         <Band tone={3} id="who">
           <h3 className="text-slate-50 text-lg font-semibold mb-3">Who Hoshi serves</h3>
           <div className="grid md:grid-cols-3 gap-3 md:gap-4">
@@ -614,56 +582,37 @@ const { payback, npv10, irr, annualSavings } = React.useMemo(() => {
           </div>
         </Band>
 
-        {/* WHAT YOU GET (Band 1 again for rhythm) */}
+        {/* WHAT YOU GET */}
         <Band tone={1}>
           <div className="grid md:grid-cols-2 gap-4">
             {/* Forward Energy Premium */}
-<div className="card p-4 md:p-6 relative">
-  <div
-    className="absolute -top-24 -right-24 w-[300px] h-[300px] rounded-full blur-3xl"
-    style={{ background: "radial-gradient(circle, rgba(59,130,246,.18), transparent 60%)" }}
-  />
-  <h3 className="text-slate-50 text-lg font-semibold">Forward Energy Premium</h3>
-  <p className="text-slate-400 text-sm mt-1">
-    Quantifies how energy &amp; service factors add/subtract from expected ROI — split by systematic (β) vs idiosyncratic drivers.
-  </p>
+            <div className="card p-4 md:p-6 relative">
+              <div className="absolute -top-24 -right-24 w-[300px] h-[300px] rounded-full blur-3xl"
+                   style={{ background: "radial-gradient(circle, rgba(59,130,246,.18), transparent 60%)" }}/>
+              <h3 className="text-slate-50 text-lg font-semibold">Forward Energy Premium</h3>
+              <p className="text-slate-400 text-sm mt-1">
+                Quantifies how energy &amp; service factors add/subtract from expected ROI — split by systematic (β) vs idiosyncratic drivers.
+              </p>
 
-  {/* On mobile: stack; on small screens: 2 cols; on md+: 3 cols with the sparkline spanning 2 */}
-  <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-    {/* Avg. index */}
-    <div
-      className="rounded-xl p-3 z-10"
-      style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}
-    >
-      <div className="text-xs text-slate-400">Avg. index</div>
-      <div className="mt-2 bg-white rounded-xl p-2 inline-block">
-        <DonutGauge
-          value={0.07 - demoAvg}
-          max={0.07}
-          size={96}
-          stroke={12}
-          display={(demoAvg * 10).toFixed(2)}
-          label="Good"
-        />
-      </div>
-    </div>
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                <div className="rounded-xl p-3 z-10" style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}>
+                  <div className="text-xs text-slate-400">Avg. index</div>
+                  <div className="mt-2 bg-white rounded-xl p-2 inline-block">
+                    <DonutGauge value={0.07 - demoAvg} max={0.07} size={96} stroke={12}
+                                display={(demoAvg * 10).toFixed(2)} label="Good" />
+                  </div>
+                </div>
 
-    {/* Expected ROI contribution */}
-    <div
-      className="rounded-xl p-3 sm:col-span-1 md:col-span-2 z-0"
-      style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}
-    >
-      <div className="flex items-center justify-between">
-        <div className="text-xs text-slate-400">Expected ROI contribution</div>
-        <span className="chip">Lower risk</span>
-      </div>
-      <div className="mt-2">
-        <LineChart points={roiSpark} />
-      </div>
-    </div>
-  </div>
-</div>
-
+                <div className="rounded-xl p-3 sm:col-span-1 md:col-span-2 z-0"
+                     style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}>
+                  <div className="flex items-center justify-between">
+                    <div className="text-xs text-slate-400">Expected ROI contribution</div>
+                    <span className="chip">Lower risk</span>
+                  </div>
+                  <div className="mt-2"><LineChart points={roiSpark} /></div>
+                </div>
+              </div>
+            </div>
 
             {/* Scenario Studio */}
             <div className="card p-4 md:p-6 relative overflow-hidden">
@@ -689,53 +638,50 @@ const { payback, npv10, irr, annualSavings } = React.useMemo(() => {
             </div>
           </div>
 
-        {/* What you get — narrative outcome */}
-<div className="mt-4">
-  <div className="rounded-2xl p-4 md:p-5"
-       style={{background:"var(--panel-2)", border:"1px solid var(--stroke)"}}>
-    <div className="text-slate-50 font-semibold">Illustrative outcome</div>
-    <p className="text-slate-300 text-sm mt-1">
-      For a typical 12,800&nbsp;m² office, Hoshi flags LED + controls and HVAC schedule tuning,
-      verifies a {Math.round(DEMO.savingsPct*100)}% utility reduction, and ranks it by confidence.
-    </p>
+          {/* What you get — narrative outcome */}
+          <div className="mt-4">
+            <div className="rounded-2xl p-4 md:p-5" style={{background:"var(--panel-2)", border:"1px solid var(--stroke)"}}>
+              <div className="text-slate-50 font-semibold">Illustrative outcome</div>
+              <p className="text-slate-300 text-sm mt-1">
+                For a typical 12,800&nbsp;m² office, Hoshi flags LED + controls and HVAC schedule tuning,
+                verifies a {Math.round(DEMO.savingsPct*100)}% utility reduction, and ranks it by confidence.
+              </p>
 
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 mt-3">
-      <div className="rounded-xl p-3" style={{background:"rgba(148,163,184,.06)", border:"1px solid var(--stroke)"}}>
-        <div className="text-xs text-slate-400 mb-1">Payback</div>
-        <div className="text-slate-100 font-semibold">
-          {Number.isFinite(payback) ? `${payback.toFixed(1)}y` : "—"}
-        </div>
-      </div>
-      <div className="rounded-xl p-3" style={{background:"rgba(148,163,184,.06)", border:"1px solid var(--stroke)"}}>
-        <div className="text-xs text-slate-400 mb-1">NPV (10y)</div>
-        <div className="text-slate-100 font-semibold">{fmtMoney(npv10)}</div>
-      </div>
-      <div className="rounded-xl p-3" style={{background:"rgba(148,163,184,.06)", border:"1px solid var(--stroke)"}}>
-        <div className="text-xs text-slate-400 mb-1">IRR (10y)</div>
-        <div className="text-slate-100 font-semibold">
-          {Number.isFinite(irr) ? `${(irr*100).toFixed(1)}%` : "—"}
-        </div>
-      </div>
-    </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 mt-3">
+                <div className="rounded-xl p-3" style={{background:"rgba(148,163,184,.06)", border:"1px solid var(--stroke)"}}>
+                  <div className="text-xs text-slate-400 mb-1">Payback</div>
+                  <div className="text-slate-100 font-semibold">
+                    {Number.isFinite(payback) ? `${payback.toFixed(1)}y` : "—"}
+                  </div>
+                </div>
+                <div className="rounded-xl p-3" style={{background:"rgba(148,163,184,.06)", border:"1px solid var(--stroke)"}}>
+                  <div className="text-xs text-slate-400 mb-1">NPV (10y)</div>
+                  <div className="text-slate-100 font-semibold">{fmtMoney(npv10)}</div>
+                </div>
+                <div className="rounded-xl p-3" style={{background:"rgba(148,163,184,.06)", border:"1px solid var(--stroke)"}}>
+                  <div className="text-xs text-slate-400 mb-1">IRR (10y)</div>
+                  <div className="text-slate-100 font-semibold">
+                    {Number.isFinite(irr) ? `${(irr*100).toFixed(1)}%` : "—"}
+                  </div>
+                </div>
+              </div>
 
-    <div className="mt-3 flex flex-wrap items-center gap-3">
-      <div className="text-xs text-slate-400">
-        ≈ {fmtMoney(annualSavings)} saved per year, verified via data lineage.
-      </div>
-      <button className="btn btn-ghost text-xs" onClick={()=>setShowAssump(x=>!x)}>
-        {showAssump ? "Hide" : "See"} assumptions
-      </button>
-    </div>
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                <div className="text-xs text-slate-400">≈ {fmtMoney(annualSavings)} saved per year, verified via data lineage.</div>
+                <button className="btn btn-ghost text-xs" onClick={()=>setShowAssump(x=>!x)}>
+                  {showAssump ? "Hide" : "See"} assumptions
+                </button>
+              </div>
 
-    {showAssump && (
-      <ul className="text-xs text-slate-400 mt-2 list-disc pl-4">
-        <li>CapEx {fmtMoney(DEMO.capex)}; service OpEx {fmtMoney(DEMO.opex)}/yr</li>
-        <li>Baseline utilities {fmtMoney(DEMO.baselineAnnual)}/yr; savings {Math.round(DEMO.savingsPct*100)}%</li>
-        <li>10-year horizon @ 8% discount rate (illustrative)</li>
-      </ul>
-    )}
-  </div>
-</div>
+              {showAssump && (
+                <ul className="text-xs text-slate-400 mt-2 list-disc pl-4">
+                  <li>CapEx {fmtMoney(DEMO.capex)}; service OpEx {fmtMoney(DEMO.opex)}/yr</li>
+                  <li>Baseline utilities {fmtMoney(DEMO.baselineAnnual)}/yr; savings {Math.round(DEMO.savingsPct*100)}%</li>
+                  <li>10-year horizon @ 8% discount rate (illustrative)</li>
+                </ul>
+              )}
+            </div>
+          </div>
 
           {/* compact value grid */}
           <div className="mt-4 grid md:grid-cols-4 gap-3 md:gap-4">
@@ -746,46 +692,27 @@ const { payback, npv10, irr, annualSavings } = React.useMemo(() => {
           </div>
         </Band>
 
-{/* COMMONWEALTH OF PEOPLE (carousel) */}
-<Band tone={3} id="commonwealth">
-  <CommonwealthCarousel
-    onLearnMore={() => {
-      // open the Blog tab (no popup)
-      if (typeof goBlog === "function") {
-        goBlog(); // App already wires this to setActive("blog")
-      } else {
-        // safe fallback if Story is ever used standalone
-        window.location.hash = "#blog";
-      }
-    }}
-  />
-</Band>
+        {/* COMMONWEALTH OF PEOPLE (carousel) */}
+        <Band tone={3} id="commonwealth">
+          <CommonwealthCarousel
+            onLearnMore={() => {
+              if (typeof goBlog === "function") goBlog();
+              else window.location.hash = "#blog";
+            }}
+          />
+        </Band>
 
-
-
-        {/* HOW IT WORKS (Band 2) */}
+        {/* HOW IT WORKS */}
         <Band tone={2} id="how">
           <h3 className="text-slate-50 text-lg font-semibold mb-3">How it works</h3>
           <div className="grid md:grid-cols-3 gap-4">
-            <div className="how-step">
-              <div className="how-num mb-2">1</div>
-              <div className="text-slate-100 font-medium">Ingest</div>
-              <div className="text-slate-400 text-sm">Email PDFs/CSVs or connect a meter. OCR + normalisation standardise the data.</div>
-            </div>
-            <div className="how-step">
-              <div className="how-num mb-2">2</div>
-              <div className="text-slate-100 font-medium">Compare</div>
-              <div className="text-slate-400 text-sm">FEP, β, intensity, tCO₂e, spend & comfort risk — scenario-aware.</div>
-            </div>
-            <div className="how-step">
-              <div className="how-num mb-2">3</div>
-              <div className="text-slate-100 font-medium">Publish & act</div>
-              <div className="text-slate-400 text-sm">Share a Building Performance Sheet. Prioritise actions by ROI and confidence.</div>
-            </div>
+            <div className="how-step"><div className="how-num mb-2">1</div><div className="text-slate-100 font-medium">Ingest</div><div className="text-slate-400 text-sm">Email PDFs/CSVs or connect a meter. OCR + normalisation standardise the data.</div></div>
+            <div className="how-step"><div className="how-num mb-2">2</div><div className="text-slate-100 font-medium">Compare</div><div className="text-slate-400 text-sm">FEP, β, intensity, tCO₂e, spend & comfort risk — scenario-aware.</div></div>
+            <div className="how-step"><div className="how-num mb-2">3</div><div className="text-slate-100 font-medium">Publish & act</div><div className="text-slate-400 text-sm">Share a Building Performance Sheet. Prioritise actions by ROI and confidence.</div></div>
           </div>
         </Band>
 
-        {/* CTA (Band 3) */}
+        {/* CTA */}
         <Band tone={3}>
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
             <div>
@@ -799,6 +726,7 @@ const { payback, npv10, irr, annualSavings } = React.useMemo(() => {
     </div>
   );
 }
+
 
 
 function Onboarding(){
