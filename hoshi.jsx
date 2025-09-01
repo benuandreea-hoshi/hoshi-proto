@@ -511,25 +511,38 @@ const FinanceStat = ({ label, value }) => (
     <div className="text-slate-100 font-semibold">{value}</div>
   </div>
 );
+  // --- demo inputs used only for Story's "Illustrative outcome"
+const DEMO = { 
+  capex: 250_000,            // LED + controls + schedule tuning
+  baselineAnnual: 1_200_000, // current utilities
+  savingsPct: 0.12,          // 12% reduction
+  opex: 15_000,              // added service contracts
+  years: 10,
+  rate: 0.08                 // 10y NPV @ 8%
+};
+
+// money formatter reusing saved currency
+const fmtMoney = (n) => new Intl.NumberFormat("en-GB", {
+  style: "currency",
+  currency:
+    (typeof window !== "undefined" &&
+      (window.localStorage.getItem("hoshi.currency") || "GBP")) || "GBP",
+  maximumFractionDigits: 0,
+}).format(n);
+
+const [showAssump, setShowAssump] = React.useState(false);
 
 // compute once for the demo
-const { payback, npv10, irr } = React.useMemo(() => {
-  const capex = 1_350_000;
-  const baselineAnnual = 1_200_000;
-  const savingsPct = 0.09;
-  const opex = 50_000;
-  const years = 10;
-
-  const annualSavings = baselineAnnual * savingsPct;
-  const flows = [-capex, ...Array.from({ length: years }, () => annualSavings - opex)];
-
+const { payback, npv10, irr, annualSavings } = React.useMemo(() => {
+  const s = DEMO.baselineAnnual * DEMO.savingsPct;
+  const flows = [-DEMO.capex, ...Array.from({ length: DEMO.years }, () => (s - DEMO.opex))];
   return {
-    payback: annualSavings > 0 ? capex / annualSavings : Infinity,
-    npv10: calcNPV(0.08, flows), // assumes calcNPV is defined at top of file (as in Actions)
-    irr: calcIRR(flows),          // assumes calcIRR is defined at top of file (as in Actions)
+    annualSavings: s,
+    payback: s > 0 ? DEMO.capex / s : Infinity,
+    npv10: calcNPV(DEMO.rate, flows),
+    irr: calcIRR(flows),
   };
 }, []);
-
 
   return (
     <div className="min-h-[calc(100vh-80px)]">
@@ -676,21 +689,54 @@ const { payback, npv10, irr } = React.useMemo(() => {
             </div>
           </div>
 
-        {/* What you get — finance at a glance */}
-<div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
-  <FinanceStat
-    label="Payback"
-    value={Number.isFinite(payback) ? `${payback.toFixed(1)}y` : "—"}
-  />
-  <FinanceStat
-    label="NPV (10y)"
-    value={fmtMoney(npv10)}
-  />
-  <FinanceStat
-    label="IRR (10y)"
-    value={`${(irr * 100).toFixed(1)}%`}
-  />
+        {/* What you get — narrative outcome */}
+<div className="mt-4">
+  <div className="rounded-2xl p-4 md:p-5"
+       style={{background:"var(--panel-2)", border:"1px solid var(--stroke)"}}>
+    <div className="text-slate-50 font-semibold">Illustrative outcome</div>
+    <p className="text-slate-300 text-sm mt-1">
+      For a typical 12,800&nbsp;m² office, Hoshi flags LED + controls and HVAC schedule tuning,
+      verifies a {Math.round(DEMO.savingsPct*100)}% utility reduction, and ranks it by confidence.
+    </p>
+
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 mt-3">
+      <div className="rounded-xl p-3" style={{background:"rgba(148,163,184,.06)", border:"1px solid var(--stroke)"}}>
+        <div className="text-xs text-slate-400 mb-1">Payback</div>
+        <div className="text-slate-100 font-semibold">
+          {Number.isFinite(payback) ? `${payback.toFixed(1)}y` : "—"}
+        </div>
+      </div>
+      <div className="rounded-xl p-3" style={{background:"rgba(148,163,184,.06)", border:"1px solid var(--stroke)"}}>
+        <div className="text-xs text-slate-400 mb-1">NPV (10y)</div>
+        <div className="text-slate-100 font-semibold">{fmtMoney(npv10)}</div>
+      </div>
+      <div className="rounded-xl p-3" style={{background:"rgba(148,163,184,.06)", border:"1px solid var(--stroke)"}}>
+        <div className="text-xs text-slate-400 mb-1">IRR (10y)</div>
+        <div className="text-slate-100 font-semibold">
+          {Number.isFinite(irr) ? `${(irr*100).toFixed(1)}%` : "—"}
+        </div>
+      </div>
+    </div>
+
+    <div className="mt-3 flex flex-wrap items-center gap-3">
+      <div className="text-xs text-slate-400">
+        ≈ {fmtMoney(annualSavings)} saved per year, verified via data lineage.
+      </div>
+      <button className="btn btn-ghost text-xs" onClick={()=>setShowAssump(x=>!x)}>
+        {showAssump ? "Hide" : "See"} assumptions
+      </button>
+    </div>
+
+    {showAssump && (
+      <ul className="text-xs text-slate-400 mt-2 list-disc pl-4">
+        <li>CapEx {fmtMoney(DEMO.capex)}; service OpEx {fmtMoney(DEMO.opex)}/yr</li>
+        <li>Baseline utilities {fmtMoney(DEMO.baselineAnnual)}/yr; savings {Math.round(DEMO.savingsPct*100)}%</li>
+        <li>10-year horizon @ 8% discount rate (illustrative)</li>
+      </ul>
+    )}
+  </div>
 </div>
+
           {/* compact value grid */}
           <div className="mt-4 grid md:grid-cols-4 gap-3 md:gap-4">
             <div className="usp-card"><div className="flex items-start gap-3"><span className="usp-ico"><IcoFEP/></span><div><div className="text-slate-100 font-medium">Forward Energy Premium</div><div className="text-slate-400 text-sm">Decision-grade ROI signal with β split.</div></div></div></div>
