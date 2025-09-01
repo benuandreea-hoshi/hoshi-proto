@@ -708,27 +708,52 @@ function Onboarding(){
   const inputStyle={background:"var(--panel-2)",border:"1px solid var(--stroke)",borderRadius:"12px",padding:"8px 12px",color:"#fff",width:"100%"};
   return(<div className="grid gap-4 md:gap-6">
     <div className="flex items-center gap-2 md:gap-3">{[1,2,3,4].map(i=>(<div key={i} className={`h-2 rounded-full ${i<=step?"bg-blue-400":"bg-slate-700"}`} style={{width:i===step?80:64}}/>))}</div>
-    {step===1 && (<Section title="Basics" desc="Name your portfolio and set default units.">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div><label className="text-sm text-slate-300">Portfolio name</label><input className="mt-1" style={inputStyle} placeholder="Acme Real Estate"/></div>
-        <div className="grid grid-cols-2 gap-4">
-          <div><label className="text-sm text-slate-300">Area units</label><select className="mt-1" style={inputStyle}><option>m²</option><option>ft²</option></select></div>
-         <label className="text-sm text-slate-300">Currency</label>
-<select
-  className="mt-1"
-  style={inputStyle}
-  defaultValue={typeof window !== "undefined" ? (window.localStorage.getItem("hoshi.currency") || "GBP") : "GBP"}
-  onChange={(e) => window.localStorage.setItem("hoshi.currency", e.target.value)}
->
-  <option>GBP</option>
-  <option>EUR</option>
-  <option>USD</option>
-</select>
+    {step===1 && <Section title="Basics" desc="Name your portfolio and set default units.">
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    {/* Portfolio name */}
+    <div>
+      <label className="text-sm text-slate-300">Portfolio name</label>
+      <input className="mt-1" style={inputStyle} placeholder="Acme Real Estate" />
+    </div>
 
-        </div>
+    {/* Area + Currency in a 2-col grid */}
+    <div className="grid grid-cols-2 gap-4">
+      {/* Area units */}
+      <div>
+        <label className="text-sm text-slate-300">Area units</label>
+        <select className="mt-1" style={inputStyle}>
+          <option>m²</option>
+          <option>ft²</option>
+        </select>
       </div>
-      <div className="mt-4 flex justify-end"><button onClick={next} className="btn btn-primary">Next</button></div>
-    </Section>)}
+
+      {/* Currency — WRAP BOTH label+select IN A DIV */}
+      <div>
+        <label className="text-sm text-slate-300">Currency</label>
+        <select
+          className="mt-1"
+          style={inputStyle}
+          defaultValue={
+            typeof window !== "undefined"
+              ? (window.localStorage.getItem("hoshi.currency") || "GBP")
+              : "GBP"
+          }
+          onChange={(e) => window.localStorage.setItem("hoshi.currency", e.target.value)}
+        >
+          <option>GBP</option>
+          <option>EUR</option>
+          <option>USD</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div className="mt-4 flex justify-end">
+    <button onClick={next} className="btn btn-primary">Next</button>
+  </div>
+</Section>}
+
+      
     {step===2 && (<Section title="Email-to-ingest" desc="Forward bills to this unique address. We'll extract totals and dates.">
       <div className="flex items-center gap-3"><code className="px-3 py-2 rounded-xl" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)",color:"#93c5fd"}}>bills+acme@hoshi.app</code><button className="btn btn-ghost">Copy</button></div>
       <div className="mt-4 flex justify-between"><button onClick={back} className="btn btn-ghost">Back</button><button onClick={next} className="btn btn-primary">Next</button></div>
