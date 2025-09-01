@@ -1259,7 +1259,7 @@ function Actions({ goLineage }) {
     const pv = annual * (1 - Math.pow(1 + rate, -years)) / rate; // annuity PV
     return Math.round(pv - capex);
   };
-  const fmt = (n) => (typeof fmtGBP === "function" ? fmtGBP(n) : ("£" + Math.round(n).toLocaleString()));
+  const fmt = (n) => fmtMoney(n);
 
   // --- lineage defaults for demo ids (led/hvac)
   const DEFAULT_LINEAGE = {
@@ -1536,6 +1536,123 @@ function Actions({ goLineage }) {
     </div>
   );
 }
+// --- Lineage & Governance ---
+function Lineage({ fromAction, goActions }) {
+  const A = fromAction || null;
+
+  const Card = ({ title, children }) => (
+    <div className="rounded-xl p-4"
+         style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}>
+      <div className="text-slate-100 font-medium">{title}</div>
+      <div className="mt-2 text-sm text-slate-300">{children}</div>
+    </div>
+  );
+
+  return (
+    <div className="grid gap-4 md:gap-6">
+      <Section
+        title={"Data lineage" + (A ? ` — ${A.title}` : "")}
+        desc="Inputs → transforms → factors → formulas → versions. This is how we make numbers audit-ready."
+        right={A && <button className="btn btn-ghost" onClick={goActions}>← Back to actions</button>}
+      >
+        {/* Why lineage matters */}
+        <div className="grid md:grid-cols-3 gap-3 md:gap-4 mb-3">
+          <Card title="Why this matters">
+            <ul className="list-disc pl-5 space-y-1">
+              <li>Builds trust: every KPI links to sources and methods.</li>
+              <li>Finance-grade: shows how savings/NPV were derived.</li>
+              <li>Governance: versioned factors & acceptance criteria.</li>
+            </ul>
+          </Card>
+          <Card title="What’s included">
+            <ul className="list-disc pl-5 space-y-1">
+              <li>Data sources (bills, meters, surveys, models).</li>
+              <li>Normalisation (HDD/CDD, occupancy, area).</li>
+              <li>Formulas & coefficients with version and date.</li>
+            </ul>
+          </Card>
+          <Card title="Client benefits">
+            <ul className="list-disc pl-5 space-y-1">
+              <li>Faster approvals: procurement & finance aligned.</li>
+              <li>Comparable metrics across assets & vendors.</li>
+              <li>Audit trail for ESG and assurance processes.</li>
+            </ul>
+          </Card>
+        </div>
+
+        {/* If we came from an action, show its snapshot */}
+        {A ? (
+          <div className="grid md:grid-cols-2 gap-3 md:gap-4">
+            <Card title="Lineage snapshot">
+              <div className="grid grid-cols-1 gap-2">
+                <div><span className="text-slate-400">Alarm</span> · {A.alarm.type} — {A.alarm.category} ({A.alarm.window}; {A.alarm.rule})</div>
+                <div><span className="text-slate-400">Baseline</span> · {A.lineage?.baseline || "—"}</div>
+                <div><span className="text-slate-400">Method</span> · {A.lineage?.method || "—"}</div>
+                <div><span className="text-slate-400">Factors</span> · {(A.lineage?.factors || []).join(", ") || "—"}</div>
+                <div className="flex flex-wrap gap-2 mt-1">
+                  <span className="chip">Δ index {A.impacts.indexDelta.toFixed(2)}</span>
+                  <span className="chip">Δ comfort {A.impacts.comfortDeltaPct}%</span>
+                  <span className="chip">Δ tCO₂e {A.impacts.co2Delta} /yr</span>
+                </div>
+              </div>
+            </Card>
+
+            <Card title="Verification & acceptance">
+              {A.plan ? (
+                <div className="grid gap-2">
+                  <div><span className="text-slate-400">Owner</span> · {A.plan.owner}</div>
+                  <div><span className="text-slate-400">Start</span> · {A.plan.start}</div>
+                  <div><span className="text-slate-400">Funding</span> · {A.plan.funding}</div>
+                  <div><span className="text-slate-400">M&V</span> · {A.plan.mv}</div>
+                  <div><span className="text-slate-400">Acceptance</span> · {A.plan.accept}</div>
+                  {A.plan.scope && <div><span className="text-slate-400">Scope</span> · {A.plan.scope}</div>}
+                </div>
+              ) : (
+                <div>
+                  Not planned yet. Use <span className="chip">Add to plan</span> in Actions to register
+                  owner, start, funding and M&V so this section populates automatically.
+                </div>
+              )}
+            </Card>
+
+            <Card title="Trace (demo)">
+              <div className="text-xs">
+                <div className="grid grid-cols-[160px_1fr] gap-y-1">
+                  <div className="text-slate-400">Source</div><div>{A.lineage?.baseline || "FY24 bills"}</div>
+                  <div className="text-slate-400">Transforms</div><div>OCR → clean → normalise (HDD/CDD)</div>
+                  <div className="text-slate-400">Model</div><div>{A.lineage?.method || "Top-down regression"}</div>
+                  <div className="text-slate-400">Outputs</div><div>Δ index {A.impacts.indexDelta.toFixed(2)}; Δ tCO₂e {A.impacts.co2Delta}/yr</div>
+                  <div className="text-slate-400">Version</div><div>v0.2 · {new Date().toISOString().slice(0,10)}</div>
+                </div>
+              </div>
+            </Card>
+
+            <Card title="Finance context">
+              <div className="grid grid-cols-2 gap-2">
+                <div><span className="text-slate-400">CapEx</span><div className="text-slate-100 font-semibold">£{A.finance.capex.toLocaleString()}</div></div>
+                <div><span className="text-slate-400">Savings /yr</span><div className="text-slate-100 font-semibold">£{A.finance.save.toLocaleString()}</div></div>
+                <div><span className="text-slate-400">NPV @8%</span><div className="text-emerald-300 font-semibold">£{A.finance.npv.toLocaleString()}</div></div>
+                <div><span className="text-slate-400">Payback</span><div className="text-slate-100 font-semibold">{A.finance.payback}y</div></div>
+                <div><span className="text-slate-400">β</span><div className="text-slate-100 font-semibold">{A.finance.beta.toFixed(2)}</div></div>
+                <div><span className="text-slate-400">Confidence</span><div className="text-slate-100 font-semibold">{Math.round(A.finance.confidence*100)}%</div></div>
+              </div>
+            </Card>
+          </div>
+        ) : (
+          <div className="rounded-xl p-4"
+               style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}>
+            <div className="text-slate-300 text-sm">
+              Open this page from an action to see a complete lineage snapshot for that recommendation.
+              You’ll get: Source → Normalisation → Model → Version → M&V → Acceptance, with links to the
+              portfolio/building data behind it.
+            </div>
+          </div>
+        )}
+      </Section>
+    </div>
+  );
+}
+
 
 function PublicBPS({ goLineage = ()=>{}, goActions = ()=>{} }){
   // Demo signals (swap with real values later)
