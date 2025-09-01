@@ -591,12 +591,7 @@ function Story({ goApp }) {
 
 {/* COMMONWEALTH OF PEOPLE (carousel) */}
 <Band tone={3} id="commonwealth">
-  <CommonwealthCarousel
-    onLearnMore={()=>{
-      // hand off to Blog → “Commonwealth of People”
-      if (typeof window !== "undefined") {
-        window.__blogIntent = "commonwealth-of-people";
-      }
+<CommonwealthCarousel onLearnMore={goBlog} />
       // if your App sets tabs via setActive("blog"), wire Story to accept goBlog
       // and pass it down here; otherwise this falls back to hash navigation.
       if (typeof goBlog === "function") {
@@ -2171,7 +2166,12 @@ function App(){
 const [lineageCtx, setLineageCtx] = useState(null);
   
 const tabs = [
-    { key: "story", label: "Story",      comp: <Story goApp={() => setActive("onboarding")} /> },
+{ key: "story", label: "Story",
+  comp: <Story
+          goApp={() => setActive("onboarding")}
+          goBlog={() => setActive("blog")}   // <-- add this
+        />
+},
     { key: "onboarding", label: "Onboarding", comp: <Onboarding /> },
     { key: "portfolio",  label: "Portfolio",  comp: <Portfolio /> },
     { key: "building",   label: "Building",   comp: <Building /> },
