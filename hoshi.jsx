@@ -19,19 +19,33 @@ const HOSHI_DEFAULT_EF = { elec: 0.233, gas: 0.184 };
 
 // derive minimal KPIs for table/compare
 function hoshiKPIs(b) {
-  const elec = +b.elec_kwh || 0;
-  const gas  = +b.gas_kwh  || 0;
-  const area = +b.area     || 0;
-  const efE  = +b.ef_elec  || HOSHI_DEFAULT_EF.elec;
-  const efG  = +b.ef_gas   || HOSHI_DEFAULT_EF.gas;
+  // Accept both the modal’s and your thesis-style keys
+  const elec = +(
+    b.elec_kwh ?? b.electricity ?? b.elec ?? 0
+  );
+  const gas  = +(
+    b.gas_kwh ?? b.gas ?? 0
+  );
+  const area = +(
+    b.area ?? b.gia ?? 0
+  );
+
+  const efE  = +(b.ef_elec ?? HOSHI_DEFAULT_EF.elec);
+  const efG  = +(b.ef_gas  ?? HOSHI_DEFAULT_EF.gas);
 
   const kwh = elec + gas;
   const tco2e = (elec * efE + gas * efG) / 1000; // tonnes
   const intensity = area > 0 ? kwh / area : 0;
 
-  const req = ["name","area","sector","elec_kwh","gas_kwh"];
-  const have = req.filter(k => b[k] !== undefined && b[k] !== "").length;
-  const completeness = Math.round((have / req.length) * 100);
+  // completeness uses your original required keys; include alternates too
+  const required = [
+    ["name"],
+    ["area","gia"],
+    ["elec_kwh","electricity","elec"],
+    ["gas_kwh","gas"]
+  ];
+  const have = required.filter(keys => keys.some(k => b[k] !== undefined && b[k] !== "")).length;
+  const completeness = Math.round((have / required.length) * 100);
 
   return { kwh, tco2e, intensity, completeness };
 }
@@ -882,24 +896,6 @@ function Story({ goApp, goBlog }) {
   );
 }
 
-// near the top of the Portfolio component:
-const [addOpen, setAddOpen] = React.useState(false);
-const defaultCurrency = (typeof window!=="undefined"
-  ? (localStorage.getItem("hoshi.currency") || "GBP")
-  : "GBP");
-
-// update the button:
-<button className="btn btn-primary" onClick={()=>setAddOpen(true)}>Add building</button>
-
-// …and at the bottom of that component (but still inside it) render the modal:
-<HoshiAddBuildingModal
-  open={addOpen}
-  onClose={()=>setAddOpen(false)}
-  defaultCurrency={defaultCurrency}
-  onSave={(b)=> setBuildings(prev => [...prev, b])}
-/>
-
-
 function Onboarding(){
   const [step,setStep]=useState(1);
   const next=()=>setStep(s=>Math.min(4,s+1));
@@ -974,18 +970,36 @@ function Onboarding(){
   </div>);
 }
 
-function Portfolio() {
-  const rows = [
-    {name:"1 King Street",kwh:142000,co2:36.2,intensity:92,complete:.92,actions:3,updated:"2025-08-10"},
-    {name:"42 Market Way",kwh:98000,co2:24.4,intensity:78,complete:.84,actions:1,updated:"2025-08-07"},
-    {name:"Riverside 8",kwh:123500,co2:31.0,intensity:88,complete:.67,actions:2,updated:"2025-08-05"},
-  ];
 
-  const Kpi = (p) => <Metric {...p} />; // reuse your Metric card
+function Portfolio({ buildings = [], setBuildings }) {
+  const [addOpen, setAddOpen] = React.useState(false);
+  const defaultCurrency = (typeof window !== "undefined"
+    ? (localStorage.getItem("hoshi.currency") || "GBP")
+    : "GBP");
+
+  const rows = buildings.length
+    ? buildings.map(b => {
+        const k = hoshiKPIs(b);
+        return {
+          name: b.name,
+          kwh: Math.round(k.kwh),
+          co2: k.tco2e,
+          intensity: Math.round(k.intensity || 0),
+          complete: (k.completeness || 0) / 100,
+          actions: 0,
+          updated: b.updated || "—",
+        };
+      })
+    : [
+        {name:"1 King Street",kwh:142000,co2:36.2,intensity:92,complete:.92,actions:3,updated:"2025-08-10"},
+        {name:"42 Market Way",kwh:98000,co2:24.4,intensity:78,complete:.84,actions:1,updated:"2025-08-07"},
+        {name:"Riverside 8",kwh:123500,co2:31.0,intensity:88,complete:.67,actions:2,updated:"2025-08-05"},
+      ];
+
+  const Kpi = (p) => <Metric {...p} />;
 
   return (
     <div className="grid gap-4 md:gap-6">
-      {/* KPIs — stack on mobile, 4-up on desktop */}
       <Section
         title="Portfolio summary"
         right={<button className="hidden md:inline-flex btn btn-ghost">Export Portfolio Pack</button>}
@@ -1004,11 +1018,11 @@ function Portfolio() {
         right={
           <div className="hidden md:flex gap-2">
             <button className="btn btn-ghost">Sort</button>
-            <button className="btn btn-primary">Add building</button>
+            <button className="btn btn-primary" onClick={()=>setAddOpen(true)}>Add building</button>
           </div>
         }
       >
-  
+        {/* mobile chips */}
         <div className="md:hidden -mx-2 mb-3 overflow-x-auto no-scrollbar">
           <div className="px-2 flex gap-2">
             <span className="chip whitespace-nowrap">Sort: Intensity</span>
@@ -1017,6 +1031,7 @@ function Portfolio() {
           </div>
         </div>
 
+        {/* desktop table */}
         <div className="hidden md:block overflow-x-auto rounded-2xl" style={{border:"1px solid var(--stroke)"}}>
           <table className="w-full text-sm min-w-[700px]">
             <thead className="text-slate-300" style={{background:"var(--panel-2)"}}>
@@ -1031,7 +1046,7 @@ function Portfolio() {
                 <tr key={i} className="hover:bg-[#10131a]">
                   <td className="px-4 py-3 text-slate-100">{r.name}</td>
                   <td className="px-4 py-3 text-slate-300">{r.kwh.toLocaleString()}</td>
-                  <td className="px-4 py-3 text-slate-300">{r.co2.toFixed(1)}</td>
+                  <td className="px-4 py-3 text-slate-300">{Number(r.co2).toFixed(1)}</td>
                   <td className="px-4 py-3 text-slate-300">{r.intensity}</td>
                   <td className="px-4 py-3">
                     <div className="w-28 h-2 rounded bg-slate-800">
@@ -1046,6 +1061,8 @@ function Portfolio() {
             </tbody>
           </table>
         </div>
+
+        {/* mobile list */}
         <ul className="md:hidden space-y-3">
           {rows.map((r,i)=>(
             <li key={i} className="rounded-2xl p-4" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
@@ -1053,20 +1070,10 @@ function Portfolio() {
                 <div className="text-slate-100 font-medium">{r.name}</div>
                 <div className="text-slate-400 text-xs">Updated {r.updated}</div>
               </div>
-
               <div className="mt-3 grid grid-cols-2 gap-3">
-                <div>
-                  <div className="text-xs text-slate-400">kWh</div>
-                  <div className="text-slate-200 font-semibold">{r.kwh.toLocaleString()}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-slate-400">tCO₂e</div>
-                  <div className="text-slate-200 font-semibold">{r.co2.toFixed(1)}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-slate-400">Intensity</div>
-                  <div className="text-slate-200 font-semibold">{r.intensity}</div>
-                </div>
+                <div><div className="text-xs text-slate-400">kWh</div><div className="text-slate-200 font-semibold">{r.kwh.toLocaleString()}</div></div>
+                <div><div className="text-xs text-slate-400">tCO₂e</div><div className="text-slate-200 font-semibold">{Number(r.co2).toFixed(1)}</div></div>
+                <div><div className="text-xs text-slate-400">Intensity</div><div className="text-slate-200 font-semibold">{r.intensity}</div></div>
                 <div>
                   <div className="text-xs text-slate-400">Completeness</div>
                   <div className="mt-1 h-2 rounded bg-slate-800">
@@ -1075,7 +1082,6 @@ function Portfolio() {
                   <div className="text-[11px] text-slate-400 mt-1">{Math.round(r.complete*100)}%</div>
                 </div>
               </div>
-
               <div className="mt-3 flex items-center justify-between">
                 <span className="text-xs text-slate-400">{r.actions} actions</span>
                 <button className="btn btn-ghost">Open</button>
@@ -1088,48 +1094,24 @@ function Portfolio() {
         <button
           className="md:hidden fixed bottom-5 right-5 btn btn-primary rounded-full shadow-lg"
           aria-label="Add building"
+          onClick={()=>setAddOpen(true)}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
             <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
           </svg>
         </button>
       </Section>
+
+      {/* Add building modal */}
+      <HoshiAddBuildingModal
+        open={addOpen}
+        onClose={()=>setAddOpen(false)}
+        defaultCurrency={defaultCurrency}
+        onSave={(b)=>{ setBuildings?.(prev => [...(prev || []), b]); setAddOpen(false); }}
+      />
     </div>
   );
 }
-const INDEX_BINS = [
-  { min: -Infinity, max: 0.0300, color: "#22c55e", label: "< 0.0300" },
-  { min: 0.0300,   max: 0.0400, color: "#84cc16", label: "0.0300+" },
-  { min: 0.0400,   max: 0.0500, color: "#fbbf24", label: "0.0400+" },
-  { min: 0.0500,   max: 0.0600, color: "#f59e0b", label: "0.0500+" },
-  { min: 0.0600,   max: 0.0700, color: "#f97316", label: "0.0600+" },
-  { min: 0.0700,   max:  Infinity, color: "#ef4444", label: "0.0700+" },
-];
-const colorForIndex = v => INDEX_BINS.find(b => v >= b.min && v < b.max)?.color || "#64748b";
-const PRESETS = {
-  Balanced:        { electricity:.14, gas:.14, water:.08, hvac:.12, cleaning:.12, waste:.10, security:.15, maintenance:.15 },
-  "Utilities-heavy": { electricity:.22, gas:.20, water:.12, hvac:.18, cleaning:.06, waste:.06, security:.08, maintenance:.08 },
-  "Ops-heavy":       { electricity:.08, gas:.08, water:.06, hvac:.08, cleaning:.20, waste:.14, security:.18, maintenance:.18 },
-};
-const PLACES = [
-  { name:"City of London", lat:51.513, lng:-0.091, spend: 950000,
-    m:{ electricity:.0450, gas:.0395, water:.0340, hvac:.0430, cleaning:.0385, waste:.0372, security:.0420, maintenance:.0410 } },
-  { name:"Soho",          lat:51.513, lng:-0.136, spend: 520000,
-    m:{ electricity:.0415, gas:.0420, water:.0335, hvac:.0405, cleaning:.0380, waste:.0365, security:.0450, maintenance:.0420 } },
-  { name:"Paddington",    lat:51.515, lng:-0.175, spend: 610000,
-    m:{ electricity:.0405, gas:.0375, water:.0325, hvac:.0385, cleaning:.0395, waste:.0355, security:.0400, maintenance:.0390 } },
-  { name:"Stratford",     lat:51.541, lng:-0.003, spend: 780000,
-    m:{ electricity:.0385, gas:.0360, water:.0315, hvac:.0375, cleaning:.0360, waste:.0345, security:.0380, maintenance:.0370 } },
-  { name:"Docklands",     lat:51.505, lng:-0.022, spend: 680000,
-    m:{ electricity:.0435, gas:.0400, water:.0345, hvac:.0415, cleaning:.0390, waste:.0375, security:.0410, maintenance:.0405 } },
-  { name:"Richmond",      lat:51.461, lng:-0.304, spend: 340000,
-    m:{ electricity:.0375, gas:.0340, water:.0305, hvac:.0365, cleaning:.0360, waste:.0335, security:.0380, maintenance:.0370 } },
-  { name:"Bromley",       lat:51.405, lng: 0.015, spend: 300000,
-    m:{ electricity:.0480, gas:.0465, water:.0390, hvac:.0470, cleaning:.0415, waste:.0400, security:.0460, maintenance:.0445 } },
-  { name:"Croydon",       lat:51.372, lng:-0.103, spend: 420000,
-    m:{ electricity:.0500, gas:.0480, water:.0410, hvac:.0485, cleaning:.0425, waste:.0415, security:.0470, maintenance:.0460 } },
-];
-const CAT_KEYS = ["electricity","gas","water","hvac","cleaning","waste","security","maintenance"];
 
 function compositeIndex(m, w) {
   let s=0, ws=0; CAT_KEYS.forEach(k=>{ if (m[k]!=null && w[k]) { s += m[k]*w[k]; ws += w[k]; }});
@@ -2468,7 +2450,9 @@ const tabs = [
         />
 },
     { key: "onboarding", label: "Onboarding", comp: <Onboarding /> },
-    { key: "portfolio",  label: "Portfolio",  comp: <Portfolio /> },
+{ key: "portfolio", label: "Portfolio",
+  comp: <Portfolio buildings={buildings} setBuildings={setBuildings} /> },
+
     { key: "building",   label: "Building",   comp: <Building /> },
 
     { key: "actions", label: "Actions",
