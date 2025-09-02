@@ -2,6 +2,41 @@ const LOGO_SRC   = "https://cdn.prod.website-files.com/68a8baf20ad5978747d9d44d/
 const PEOPLE_SRC = "https://cdn.prod.website-files.com/68a8baf20ad5978747d9d44d/68a8fe75f8001bf82851cd0f_commonwealthOfPeoples.jpeg";
 const {useMemo,useState,useRef,useEffect} = React;
 
+// === Hoshi MVP: building store + KPI helpers (isolated) ===
+const HOSHI_STORE_KEY = "hoshi.buildings.v1";
+const hoshiUid = () => Math.random().toString(36).slice(2, 9);
+
+function hoshiLoadBuildings() {
+  try { return JSON.parse(localStorage.getItem(HOSHI_STORE_KEY) || "[]"); }
+  catch { return []; }
+}
+function hoshiSaveBuildings(xs) {
+  localStorage.setItem(HOSHI_STORE_KEY, JSON.stringify(xs));
+}
+
+// illustrative emission factors (kgCO2e/kWh)
+const HOSHI_DEFAULT_EF = { elec: 0.233, gas: 0.184 };
+
+// derive minimal KPIs for table/compare
+function hoshiKPIs(b) {
+  const elec = +b.elec_kwh || 0;
+  const gas  = +b.gas_kwh  || 0;
+  const area = +b.area     || 0;
+  const efE  = +b.ef_elec  || HOSHI_DEFAULT_EF.elec;
+  const efG  = +b.ef_gas   || HOSHI_DEFAULT_EF.gas;
+
+  const kwh = elec + gas;
+  const tco2e = (elec * efE + gas * efG) / 1000; // tonnes
+  const intensity = area > 0 ? kwh / area : 0;
+
+  const req = ["name","area","sector","elec_kwh","gas_kwh"];
+  const have = req.filter(k => b[k] !== undefined && b[k] !== "").length;
+  const completeness = Math.round((have / req.length) * 100);
+
+  return { kwh, tco2e, intensity, completeness };
+}
+
+
 /* ===== Hoshi helpers (currency + finance) ===== */
 function getCurrency() {
   if (typeof window === "undefined") return "GBP";
