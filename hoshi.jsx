@@ -2219,15 +2219,17 @@ function HeroImage({ src, alt = "" }) {
       className="rounded-2xl overflow-hidden border"
       style={{ border: "1px solid var(--stroke)", background: "#0c1220" }}
     >
+      {/* full image, never cropped */}
       <img
         src={src}
         alt={alt}
-        className="block w-full max-w-full h-auto object-contain"
         loading="lazy"
+        className="block w-full h-auto max-h-[46vh] sm:max-h-[56vh] md:max-h-[64vh] object-contain mx-auto"
       />
     </figure>
   );
 }
+
 
 
 
@@ -2246,16 +2248,16 @@ function Blog({ openPortfolio, openBuilding }) {
     readingMins: 5,
     tags: ["Investors", "Operators", "Signals"],
   },
-  {
-    slug: "commonwealth-of-people",
-    label: "Governance",
-    title: "Commonwealth of People",
-    summary:
-      "Why real estate needs a different kind of order; a practical frame for real-estate governance where choices become decision-grade capital signals.",
-    img: PEOPLE_SRC,
-    hero: PEOPLE_SRC,         // <- used by the article view
-    readingMins: 7,
-    tags: ["Hobbes", "Commonwealth Cost of Carbon", "Sustainability", "Eco ledger", "Governance"],
+ {
+  slug: "commonwealth-of-people",
+  label: "Governance",
+  title: "Commonwealth of People",
+  summary:
+    "Why real estate needs a different kind of order; a practical frame for real-estate governance where choices become decision-grade capital signals.",
+  img: PEOPLE_SRC,   // used by the card
+  hero: PEOPLE_SRC,  // used by the article hero
+  readingMins: 7,
+  tags: ["Hobbes","Commonwealth Cost of Carbon","Sustainability","Eco ledger","Governance"],
   },
 ];
 
@@ -2315,7 +2317,7 @@ const ArticleBody = () => {
     return (
       <>
         {/* Hero (full image, no crop) */}
-        {article?.img && <HeroImage src={article.img} alt={article.title} />}
+       {article?.hero && <HeroImage src={article.hero} alt={article.title} />}
 
         {/* Body */}
         <div className="prose prose-invert max-w-none mt-4">
@@ -2578,7 +2580,9 @@ const ArticleBody = () => {
     ))}
   </div>
 </div>
-      <div className="rounded-2xl p-4 md:p-5 article-wrap" style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}
+   <div
+  className="rounded-2xl p-4 md:p-5 pb-[calc(88px+max(env(safe-area-inset-bottom),16px))] md:pb-5"
+  style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}
 >
   <ArticleBody />
 
