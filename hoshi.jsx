@@ -2089,8 +2089,8 @@ function PublicBPS({ goLineage = ()=>{}, goActions = ()=>{} }){
 
       {/* Footer / attestation strip */}
       <div className="px-6 pb-5 text-[12px] text-slate-500 flex items-center justify-between">
-        <div>BPS v1.3 • commit abc123 • Published 10 Aug 2025</div>
-        <div>Signed by Hoshi • License: CC BY-SA</div>
+        <div>BPS v1.3 • commit fb3c918 • Published 2 Sep 2025</div>
+        <div>Signed by Hoshi • License: Aidan Parkinson</div>
       </div>
     </div>
   );
