@@ -882,6 +882,22 @@ function Story({ goApp, goBlog }) {
   );
 }
 
+// near the top of the Portfolio component:
+const [addOpen, setAddOpen] = React.useState(false);
+const defaultCurrency = (typeof window!=="undefined"
+  ? (localStorage.getItem("hoshi.currency") || "GBP")
+  : "GBP");
+
+// update the button:
+<button className="btn btn-primary" onClick={()=>setAddOpen(true)}>Add building</button>
+
+// …and at the bottom of that component (but still inside it) render the modal:
+<HoshiAddBuildingModal
+  open={addOpen}
+  onClose={()=>setAddOpen(false)}
+  defaultCurrency={defaultCurrency}
+  onSave={(b)=> setBuildings(prev => [...prev, b])}
+/>
 
 
 function Onboarding(){
