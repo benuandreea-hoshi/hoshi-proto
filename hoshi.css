@@ -20,6 +20,9 @@
   overflow-wrap: anywhere;
   word-break: break-word;
 }
+#hoshi-root .article-wrap {
+  overflow-x: hidden;
+}
 
 /* Extra safety for literal URLs in links */
 #hoshi-root .prose a {
