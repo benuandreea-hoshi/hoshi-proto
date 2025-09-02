@@ -1000,6 +1000,13 @@ function Portfolio({ buildings = [], setBuildings }) {
   const defaultCurrency = (typeof window !== "undefined"
     ? (localStorage.getItem("hoshi.currency") || "GBP")
     : "GBP");
+  const fmtMoney = (n) =>
+  new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency: defaultCurrency || "GBP",
+    maximumFractionDigits: 0,
+  }).format(n || 0);
+
 
     // ✅ Auto-open when coming from Onboarding
   React.useEffect(() => {
@@ -1028,6 +1035,36 @@ function Portfolio({ buildings = [], setBuildings }) {
         {name:"Riverside 8",kwh:123500,co2:31.0,intensity:88,complete:.67,actions:2,updated:"2025-08-05"},
       ];
 
+const rollup = React.useMemo(() => {
+  if (buildings?.length) {
+    // Real buildings → use hoshiKPIs
+    let totalKwh = 0, totalCO2 = 0, totalSpend = 0, totalArea = 0;
+    for (const b of buildings) {
+      const k = hoshiKPIs(b);
+      totalKwh += k.kwh;
+      totalCO2 += k.tco2e;
+      totalArea += (+b.area || 0);
+      totalSpend += (+b.spend || 0);
+    }
+    return {
+      totalKwh,
+      totalCO2,
+      totalSpend,
+      avgIntensity: totalArea ? totalKwh / totalArea : 0,
+    };
+  }
+
+  // Fallback: placeholder rows already have aggregate-like values
+  if (rows?.length) {
+    const totalKwh = rows.reduce((s, r) => s + (+r.kwh || 0), 0);
+    const totalCO2 = rows.reduce((s, r) => s + (+r.co2 || 0), 0);
+    const avgIntensity =
+      rows.length ? rows.reduce((s, r) => s + (+r.intensity || 0), 0) / rows.length : 0;
+    return { totalKwh, totalCO2, totalSpend: 0, avgIntensity };
+  }
+
+  return null;
+}, [buildings, rows]);
 
   const Kpi = (p) => <Metric {...p} />;
 
@@ -1037,12 +1074,29 @@ function Portfolio({ buildings = [], setBuildings }) {
         title="Portfolio summary"
         right={<button className="hidden md:inline-flex btn btn-ghost">Export Portfolio Pack</button>}
       >
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-          <Kpi label="Total energy"   value="363,500 kWh" sub="Last 12 months" />
-          <Kpi label="Emissions"      value="91.6 tCO₂e"   sub="Scope 2 location-based" />
-          <Kpi label="Spend"          value="£ 69,120"     sub="Utilities" />
-          <Kpi label="Avg. intensity" value="86 kWh/m²"    sub="All buildings" />
-        </div>
+       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+  <Kpi
+    label="Total energy"
+    value={rollup ? `${Math.round(rollup.totalKwh).toLocaleString()} kWh` : "363,500 kWh"}
+    sub="Last 12 months"
+  />
+  <Kpi
+    label="Emissions"
+    value={rollup ? `${rollup.totalCO2.toFixed(1)} tCO₂e` : "91.6 tCO₂e"}
+    sub="Scope 2 location-based"
+  />
+  <Kpi
+    label="Spend"
+    value={rollup ? fmtMoney(rollup.totalSpend) : "£ 69,120"}
+    sub="Utilities"
+  />
+  <Kpi
+    label="Avg. intensity"
+    value={rollup ? `${Math.round(rollup.avgIntensity)} kWh/m²` : "86 kWh/m²"}
+    sub="All buildings"
+  />
+</div>
+
       </Section>
 
       <Section
