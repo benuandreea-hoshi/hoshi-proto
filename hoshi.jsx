@@ -2216,18 +2216,19 @@ ICONS.blog = function BlogIcon() {
 function HeroImage({ src, alt = "" }) {
   return (
     <figure
-      className="rounded-2xl overflow-hidden border mx-0" // <- was: md:mx-0 -mx-4
-      style={{ border: "1px solid var(--stroke)" }}
+      className="rounded-2xl overflow-hidden border"
+      style={{ border: "1px solid var(--stroke)", background: "#0c1220" }}
     >
       <img
         src={src}
         alt={alt}
+        className="block w-full max-w-full h-auto object-contain"
         loading="lazy"
-        className="block w-full h-auto max-h-[62vh] sm:max-h-[68vh] object-contain mx-auto"
       />
     </figure>
   );
 }
+
 
 
 /* --------------------- BLOG TAB --------------------- */
@@ -2567,18 +2568,19 @@ const ArticleBody = () => {
 
   // ---------- ARTICLE ----------
   const Article = () => (
-    <Section title={article.title} desc={article.summary}>
-      <div className="mb-3 overflow-x-auto no-scrollbar">
-  <div className="px-2 md:px-0 flex gap-2 flex-nowrap md:flex-wrap whitespace-nowrap md:whitespace-normal text-xs text-slate-400 min-w-0">
-    <span className="chip">{article.readingMins} min read</span>
+    <Section title={article.title} desc={article.summary}>      
+  {/* Tag chips — no negative margins */}
+<div className="mb-3 overflow-x-auto no-scrollbar">
+  <div className="flex gap-2 flex-nowrap text-xs text-slate-400">
+    <span className="chip shrink-0">{article.readingMins} min read</span>
     {article.tags.map((t, i) => (
-      <span key={i} className="chip">{t}</span>
+      <span key={i} className="chip shrink-0">{t}</span>
     ))}
   </div>
 </div>
-
-      <div className="rounded-2xl p-4 md:p-5" style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}>
-        <ArticleBody />
+      <div className="rounded-2xl p-4 md:p-5 article-wrap" style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}
+>
+  <ArticleBody />
 
         {/* in-article CTAs */}
         <div className="mt-6 flex flex-wrap gap-3">
