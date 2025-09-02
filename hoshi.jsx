@@ -422,11 +422,11 @@ function HeroOrb({ value = 0.42, label = "Good" }) {
         </div>
 
         {/* rail */}
-        <div
-          ref={ref}
-          className="flex gap-3 overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar -mx-1 px-1"
-          style={{ scrollbarWidth: "none" }}
-        >
+       <div
+  ref={ref}
+  className="flex gap-3 overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar px-1 max-w-full"
+  style={{ scrollbarWidth: "none" }}
+>
           {slides.map((s) => (
             <div
               key={s.key}
@@ -2216,10 +2216,9 @@ ICONS.blog = function BlogIcon() {
 function HeroImage({ src, alt = "" }) {
   return (
     <figure
-      className="rounded-2xl overflow-hidden border md:mx-0 -mx-4"
+      className="rounded-2xl overflow-hidden border mx-0" // <- was: md:mx-0 -mx-4
       style={{ border: "1px solid var(--stroke)" }}
     >
-      {/* Full image, no crop; capped height on mobile too */}
       <img
         src={src}
         alt={alt}
@@ -2559,17 +2558,14 @@ const ArticleBody = () => {
   // ---------- ARTICLE ----------
   const Article = () => (
     <Section title={article.title} desc={article.summary}>
-      <div className="mb-3 -mx-2 md:mx-0 overflow-x-auto md:overflow-visible no-scrollbar">
-  <div className="px-2 md:px-0 flex gap-2 md:flex-wrap whitespace-nowrap md:whitespace-normal text-xs text-slate-400">
+      <div className="mb-3 overflow-x-auto no-scrollbar">
+  <div className="px-2 md:px-0 flex gap-2 flex-nowrap md:flex-wrap whitespace-nowrap md:whitespace-normal text-xs text-slate-400 min-w-0">
     <span className="chip">{article.readingMins} min read</span>
     {article.tags.map((t, i) => (
-      <span key={i} className="chip inline-block">{t}</span>
+      <span key={i} className="chip">{t}</span>
     ))}
   </div>
 </div>
-
-
-
 
       <div className="rounded-2xl p-4 md:p-5" style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}>
         <ArticleBody />
