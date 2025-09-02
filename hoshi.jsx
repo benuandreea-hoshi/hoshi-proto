@@ -492,14 +492,23 @@ function HeroOrb({ value = 0.42, label = "Good" }) {
   const k = hoshiKPIs(b);
   const disabled = !form.name || !form.area;
 
-  if (!open) return null;
-  return (
-    <div className="fixed inset-0 z-[3000] grid place-items-center" style={{background:"rgba(0,0,0,.45)"}}>
-      <div className="w-[min(720px,92vw)] rounded-2xl p-5"
-           style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
+if (!open) return null;
+return (
+  // overlay: bottom-sheet on mobile, centered on desktop
+  <div className="fixed inset-0 z-[3000] bg-black/45 flex items-end md:items-center justify-center">
+    {/* panel */}
+    <div
+      className="w-[min(720px,92vw)] max-h-[92dvh] rounded-2xl flex flex-col overflow-hidden"
+      style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}
+    >
+      {/* header */}
+      <div className="px-4 md:px-5 py-4 md:py-5">
         <div className="text-slate-100 font-semibold text-lg">Add building</div>
+      </div>
 
-        <div className="grid md:grid-cols-2 gap-3 mt-3">
+      {/* body (scrolls if tall) */}
+      <div className="flex-1 overflow-y-auto px-4 md:px-5 pb-[max(env(safe-area-inset-bottom),16px)]">
+        <div className="grid md:grid-cols-2 gap-3">
           <div>
             <label className="text-xs text-slate-400">Name</label>
             <input className="w-full mt-1 px-3 py-2 rounded-lg"
@@ -579,11 +588,16 @@ function HeroOrb({ value = 0.42, label = "Good" }) {
             <div className="text-slate-100 font-semibold">{k.completeness}%</div>
           </div>
         </div>
+      </div>
 
-        <div className="mt-4 flex items-center justify-end gap-2">
+      {/* footer (sticks to bottom) */}
+      <div className="border-t" style={{ borderColor: "var(--stroke)" }}>
+        <div className="p-4 md:p-5 flex items-center justify-end gap-2">
           <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
-          <button className="btn btn-primary" disabled={disabled}
-            onClick={()=>{
+          <button
+            className="btn btn-primary"
+            disabled={disabled}
+            onClick={() => {
               onSave({
                 id: hoshiUid(),
                 ...b,
@@ -591,11 +605,16 @@ function HeroOrb({ value = 0.42, label = "Good" }) {
                 updated: new Date().toISOString().slice(0,10),
               });
               onClose();
-            }}>Save building</button>
+            }}
+          >
+            Save building
+          </button>
         </div>
       </div>
     </div>
-  );
+  </div>
+);
+
 }
 
 
@@ -1008,6 +1027,7 @@ function Portfolio({ buildings = [], setBuildings }) {
         {name:"42 Market Way",kwh:98000,co2:24.4,intensity:78,complete:.84,actions:1,updated:"2025-08-07"},
         {name:"Riverside 8",kwh:123500,co2:31.0,intensity:88,complete:.67,actions:2,updated:"2025-08-05"},
       ];
+
 
   const Kpi = (p) => <Metric {...p} />;
 
