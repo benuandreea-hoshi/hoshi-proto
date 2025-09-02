@@ -463,7 +463,127 @@ function HeroOrb({ value = 0.42, label = "Good" }) {
   );
 }
 
- 
+ function HoshiAddBuildingModal({ open, onClose, onSave, defaultCurrency="GBP" }) {
+  const [form, setForm] = React.useState({
+    name: "", city: "", sector: "Office",
+    area: "", elec_kwh: "", gas_kwh: "",
+    spend: "", ef_elec: HOSHI_DEFAULT_EF.elec, ef_gas: HOSHI_DEFAULT_EF.gas,
+  });
+
+  const b = {
+    ...form,
+    area:+form.area, elec_kwh:+form.elec_kwh, gas_kwh:+form.gas_kwh,
+    ef_elec:+form.ef_elec, ef_gas:+form.ef_gas
+  };
+  const k = hoshiKPIs(b);
+  const disabled = !form.name || !form.area;
+
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-[3000] grid place-items-center" style={{background:"rgba(0,0,0,.45)"}}>
+      <div className="w-[min(720px,92vw)] rounded-2xl p-5"
+           style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
+        <div className="text-slate-100 font-semibold text-lg">Add building</div>
+
+        <div className="grid md:grid-cols-2 gap-3 mt-3">
+          <div>
+            <label className="text-xs text-slate-400">Name</label>
+            <input className="w-full mt-1 px-3 py-2 rounded-lg"
+              style={{background:"var(--panel-2)",border:"1px solid var(--stroke)",color:"var(--text)"}}
+              value={form.name} onChange={e=>setForm({...form,name:e.target.value})} placeholder="1 King Street"/>
+          </div>
+          <div>
+            <label className="text-xs text-slate-400">City</label>
+            <input className="w-full mt-1 px-3 py-2 rounded-lg"
+              style={{background:"var(--panel-2)",border:"1px solid var(--stroke)",color:"var(--text)"}}
+              value={form.city} onChange={e=>setForm({...form,city:e.target.value})} placeholder="London"/>
+          </div>
+          <div>
+            <label className="text-xs text-slate-400">Sector</label>
+            <select className="w-full mt-1 px-3 py-2 rounded-lg"
+              style={{background:"var(--panel-2)",border:"1px solid var(--stroke)",color:"var(--text)"}}
+              value={form.sector} onChange={e=>setForm({...form,sector:e.target.value})}>
+              <option>Office</option><option>Retail</option><option>Industrial</option><option>Other</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-xs text-slate-400">Area (m²)</label>
+            <input type="number" min="0" className="w-full mt-1 px-3 py-2 rounded-lg"
+              style={{background:"var(--panel-2)",border:"1px solid var(--stroke)",color:"var(--text)"}}
+              value={form.area} onChange={e=>setForm({...form,area:e.target.value})} placeholder="12800"/>
+          </div>
+          <div>
+            <label className="text-xs text-slate-400">Electricity (kWh/yr)</label>
+            <input type="number" min="0" className="w-full mt-1 px-3 py-2 rounded-lg"
+              style={{background:"var(--panel-2)",border:"1px solid var(--stroke)",color:"var(--text)"}}
+              value={form.elec_kwh} onChange={e=>setForm({...form,elec_kwh:e.target.value})} placeholder="95000"/>
+          </div>
+          <div>
+            <label className="text-xs text-slate-400">Gas (kWh/yr)</label>
+            <input type="number" min="0" className="w-full mt-1 px-3 py-2 rounded-lg"
+              style={{background:"var(--panel-2)",border:"1px solid var(--stroke)",color:"var(--text)"}}
+              value={form.gas_kwh} onChange={e=>setForm({...form,gas_kwh:e.target.value})} placeholder="47000"/>
+          </div>
+          <div>
+            <label className="text-xs text-slate-400">Annual spend ({defaultCurrency})</label>
+            <input type="number" min="0" className="w-full mt-1 px-3 py-2 rounded-lg"
+              style={{background:"var(--panel-2)",border:"1px solid var(--stroke)",color:"var(--text)"}}
+              value={form.spend} onChange={e=>setForm({...form,spend:e.target.value})} placeholder="30150"/>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs text-slate-400">EF elec (kgCO₂e/kWh)</label>
+              <input type="number" step="0.001" className="w-full mt-1 px-3 py-2 rounded-lg"
+                style={{background:"var(--panel-2)",border:"1px solid var(--stroke)",color:"var(--text)"}}
+                value={form.ef_elec} onChange={e=>setForm({...form,ef_elec:e.target.value})}/>
+            </div>
+            <div>
+              <label className="text-xs text-slate-400">EF gas (kgCO₂e/kWh)</label>
+              <input type="number" step="0.001" className="w-full mt-1 px-3 py-2 rounded-lg"
+                style={{background:"var(--panel-2)",border:"1px solid var(--stroke)",color:"var(--text)"}}
+                value={form.ef_gas} onChange={e=>setForm({...form,ef_gas:e.target.value})}/>
+            </div>
+          </div>
+        </div>
+
+        {/* live KPI preview */}
+        <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="rounded-xl p-3" style={{background:"rgba(148,163,184,.06)",border:"1px solid var(--stroke)"}}>
+            <div className="text-xs text-slate-400">kWh</div>
+            <div className="text-slate-100 font-semibold">{k.kwh.toLocaleString()}</div>
+          </div>
+          <div className="rounded-xl p-3" style={{background:"rgba(148,163,184,.06)",border:"1px solid var(--stroke)"}}>
+            <div className="text-xs text-slate-400">tCO₂e</div>
+            <div className="text-slate-100 font-semibold">{k.tco2e.toFixed(1)}</div>
+          </div>
+          <div className="rounded-xl p-3" style={{background:"rgba(148,163,184,.06)",border:"1px solid var(--stroke)"}}>
+            <div className="text-xs text-slate-400">Intensity (kWh/m²)</div>
+            <div className="text-slate-100 font-semibold">{k.intensity ? k.intensity.toFixed(0) : "—"}</div>
+          </div>
+          <div className="rounded-xl p-3" style={{background:"rgba(148,163,184,.06)",border:"1px solid var(--stroke)"}}>
+            <div className="text-xs text-slate-400">Completeness</div>
+            <div className="text-slate-100 font-semibold">{k.completeness}%</div>
+          </div>
+        </div>
+
+        <div className="mt-4 flex items-center justify-end gap-2">
+          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+          <button className="btn btn-primary" disabled={disabled}
+            onClick={()=>{
+              onSave({
+                id: hoshiUid(),
+                ...b,
+                spend: +form.spend || null,
+                updated: new Date().toISOString().slice(0,10),
+              });
+              onClose();
+            }}>Save building</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 
 
 function Story({ goApp, goBlog }) {
