@@ -1096,7 +1096,7 @@ function Portfolio({ buildings = [], setBuildings }) {
         </div>
 
         {/* mobile list */}
-        <ul className="md:hidden space-y-3">
+       <ul className="md:hidden space-y-3 pb-[calc(96px+max(env(safe-area-inset-bottom),16px))]">
           {rows.map((r,i)=>(
             <li key={i} className="rounded-2xl p-4" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
               <div className="flex items-start justify-between gap-3">
@@ -1124,15 +1124,19 @@ function Portfolio({ buildings = [], setBuildings }) {
         </ul>
 
         {/* Mobile FAB */}
-        <button
-          className="md:hidden fixed bottom-5 right-5 btn btn-primary rounded-full shadow-lg"
-          aria-label="Add building"
-          onClick={()=>setAddOpen(true)}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-          </svg>
-        </button>
+      <button
+  className="md:hidden fixed right-5 btn btn-primary rounded-full shadow-lg z-[3000]"
+  aria-label="Add building"
+  style={{
+    bottom: 'calc(72px + max(env(safe-area-inset-bottom), 16px))', // clears the Webflow badge
+    right: 'max(1.25rem, env(safe-area-inset-right))'
+  }}
+  onClick={() => setAddOpen(true)}
+>
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+    <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+  </svg>
+</button>
       </Section>
 
       {/* Add building modal */}
