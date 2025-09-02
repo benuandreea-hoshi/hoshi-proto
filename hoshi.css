@@ -8,6 +8,12 @@
     var(--bg);
   color:var(--text);
 }
+/* Keep the page from panning sideways on iOS */
+#hoshi-root { overflow-x: hidden; }
+
+/* Images never exceed their container */
+#hoshi-root img { max-width: 100%; height: auto; }
+
 
 #hoshi-root .card{background:var(--panel);border:1px solid var(--stroke);border-radius:16px}
 #hoshi-root .btn{border-radius:12px;padding:10px 16px;font-weight:600}
