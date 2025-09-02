@@ -1055,13 +1055,14 @@ const rollup = React.useMemo(() => {
   }
 
   // Fallback: placeholder rows already have aggregate-like values
-  if (rows?.length) {
-    const totalKwh = rows.reduce((s, r) => s + (+r.kwh || 0), 0);
-    const totalCO2 = rows.reduce((s, r) => s + (+r.co2 || 0), 0);
-    const avgIntensity =
-      rows.length ? rows.reduce((s, r) => s + (+r.intensity || 0), 0) / rows.length : 0;
-    return { totalKwh, totalCO2, totalSpend: 0, avgIntensity };
-  }
+ if (rows?.length) {
+  const totalKwh = rows.reduce((s, r) => s + (+r.kwh || 0), 0);
+  const totalCO2 = rows.reduce((s, r) => s + (+r.co2 || 0), 0);
+  const avgIntensity =
+    rows.length ? rows.reduce((s, r) => s + (+r.intensity || 0), 0) / rows.length : 0;
+
+  return { totalKwh, totalCO2, totalSpend: null, avgIntensity }; // <- null (not 0)
+}
 
   return null;
 }, [buildings, rows]);
@@ -1086,10 +1087,15 @@ const rollup = React.useMemo(() => {
     sub="Scope 2 location-based"
   />
   <Kpi
-    label="Spend"
-    value={rollup ? fmtMoney(rollup.totalSpend) : "£ 69,120"}
-    sub="Utilities"
-  />
+  label="Spend"
+  value={
+    rollup && rollup.totalSpend != null
+      ? fmtMoney(rollup.totalSpend)
+      : "£ 69,120" // sample figure
+  }
+  sub={rollup && rollup.totalSpend != null ? "Utilities" : "Utilities (sample)"}
+/>
+
   <Kpi
     label="Avg. intensity"
     value={rollup ? `${Math.round(rollup.avgIntensity)} kWh/m²` : "86 kWh/m²"}
