@@ -2216,19 +2216,20 @@ ICONS.blog = function BlogIcon() {
 function HeroImage({ src, alt = "" }) {
   return (
     <figure
-      className="rounded-2xl overflow-hidden"
-      style={{ border: "1px solid var(--stroke)", background: "#0c1220" }}
+      className="rounded-2xl overflow-hidden border md:mx-0 -mx-4"
+      style={{ border: "1px solid var(--stroke)" }}
     >
-      {/* Full image shown (no crop) + sane max height */}
+      {/* Full image, no crop; capped height on mobile too */}
       <img
         src={src}
         alt={alt}
-        className="block w-full h-auto md:max-h-[68vh] object-contain mx-auto"
         loading="lazy"
+        className="block w-full h-auto max-h-[62vh] sm:max-h-[68vh] object-contain mx-auto"
       />
     </figure>
   );
 }
+
 
 /* --------------------- BLOG TAB --------------------- */
 function Blog({ openPortfolio, openBuilding }) {
@@ -2558,7 +2559,7 @@ const ArticleBody = () => {
   // ---------- ARTICLE ----------
   const Article = () => (
     <Section title={article.title} desc={article.summary}>
-     <div className="mb-3 -mx-2 md:mx-0 overflow-x-auto md:overflow-visible no-scrollbar">
+      <div className="mb-3 -mx-2 md:mx-0 overflow-x-auto md:overflow-visible no-scrollbar">
   <div className="px-2 md:px-0 flex gap-2 md:flex-wrap whitespace-nowrap md:whitespace-normal text-xs text-slate-400">
     <span className="chip">{article.readingMins} min read</span>
     {article.tags.map((t, i) => (
@@ -2566,6 +2567,8 @@ const ArticleBody = () => {
     ))}
   </div>
 </div>
+
+
 
 
       <div className="rounded-2xl p-4 md:p-5" style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}>
@@ -2730,15 +2733,6 @@ window.addEventListener('error', e => {
     '<pre style="white-space:pre-wrap;color:#fff;background:#111;padding:12px;border:1px solid #333;border-radius:8px;">'
     + e.message + '</pre>';
 });
-// inject once
-if (!document.getElementById('hoshi-scrollbar-css')) {
-  const s = document.createElement('style');
-  s.id = 'hoshi-scrollbar-css';
-  s.textContent = `
-    .no-scrollbar::-webkit-scrollbar { display: none; }
-    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-  `;
-  document.head.appendChild(s);
-}
+
 
 ReactDOM.createRoot(document.getElementById("hoshi-root")).render(<App/>);
