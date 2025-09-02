@@ -2308,10 +2308,11 @@ function Blog({ openPortfolio, openBuilding }) {
   );
 
   // article body as JSX so you can style/tweak freely
- const ArticleBody = () => {
+const ArticleBody = () => {
   if (active === "commonwealth-of-people") {
     return (
       <>
+        {/* hero image */}
         {article?.hero && <HeroImage src={article.hero} alt={article.title} />}
 
         {/* Body */}
@@ -2422,7 +2423,7 @@ function Blog({ openPortfolio, openBuilding }) {
   }
 
   // Default: “Hoshi in 5 minutes”
-  return (
+   return (
     <div className="prose prose-invert max-w-none">
         <div className="rounded-xl p-4 mb-4" style={{background:"rgba(148,163,184,.06)",border:"1px solid var(--stroke)"}}>
           <div className="text-slate-100 font-semibold">TL;DR (60 seconds)</div>
