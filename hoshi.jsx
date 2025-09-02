@@ -2319,6 +2319,10 @@ function App(){
   const [active,setActive]=useState("story");
  const [open,setOpen]=useState(false);
 const [lineageCtx, setLineageCtx] = useState(null);
+  // === Hoshi MVP: buildings state ===
+const [buildings, setBuildings] = React.useState(hoshiLoadBuildings());
+React.useEffect(() => hoshiSaveBuildings(buildings), [buildings]);
+
   
 const tabs = [
 { key: "story", label: "Story",
