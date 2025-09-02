@@ -1112,6 +1112,45 @@ function Portfolio({ buildings = [], setBuildings }) {
     </div>
   );
 }
+// --- Services map constants (bands, weights, sample places) ---
+const INDEX_BINS = [
+  { min: -Infinity, max: 0.0300, color: "#22c55e", label: "< 0.0300" },
+  { min: 0.0300,   max: 0.0400, color: "#84cc16", label: "0.0300+" },
+  { min: 0.0400,   max: 0.0500, color: "#fbbf24", label: "0.0400+" },
+  { min: 0.0500,   max: 0.0600, color: "#f59e0b", label: "0.0500+" },
+  { min: 0.0600,   max: 0.0700, color: "#f97316", label: "0.0600+" },
+  { min: 0.0700,   max:  Infinity, color: "#ef4444", label: "0.0700+" },
+];
+const colorForIndex = v =>
+  INDEX_BINS.find(b => v >= b.min && v < b.max)?.color || "#64748b";
+
+const PRESETS = {
+  Balanced:          { electricity:.14, gas:.14, water:.08, hvac:.12, cleaning:.12, waste:.10, security:.15, maintenance:.15 },
+  "Utilities-heavy": { electricity:.22, gas:.20, water:.12, hvac:.18, cleaning:.06, waste:.06, security:.08, maintenance:.08 },
+  "Ops-heavy":       { electricity:.08, gas:.08, water:.06, hvac:.08, cleaning:.20, waste:.14, security:.18, maintenance:.18 },
+};
+
+const PLACES = [
+  { name:"City of London", lat:51.513, lng:-0.091, spend: 950000,
+    m:{ electricity:.0450, gas:.0395, water:.0340, hvac:.0430, cleaning:.0385, waste:.0372, security:.0420, maintenance:.0410 } },
+  { name:"Soho",          lat:51.513, lng:-0.136, spend: 520000,
+    m:{ electricity:.0415, gas:.0420, water:.0335, hvac:.0405, cleaning:.0380, waste:.0365, security:.0450, maintenance:.0420 } },
+  { name:"Paddington",    lat:51.515, lng:-0.175, spend: 610000,
+    m:{ electricity:.0405, gas:.0375, water:.0325, hvac:.0385, cleaning:.0395, waste:.0355, security:.0400, maintenance:.0390 } },
+  { name:"Stratford",     lat:51.541, lng:-0.003, spend: 780000,
+    m:{ electricity:.0385, gas:.0360, water:.0315, hvac:.0375, cleaning:.0360, waste:.0345, security:.0380, maintenance:.0370 } },
+  { name:"Docklands",     lat:51.505, lng:-0.022, spend: 680000,
+    m:{ electricity:.0435, gas:.0400, water:.0345, hvac:.0415, cleaning:.0390, waste:.0375, security:.0410, maintenance:.0405 } },
+  { name:"Richmond",      lat:51.461, lng:-0.304, spend: 340000,
+    m:{ electricity:.0375, gas:.0340, water:.0305, hvac:.0365, cleaning:.0360, waste:.0335, security:.0380, maintenance:.0370 } },
+  { name:"Bromley",       lat:51.405, lng: 0.015, spend: 300000,
+    m:{ electricity:.0480, gas:.0465, water:.0390, hvac:.0470, cleaning:.0415, waste:.0400, security:.0460, maintenance:.0445 } },
+  { name:"Croydon",       lat:51.372, lng:-0.103, spend: 420000,
+    m:{ electricity:.0500, gas:.0480, water:.0410, hvac:.0485, cleaning:.0425, waste:.0415, security:.0470, maintenance:.0460 } },
+];
+
+const CAT_KEYS = ["electricity","gas","water","hvac","cleaning","waste","security","maintenance"];
+
 
 function compositeIndex(m, w) {
   let s=0, ws=0; CAT_KEYS.forEach(k=>{ if (m[k]!=null && w[k]) { s += m[k]*w[k]; ws += w[k]; }});
