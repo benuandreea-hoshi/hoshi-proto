@@ -896,7 +896,7 @@ function Story({ goApp, goBlog }) {
   );
 }
 
-function Onboarding(){
+function Onboarding({ goAddBuilding }){
   const [step,setStep]=useState(1);
   const next=()=>setStep(s=>Math.min(4,s+1));
   const back=()=>setStep(s=>Math.max(1,s-1));
@@ -964,9 +964,14 @@ function Onboarding(){
       </div>
       <div className="mt-4 flex justify-between"><button onClick={back} className="btn btn-ghost">Back</button><button onClick={next} className="btn btn-primary">Create portfolio</button></div>
     </Section>)}
-    {step===4 && (<Section title="You're set" desc="Add your first building — it takes about 3 minutes.">
-      <div className="flex justify-between"><button onClick={back} className="btn btn-ghost">Back</button><button className="btn btn-primary">Add building</button></div>
-    </Section>)}
+     {step===4 && (
+  <Section title="You're set" desc="Add your first building — it takes about 3 minutes.">
+ <div className="flex justify-between">
+ <button onClick={back} className="btn btn-ghost">Back</button>
+ <button className="btn btn-primary" onClick={goAddBuilding}>Add building</button>
+</div>
+</Section>
+)}
   </div>);
 }
 
@@ -976,6 +981,14 @@ function Portfolio({ buildings = [], setBuildings }) {
   const defaultCurrency = (typeof window !== "undefined"
     ? (localStorage.getItem("hoshi.currency") || "GBP")
     : "GBP");
+
+    // ✅ Auto-open when coming from Onboarding
+  React.useEffect(() => {
+    if (localStorage.getItem("hoshi.intent") === "add-building") {
+      setAddOpen(true);
+      localStorage.removeItem("hoshi.intent");
+    }
+  }, []);
 
   const rows = buildings.length
     ? buildings.map(b => {
@@ -2488,7 +2501,13 @@ const tabs = [
           goBlog={() => setActive("blog")}   // <-- add this
         />
 },
-    { key: "onboarding", label: "Onboarding", comp: <Onboarding /> },
+{ key: "onboarding", label: "Onboarding", comp: (
+  <Onboarding goAddBuilding={() => {
+    localStorage.setItem("hoshi.intent", "add-building");
+    setActive("portfolio");
+  }} />
+) },
+
 { key: "portfolio", label: "Portfolio",
   comp: <Portfolio buildings={buildings} setBuildings={setBuildings} /> },
 
