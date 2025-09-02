@@ -2487,11 +2487,21 @@ const ArticleBody = () => {
         </div>
       </div>
 
-      <div className="mt-6 rounded-xl p-3" style={{ background: "rgba(148,163,184,.06)", border: "1px solid var(--stroke)" }}>
-        <div className="text-slate-400 text-sm">
-          <b>Source notes:</b> Ecosystem Alarm Management by Aidan T Parkinson (https://github.com/aidan-parkinson/corporation-sole).
-        </div>
-      </div>
+     <div className="mt-6 rounded-xl p-3" style={{ background: "rgba(148,163,184,.06)", border: "1px solid var(--stroke)" }}>
+  <div className="text-slate-400 text-sm">
+    <b>Source notes:</b>
+    {" "}
+    <a
+      href="https://github.com/aidan-parkinson/corporation-sole"
+      target="_blank" rel="noopener"
+      className="underline"
+    >
+      Ecosystem Alarm Management
+    </a>
+    {" "}by Aidan T Parkinson.
+  </div>
+</div>
+
     </div>
   );
 };
