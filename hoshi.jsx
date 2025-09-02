@@ -2308,12 +2308,13 @@ function Blog({ openPortfolio, openBuilding }) {
   );
 
   // article body as JSX so you can style/tweak freely
+// article body as JSX so you can style/tweak freely
 const ArticleBody = () => {
   if (active === "commonwealth-of-people") {
     return (
       <>
-        {/* hero image */}
-        {article?.hero && <HeroImage src={article.hero} alt={article.title} />}
+        {/* Hero (full image, no crop) */}
+        {article?.img && <HeroImage src={article.img} alt={article.title} />}
 
         {/* Body */}
         <div className="prose prose-invert max-w-none mt-4">
@@ -2415,95 +2416,86 @@ const ArticleBody = () => {
             on. It’s not a world-government fantasy; it’s the minimum order that keeps our contracts meaningful.
           </p>
         </div>
-      );
-    }
-        </div>
       </>
     );
   }
 
   // Default: “Hoshi in 5 minutes”
-   return (
+  return (
     <div className="prose prose-invert max-w-none">
-        <div className="rounded-xl p-4 mb-4" style={{background:"rgba(148,163,184,.06)",border:"1px solid var(--stroke)"}}>
-          <div className="text-slate-100 font-semibold">TL;DR (60 seconds)</div>
-          <p className="text-slate-300 text-sm mt-1">
-            Hoshi turns messy building data (bills, meters, comfort logs) into <b>decision-grade signals</b>:
-            <b> NPV</b> (money), <b>β</b>/<b> sensitivity</b> (exposure to market-wide drivers),
-            and a split between <b>systematic</b> and <b>idiosyncratic</b> risk. Real estate can’t just
-            “diversify away” idiosyncratic risk; buildings are few, large, and unique, so we measure and manage it.
-          </p>
-        </div>
-
-        <h3 className="text-slate-50 text-lg font-semibold">Why translate energy &amp; comfort into ROI and risk?</h3>
-        <ul className="list-disc pl-6 text-slate-300">
-          <li><b>Finance speaks NPV.</b> We express outcomes as present value so ops and capital can align.</li>
-          <li><b>Markets price exposure.</b> β shows how much results move with shared forces (prices, policy, climate).</li>
-          <li><b>Idiosyncratic ≠ ignorable.</b> You don’t hold 500 micro-assets; building-specific risk must be managed.</li>
-        </ul>
-
-        <h3 className="text-slate-50 text-lg font-semibold mt-6">What Hoshi actually does (the pipeline)</h3>
-        <ol className="list-decimal pl-6 text-slate-300">
-          <li><b>Ingest:</b> email PDFs/CSVs or connect meters; normalise units and periods.</li>
-          <li><b>Clean &amp; compare:</b> compute intensity, spend, tCO₂e, comfort risk, coverage.</li>
-          <li><b>Turn into signals:</b> NPV / payback; β/sensitivity; a factor-aware composite for forward ROI.</li>
-          <li><b>Make it scenario-aware:</b> stress test prices, policy, and climate (2030/2050) to see what holds up.</li>
-          <li><b>Publish:</b> the <i>Building Performance Sheet</i> (BPS) with systematic vs idiosyncratic split + lineage.</li>
-          <li><b>Act (with governance):</b> every alarm becomes an Action with M&amp;V and acceptance criteria.</li>
-        </ol>
-
-        <h3 className="text-slate-50 text-lg font-semibold mt-6">Why you can’t just diversify idiosyncratic risk away</h3>
-        <p className="text-slate-300">
-          In equities, idiosyncratic noise averages out across many small holdings. In property it doesn’t:
-          each building is material and unique. That’s why Hoshi makes the <b>asset-specific</b> drivers visible and actionable.
+      <div className="rounded-xl p-4 mb-4" style={{background:"rgba(148,163,184,.06)",border:"1px solid var(--stroke)"}}>
+        <div className="text-slate-100 font-semibold">TL;DR (60 seconds)</div>
+        <p className="text-slate-300 text-sm mt-1">
+          Hoshi turns messy building data (bills, meters, comfort logs) into <b>decision-grade signals</b>:
+          <b> NPV</b> (money), <b>β</b>/<b> sensitivity</b> (exposure to market-wide drivers),
+          and a split between <b>systematic</b> and <b>idiosyncratic</b> risk. Real estate can’t just
+          “diversify away” idiosyncratic risk; buildings are few, large, and unique, so we measure and manage it.
         </p>
+      </div>
 
-        <h3 className="text-slate-50 text-lg font-semibold mt-6">What makes Hoshi different</h3>
-        <ul className="list-disc pl-6 text-slate-300">
-          <li><b>Signals, not just scores:</b> NPV, β, systematic vs idiosyncratic — built for capital decisions.</li>
-          <li><b>Alarm → Action → M&amp;V loop:</b> evidence-first governance with data lineage and acceptance criteria.</li>
-          <li><b>Earth-first framing:</b> align with a “commonwealth cost of carbon” lens rather than box-ticking.</li>
-        </ul>
+      <h3 className="text-slate-50 text-lg font-semibold">Why translate energy &amp; comfort into ROI and risk?</h3>
+      <ul className="list-disc pl-6 text-slate-300">
+        <li><b>Finance speaks NPV.</b> We express outcomes as present value so ops and capital can align.</li>
+        <li><b>Markets price exposure.</b> β shows how much results move with shared forces (prices, policy, climate).</li>
+        <li><b>Idiosyncratic ≠ ignorable.</b> You don’t hold 500 micro-assets; building-specific risk must be managed.</li>
+      </ul>
 
-        <h3 className="text-slate-50 text-lg font-semibold mt-6">Mini walk-through (2 minutes)</h3>
-        <ul className="list-disc pl-6 text-slate-300">
-          <li><b>Portfolio:</b> sort by intensity or coverage; pick a likely underperformer.</li>
-          <li><b>Building:</b> see spend/tCO₂e, overruns and comfort risk; inspect the composite index.</li>
-          <li><b>Actions:</b> LED retrofit with CapEx, savings, <b>NPV</b>, <b>β</b>, confidence, and expected Δ in service index, comfort risk, and tCO₂e/yr; add to plan with <b>M&amp;V</b>.</li>
-          <li><b>Lineage &amp; Governance:</b> jump to baseline, methods and factors so auditors and partners can trust the numbers.</li>
-        </ul>
+      <h3 className="text-slate-50 text-lg font-semibold mt-6">What Hoshi actually does (the pipeline)</h3>
+      <ol className="list-decimal pl-6 text-slate-300">
+        <li><b>Ingest:</b> email PDFs/CSVs or connect meters; normalise units and periods.</li>
+        <li><b>Clean &amp; compare:</b> compute intensity, spend, tCO₂e, comfort risk, coverage.</li>
+        <li><b>Turn into signals:</b> NPV / payback; β/sensitivity; a factor-aware composite for forward ROI.</li>
+        <li><b>Make it scenario-aware:</b> stress test prices, policy, and climate (2030/2050) to see what holds up.</li>
+        <li><b>Publish:</b> the <i>Building Performance Sheet</i> (BPS) with systematic vs idiosyncratic split + lineage.</li>
+        <li><b>Act (with governance):</b> every alarm becomes an Action with M&amp;V and acceptance criteria.</li>
+      </ol>
 
-        <h3 className="text-slate-50 text-lg font-semibold mt-6">Micro-glossary</h3>
-        <div className="grid md:grid-cols-3 gap-3">
-          <div className="rounded-xl p-3" style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}>
-            <div className="text-slate-100 font-medium">NPV</div>
-            <div className="text-slate-400 text-sm">Today’s value of expected savings minus cost.</div>
-          </div>
-          <div className="rounded-xl p-3" style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}>
-            <div className="text-slate-100 font-medium">β / sensitivity</div>
-            <div className="text-slate-400 text-sm">How outcomes move with shared drivers (systematic exposure).</div>
-          </div>
-          <div className="rounded-xl p-3" style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}>
-            <div className="text-slate-100 font-medium">Systematic vs idiosyncratic</div>
-            <div className="text-slate-400 text-sm">Market-wide vs asset-specific; property must manage the latter.</div>
-          </div>
+      <h3 className="text-slate-50 text-lg font-semibold mt-6">Why you can’t just diversify idiosyncratic risk away</h3>
+      <p className="text-slate-300">
+        In equities, idiosyncratic noise averages out across many small holdings. In property it doesn’t:
+        each building is material and unique. That’s why Hoshi makes the <b>asset-specific</b> drivers visible and actionable.
+      </p>
+
+      <h3 className="text-slate-50 text-lg font-semibold mt-6">What makes Hoshi different</h3>
+      <ul className="list-disc pl-6 text-slate-300">
+        <li><b>Signals, not just scores:</b> NPV, β, systematic vs idiosyncratic — built for capital decisions.</li>
+        <li><b>Alarm → Action → M&amp;V loop:</b> evidence-first governance with data lineage and acceptance criteria.</li>
+        <li><b>Earth-first framing:</b> align with a “commonwealth cost of carbon” lens rather than box-ticking.</li>
+      </ul>
+
+      <h3 className="text-slate-50 text-lg font-semibold mt-6">Mini walk-through (2 minutes)</h3>
+      <ul className="list-disc pl-6 text-slate-300">
+        <li><b>Portfolio:</b> sort by intensity or coverage; pick a likely underperformer.</li>
+        <li><b>Building:</b> see spend/tCO₂e, overruns and comfort risk; inspect the composite index.</li>
+        <li><b>Actions:</b> LED retrofit with CapEx, savings, <b>NPV</b>, <b>β</b>, confidence, and expected Δ in service index, comfort risk, and tCO₂e/yr; add to plan with <b>M&amp;V</b>.</li>
+        <li><b>Lineage &amp; Governance:</b> jump to baseline, methods and factors so auditors and partners can trust the numbers.</li>
+      </ul>
+
+      <h3 className="text-slate-50 text-lg font-semibold mt-6">Micro-glossary</h3>
+      <div className="grid md:grid-cols-3 gap-3">
+        <div className="rounded-xl p-3" style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}>
+          <div className="text-slate-100 font-medium">NPV</div>
+          <div className="text-slate-400 text-sm">Today’s value of expected savings minus cost.</div>
         </div>
-
-        <div className="mt-6 rounded-xl p-3" style={{ background: "rgba(148,163,184,.06)", border: "1px solid var(--stroke)" }}>
-          <div className="text-slate-400 text-sm">
-            <b>Source notes:</b> Ecosystem Alarm Management by Aidan T Parkinson (https://github.com/aidan-parkinson/corporation-sole).
-          </div>
+        <div className="rounded-xl p-3" style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}>
+          <div className="text-slate-100 font-medium">β / sensitivity</div>
+          <div className="text-slate-400 text-sm">How outcomes move with shared drivers (systematic exposure).</div>
+        </div>
+        <div className="rounded-xl p-3" style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}>
+          <div className="text-slate-100 font-medium">Systematic vs idiosyncratic</div>
+          <div className="text-slate-400 text-sm">Market-wide vs asset-specific; property must manage the latter.</div>
         </div>
       </div>
-    );
-  };
 
+      <div className="mt-6 rounded-xl p-3" style={{ background: "rgba(148,163,184,.06)", border: "1px solid var(--stroke)" }}>
+        <div className="text-slate-400 text-sm">
+          <b>Source notes:</b> Ecosystem Alarm Management by Aidan T Parkinson (https://github.com/aidan-parkinson/corporation-sole).
+        </div>
+      </div>
     </div>
   );
 };
 
-
-    
   // ---------- HOME (landing) ----------
   const Home = () => (
     <Section title="Hoshi Blog">
