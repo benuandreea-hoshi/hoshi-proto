@@ -391,7 +391,7 @@ function HeroOrb({ value = 0.42, label = "Good" }) {
   return (
     <div className="grid gap-3 md:gap-6 md:grid-cols-2 items-start">
       {/* left: image (cap height on mobile) */}
-      <div className="rounded-2xl overflow-hidden border" style={{ borderColor: "var(--stroke)" }}>
+      <div className="rounded-2xl overflow-hidden border box-border" style={{ borderColor: "var(--stroke)" }}>
         <img
           src={PEOPLE_SRC}
           alt="Commonwealth of People"
@@ -2216,8 +2216,9 @@ ICONS.blog = function BlogIcon() {
 // REPLACE the whole HeroImage with this version
 function HeroImage({ src, alt = "" }) {
   return (
-    <figure
-      className="rounded-2xl overflow-hidden border w-full"
+<figure className="rounded-2xl overflow-hidden border box-border w-full"
+   style={{ border: "1px solid var(--stroke)", background: "#0c1220" }}>
+
       style={{ border: "1px solid var(--stroke)", background: "#0c1220" }}
     >
       {/* Full image, never cropped; capped to safe mobile viewport height */}
@@ -2584,7 +2585,7 @@ const ArticleBody = () => {
   </div>
 </div>
    <div
-  className="rounded-2xl p-4 md:p-5 pb-[calc(88px+max(env(safe-area-inset-bottom),16px))] md:pb-5"
+ className="rounded-2xl p-4 md:p-5 pb-[calc(88px+max(env(safe-area-inset-bottom),16px))] md:pb-5 box-border"
   style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}
 >
   <ArticleBody />
