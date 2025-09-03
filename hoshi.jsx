@@ -2213,12 +2213,11 @@ ICONS.blog = function BlogIcon() {
     </svg>
   );
 };
-// REPLACE the whole HeroImage with this version
+// REPLACE the whole HeroImage with this exact version
 function HeroImage({ src, alt = "" }) {
   return (
-<figure className="rounded-2xl overflow-hidden border box-border w-full"
-   style={{ border: "1px solid var(--stroke)", background: "#0c1220" }}>
-
+    <figure
+      className="rounded-2xl overflow-hidden border box-border w-full"
       style={{ border: "1px solid var(--stroke)", background: "#0c1220" }}
     >
       {/* Full image, never cropped; capped to safe mobile viewport height */}
@@ -2227,7 +2226,6 @@ function HeroImage({ src, alt = "" }) {
         alt={alt}
         loading="lazy"
         className="block w-full h-auto max-w-full object-contain mx-auto"
-        // svh prevents iOS URL-bar jumps; md up gets a taller cap
         style={{ maxHeight: "56svh" }}
       />
     </figure>
