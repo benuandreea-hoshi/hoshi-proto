@@ -2346,16 +2346,10 @@ function Blog({ openPortfolio, openBuilding }) {
         {BLOG.map((a) => (
           <button
             key={a.slug}
-            onClick={() => {
-              if (a.url) {
-                // Open static HTML on GitHub Pages in a new tab
-                window.open(a.url, "_blank", "noopener");
-              } else {
-                // Fallback to in-app article view
-                setActive(a.slug);
-                setView("article");
-              }
-            }}
+         onClick={() => {
+  setActive(a.slug);
+  setView("article");   // always show Article view
+}}
             className="text-left rounded-2xl overflow-hidden hover:shadow-lg transition-shadow"
             style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}
           >
@@ -2380,47 +2374,40 @@ function Blog({ openPortfolio, openBuilding }) {
   );
 
   // ---------- ARTICLE (fallback route if an item has no URL) ----------
-  const Article = () => (
-    <Section title={article.title} desc={article.summary}>
-      {/* Tag chips */}
-      <div className="mb-3 overflow-x-auto no-scrollbar">
-        <div className="flex gap-2 flex-nowrap text-xs text-slate-400">
-          <span className="chip shrink-0">{article.readingMins} min read</span>
-          {article.tags.map((t, i) => (
-            <span key={i} className="chip shrink-0">{t}</span>
-          ))}
-        </div>
-      </div>
-
-      <div className="rounded-2xl p-4 md:p-5 box-border min-w-0 w-full max-w-full"
-           style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}>
-        {/* If this article actually has a static URL, show a gentle pointer */}
-        {article.url ? (
-          <div className="text-slate-300">
-            This article is served as a static page.
-            <div className="mt-3 flex gap-3">
-              <a className="btn btn-primary" target="_blank" rel="noopener" href={article.url}>
-                Open article
-              </a>
-              <button className="btn btn-ghost" onClick={() => setView("home")}>
-                ← Back to Blog
-              </button>
-            </div>
+   const Article = () => (
+  <Section title={article.title} desc={article.summary}>
+    <div
+      className="rounded-2xl p-0 box-border w-full"
+      style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}
+    >
+      {article.url ? (
+        <>
+          <iframe
+            key={article.url}                 // forces reload when switching posts
+            title={article.title}
+            src={article.url}                 // your GitHub Pages HTML
+            className="w-full rounded-2xl block"
+            style={{ height: "75svh", border: 0 }}
+            sandbox="allow-forms allow-popups allow-scripts allow-same-origin"
+          />
+          <div className="p-4 md:p-5">
+            <button className="btn btn-ghost" onClick={() => setView("home")}>
+              ← Back to Blog
+            </button>
           </div>
-        ) : (
-          <>
-            {/* Your existing in-app ArticleBody stays as-is */}
-            <ArticleBody />
-            <div className="mt-6">
-              <button className="btn btn-ghost" onClick={() => setView("home")}>
-                ← Back to Blog
-              </button>
-            </div>
-          </>
-        )}
-      </div>
-    </Section>
-  );
+        </>
+      ) : (
+        <div className="p-4 md:p-5">
+          <ArticleBody />
+          <div className="mt-6">
+            <button className="btn btn-ghost" onClick={() => setView("home")}>← Back to Blog</button>
+          </div>
+        </div>
+      )}
+    </div>
+  </Section>
+);
+
 
   // render
   return (
