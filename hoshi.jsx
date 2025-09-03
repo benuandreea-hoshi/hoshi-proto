@@ -2439,10 +2439,11 @@ const ArticleBody = () => {
       <div className="rounded-xl p-4 mb-4" style={{background:"rgba(148,163,184,.06)",border:"1px solid var(--stroke)"}}>
         <div className="text-slate-100 font-semibold">TL;DR (60 seconds)</div>
         <p className="text-slate-300 text-sm mt-1">
-          Hoshi is <b></b>the decision layer for real‑estate decarbonisation.</b> 
-          It ingests metered data and targets, then converts them into decision‑grade outputs: <b></b>service‑performance indicators (SPIs), scenario stress‑tests, retrofit economics
-        (NPV/IRR with capex curves & downtime risk), building comparisons, and investment‑committee‑ready packs</div>b>.
-        Real estate can’t just “diversify away” idiosyncratic risk; buildings are few, large, and unique, so we measure and manage it.
+            Hoshi is <b>the decision layer for real-estate decarbonisation.</b> It ingests metered data and targets,
+    then converts them into decision-grade outputs: <b>service-performance indicators (SPIs)</b>, scenario
+    stress-tests, retrofit economics (NPV/IRR with capex curves &amp; downtime risk), building comparisons,
+    and investment-committee-ready packs. Real estate can’t just “diversify away” idiosyncratic risk; buildings
+    are few, large, and unique, so we measure and manage it.
         </p>
       </div>
 
