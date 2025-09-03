@@ -166,7 +166,7 @@ const LineChart=({points=[5,8,6,9,12,10,14,15,13,16,18,17]})=>{
   </svg>);
 };
 const Section=({title,desc,right,children})=>(
-<section className="card p-5 md:p-6 box-border overflow-x-clip">
+ <section className="card p-5 md:p-6 box-border">
     <div className="flex items-start justify-between gap-4 mb-4">
       <div><h3 className="text-slate-50 text-lg font-semibold">{title}</h3>{desc&&<p className="text-slate-400 text-sm mt-1">{desc}</p>}</div>
       {right}
@@ -2217,7 +2217,7 @@ ICONS.blog = function BlogIcon() {
 function HeroImage({ src, alt = "" }) {
   return (
     <figure
-      className="rounded-2xl overflow-hidden border box-border w-full"
+  className="rounded-2xl overflow-hidden border box-border w-full max-w-full"
       style={{ border: "1px solid var(--stroke)", background: "#0c1220" }}
     >
       {/* Full image, never cropped; capped to safe mobile viewport height */}
@@ -2323,7 +2323,7 @@ const ArticleBody = () => {
        {article?.hero && <HeroImage src={article.hero} alt={article.title} />}
 
         {/* Body */}
- <div className="prose prose-invert max-w-none mt-4 break-words [hyphens:auto] [overflow-wrap:anywhere]">
+<div className="prose prose-invert max-w-none mt-4 w-full max-w-full break-words [hyphens:auto] [overflow-wrap:anywhere]">
           <p className="text-slate-300">
             Real estate runs on promises across many hands—owners, lenders, tenants, facilities
             teams, ESCOs, insurers. Each party optimizes locally: reduce a bill here, tick an ESG
@@ -2583,7 +2583,7 @@ const ArticleBody = () => {
   </div>
 </div>
    <div
- className="rounded-2xl p-4 md:p-5 pb-[calc(88px+max(env(safe-area-inset-bottom),16px))] md:pb-5 box-border min-w-0 overflow-x-clip"
+ className="rounded-2xl p-4 md:p-5 pb-[calc(88px+max(env(safe-area-inset-bottom),16px))] md:pb-5 box-border min-w-0 w-full max-w-full"
   style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}
 >
   <ArticleBody />
