@@ -165,10 +165,11 @@ const LineChart=({points=[5,8,6,9,12,10,14,15,13,16,18,17]})=>{
     <path d={d} fill="none" stroke="#6AA6FF" strokeWidth="2"/><path d={`${d} L 280 100 L 0 100 Z`} fill="url(#g)" opacity="0.2"/>
   </svg>);
 };
+// REPLACE your current Section with this
 const Section = ({ title, desc, right, children }) => (
   <section
-    className="card p-5 md:p-6 box-border"
-    style={{ overflow: "visible" }}
+    className="card p-5 md:p-6 box-border w-full max-w-full"
+    style={{ overflow: "visible" }}   // override .card { overflow:hidden }
   >
     <div className="flex items-start justify-between gap-4 mb-4">
       <div>
@@ -2225,15 +2226,14 @@ ICONS.blog = function BlogIcon() {
 function HeroImage({ src, alt = "" }) {
   return (
     <figure
-  className="rounded-2xl overflow-hidden border box-border w-full max-w-full"
+      className="rounded-2xl overflow-hidden border box-border w-full max-w-full"
       style={{ border: "1px solid var(--stroke)", background: "#0c1220" }}
     >
-      {/* Full image, never cropped; capped to safe mobile viewport height */}
       <img
         src={src}
         alt={alt}
         loading="lazy"
-        className="block w-full h-auto max-w-full object-contain mx-auto"
+        className="block w-full h-auto object-contain mx-auto"
         style={{ maxHeight: "56svh" }}
       />
     </figure>
