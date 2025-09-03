@@ -166,7 +166,8 @@ const LineChart=({points=[5,8,6,9,12,10,14,15,13,16,18,17]})=>{
   </svg>);
 };
 const Section=({title,desc,right,children})=>(
- <section className="card p-5 md:p-6 box-border">
+<section className="card p-5 md:p-6 box-border w-full max-w-full"
+           style={{ overflow: "visible" }}>
     <div className="flex items-start justify-between gap-4 mb-4">
       <div><h3 className="text-slate-50 text-lg font-semibold">{title}</h3>{desc&&<p className="text-slate-400 text-sm mt-1">{desc}</p>}</div>
       {right}
@@ -2583,8 +2584,8 @@ const ArticleBody = () => {
   </div>
 </div>
    <div
- className="rounded-2xl p-4 md:p-5 pb-[calc(88px+max(env(safe-area-inset-bottom),16px))] md:pb-5 box-border min-w-0 w-full max-w-full"
-  style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}
+className="rounded-2xl p-4 md:p-5 pb-[calc(88px+max(env(safe-area-inset-bottom),16px))] md:pb-5 box-border min-w-0 w-full max-w-full pr-px"
+ style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)", overflow: "visible" }}
 >
   <ArticleBody />
 
