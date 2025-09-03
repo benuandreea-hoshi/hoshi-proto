@@ -1,0 +1,73 @@
+<section id="hoshi-article" class="a">
+  <style>
+    /* identical CSS as above; keep a single copy if both are on the same page */
+    .a{--bg:#0b1220;--card:#0c111b;--stroke:#20293a;--text:#e5e7eb;--muted:#9aa4b2;
+       --chip-bg:rgba(148,163,184,.12);--chip-bd:rgba(148,163,184,.35);--accent:#22d3ee;--accent2:#34d399}
+    .a{background:var(--bg); color:var(--text); font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
+       padding:16px; box-sizing:border-box}
+    .a .wrap{max-width:860px; margin:0 auto}
+    .a h1{font-size:clamp(26px,6vw,36px); line-height:1.15; margin:0 0 6px}
+    .a .sub{color:var(--muted)}
+    .a .chips{display:flex; gap:8px; flex-wrap:wrap; margin:14px 0 0}
+    .a .chip{font-size:12px; color:#e2e8f0; padding:.35rem .6rem; border-radius:999px;
+             border:1px solid var(--chip-bd); background:var(--chip-bg); white-space:nowrap}
+    .a figure{margin:14px 0 0; border-radius:16px; overflow:hidden; border:1px solid var(--stroke);
+              background:#0c1220}
+    .a figure img{display:block; width:100%; height:auto; object-fit:contain; max-height:56svh}
+    .a .body{background:var(--card); border:1px solid var(--stroke); border-radius:16px;
+             padding:16px; margin-top:14px}
+    .a h2{font-size:18px; margin:20px 0 8px}
+    .a h3{font-size:16px; margin:16px 0 8px}
+    .a p{margin:10px 0; color:#ccd4de}
+    .a ul, .a ol{margin:10px 0 10px 20px; color:#ccd4de}
+    .a .back{margin:16px 0 0; display:inline-block; padding:.6rem .9rem; border-radius:12px;
+             border:1px solid var(--stroke); color:var(--text); text-decoration:none}
+    @supports (padding: max(0px)){ .a{padding-bottom: max(24px, env(safe-area-inset-bottom))} }
+  </style>
+
+  <div class="wrap">
+    <h1>Hoshi in 5 minutes</h1>
+    <p class="sub">From utility bills to decision-grade signals (NPV, β, systematic vs idiosyncratic).</p>
+
+    <div class="chips">
+      <span class="chip">5 min read</span>
+      <span class="chip">Investors</span>
+      <span class="chip">Operators</span>
+      <span class="chip">Signals</span>
+    </div>
+
+    <figure>
+      <img alt="Hoshi" src="https://cdn.prod.website-files.com/68a8baf20ad5978747d9d44d/68a8fe47145ebb756d01c372_hoshi.jpeg">
+    </figure>
+
+    <article class="body">
+      <h2>TL;DR</h2>
+      <p>Hoshi is the <b>decision layer</b> for real-estate decarbonisation. It ingests metered data and targets, then converts them into decision-grade outputs: service-performance indicators (SPIs), scenario stress-tests, retrofit economics (NPV/IRR), building comparisons, and IC-ready packs.</p>
+
+      <h2>Why ROI &amp; risk?</h2>
+      <ul>
+        <li><b>Finance speaks NPV</b> — align ops with capital decisions.</li>
+        <li><b>Markets price exposure</b> — β shows sensitivity to prices/policy/climate.</li>
+        <li><b>Property ≠ equities</b> — you can’t diversify idiosyncratic risk away.</li>
+      </ul>
+
+      <h2>Pipeline (what Hoshi does)</h2>
+      <ol>
+        <li>Ingest: email PDFs/CSVs or connect meters.</li>
+        <li>Clean &amp; compare: intensity, spend, tCO₂e, coverage.</li>
+        <li>Signals: NPV / payback; β / sensitivity; a composite for forward ROI.</li>
+        <li>Scenario-aware: stress-test prices, policy, climate (2030/2050).</li>
+        <li>Publish: a Building Performance Sheet with lineage.</li>
+      </ol>
+
+      <h2>What makes it different</h2>
+      <ul>
+        <li><b>Signals, not scores</b> — built for capital decisions.</li>
+        <li><b>Alarm → Action → M&amp;V loop</b> with lineage + acceptance criteria.</li>
+        <li><b>Earth-first frame</b> under a common ecological floor.</li>
+      </ul>
+
+      <a class="back" href="javascript:history.back()">← Back to blog</a>
+    </article>
+  </div>
+</section>
