@@ -2213,22 +2213,26 @@ ICONS.blog = function BlogIcon() {
     </svg>
   );
 };
+// REPLACE the whole HeroImage with this version
 function HeroImage({ src, alt = "" }) {
   return (
     <figure
-      className="rounded-2xl overflow-hidden border"
+      className="rounded-2xl overflow-hidden border w-full"
       style={{ border: "1px solid var(--stroke)", background: "#0c1220" }}
     >
-      {/* full image, never cropped */}
+      {/* Full image, never cropped; capped to safe mobile viewport height */}
       <img
         src={src}
         alt={alt}
         loading="lazy"
-        className="block w-full h-auto max-h-[46vh] sm:max-h-[56vh] md:max-h-[64vh] object-contain mx-auto"
+        className="block w-full h-auto max-w-full object-contain mx-auto"
+        // svh prevents iOS URL-bar jumps; md up gets a taller cap
+        style={{ maxHeight: "56svh" }}
       />
     </figure>
   );
 }
+
 
 
 
@@ -2320,7 +2324,7 @@ const ArticleBody = () => {
        {article?.hero && <HeroImage src={article.hero} alt={article.title} />}
 
         {/* Body */}
-        <div className="prose prose-invert max-w-none mt-4">
+  <div className="prose prose-invert max-w-none mt-4 break-words [hyphens:auto]">
           <p className="text-slate-300">
             Real estate runs on promises across many hands—owners, lenders, tenants, facilities
             teams, ESCOs, insurers. Each party optimizes locally: reduce a bill here, tick an ESG
@@ -2328,8 +2332,7 @@ const ArticleBody = () => {
             liability, reputational blow-ups) sit in the gaps between those hands. Data platforms
             help, but they mostly live at the edges of the problem.
           </p>
-
-          <ul className="list-disc pl-6 text-slate-300">
+<ul className="list-disc pl-5 sm:pl-6 text-slate-300">
             <li><b>Market data</b> (think CoStar) tells you what space is worth relative to peers, not how your building’s comfort/energy choices expose you to ecological or policy shocks.</li>
             <li><b>ESG reporters</b> (think Measurabl) lift disclosures to investor-grade, but they rarely turn meter data into enforceable operating commitments with payback, verification, and recourse.</li>
             <li><b>Analytics/BMS</b> finds anomalies, yet “fix the spike” is not the same as governing a portfolio against a public carbon floor and showing ROI in capital terms.</li>
@@ -2398,7 +2401,7 @@ const ArticleBody = () => {
           </p>
 
           <h3 className="text-slate-50 text-lg font-semibold mt-6">How this differs from the tools you already know</h3>
-          <ul className="list-disc pl-6 text-slate-300">
+       <ul className="list-disc pl-5 sm:pl-6 text-slate-300"> 
             <li><b>Versus market-data platforms (e.g., CoStar):</b> those excel at pricing space relative to comps. Hoshi complements that by turning inside-the-building choices (comfort, energy, maintenance) into capital signals under a public ecological floor.</li>
             <li><b>Versus ESG reporting platforms (e.g., Measurabl):</b> those make disclosures investor-grade. Hoshi’s focus is the governance loop that produces the numbers: public alarms, peer-reviewed rulings, M&amp;V, and lineage—so decisions are enforceable, not just reportable.</li>
             <li><b>Versus pure analytics/BMS:</b> anomaly detection is great, but portfolios also need common priorities, acceptance criteria, and a ledger of promises that travel into leases, financing, and valuation.</li>
@@ -2437,7 +2440,7 @@ const ArticleBody = () => {
       </div>
 
       <h3 className="text-slate-50 text-lg font-semibold">Why translate energy &amp; comfort into ROI and risk?</h3>
-      <ul className="list-disc pl-6 text-slate-300">
+     <ul className="list-disc pl-5 sm:pl-6 text-slate-300">
         <li><b>Finance speaks NPV.</b> We express outcomes as present value so ops and capital can align.</li>
         <li><b>Markets price exposure.</b> β shows how much results move with shared forces (prices, policy, climate).</li>
         <li><b>Idiosyncratic ≠ ignorable.</b> You don’t hold 500 micro-assets; building-specific risk must be managed.</li>
@@ -2460,14 +2463,14 @@ const ArticleBody = () => {
       </p>
 
       <h3 className="text-slate-50 text-lg font-semibold mt-6">What makes Hoshi different</h3>
-      <ul className="list-disc pl-6 text-slate-300">
+     <ul className="list-disc pl-5 sm:pl-6 text-slate-300">
         <li><b>Signals, not just scores:</b> NPV, β, systematic vs idiosyncratic — built for capital decisions.</li>
         <li><b>Alarm → Action → M&amp;V loop:</b> evidence-first governance with data lineage and acceptance criteria.</li>
         <li><b>Earth-first framing:</b> align with a “commonwealth cost of carbon” lens rather than box-ticking.</li>
       </ul>
 
       <h3 className="text-slate-50 text-lg font-semibold mt-6">Mini walk-through (2 minutes)</h3>
-      <ul className="list-disc pl-6 text-slate-300">
+     <ul className="list-disc pl-5 sm:pl-6 text-slate-300">
         <li><b>Portfolio:</b> sort by intensity or coverage; pick a likely underperformer.</li>
         <li><b>Building:</b> see spend/tCO₂e, overruns and comfort risk; inspect the composite index.</li>
         <li><b>Actions:</b> LED retrofit with CapEx, savings, <b>NPV</b>, <b>β</b>, confidence, and expected Δ in service index, comfort risk, and tCO₂e/yr; add to plan with <b>M&amp;V</b>.</li>
