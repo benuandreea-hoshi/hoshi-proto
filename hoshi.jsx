@@ -183,6 +183,7 @@ const Section = ({ title, desc, right, children }) => (
 );
 
 
+
 const StarLogo=({size=28})=>(
   <svg width={size} height={size} viewBox="0 0 100 100" aria-hidden>
     <defs>
@@ -2226,7 +2227,7 @@ ICONS.blog = function BlogIcon() {
 function HeroImage({ src, alt = "" }) {
   return (
     <figure
-      className="rounded-2xl overflow-hidden border box-border w-full max-w-full"
+       className="rounded-2xl overflow-hidden border box-border w-full max-w-full"
       style={{ border: "1px solid var(--stroke)", background: "#0c1220" }}
     >
       <img
@@ -2246,6 +2247,15 @@ function HeroImage({ src, alt = "" }) {
 
 /* --------------------- BLOG TAB --------------------- */
 function Blog({ openPortfolio, openBuilding }) {
+  useEffect(() => {
+  const s = document.createElement("style");
+  s.textContent = `
+    #hoshi-root .card { overflow: visible !important; }
+  `;
+  document.head.appendChild(s);
+  return () => s.remove();
+}, []);
+
   // simple registry (two articles)
   const BLOG = [
   {
@@ -2592,7 +2602,7 @@ const ArticleBody = () => {
   </div>
 </div>
    <div
-     className="rounded-2xl p-4 md:p-5 pb-[calc(88px+max(env(safe-area-inset-bottom),16px))] md:pb-5 box-border min-w-0 w-full max-w-full pr-px"
+   className="rounded-2xl p-4 md:p-5 pb-[calc(88px+max(env(safe-area-inset-bottom),16px))] md:pb-5 box-border min-w-0 w-full max-w-full pr-px"
   style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)", overflow: "visible" }}
 >
   <ArticleBody />
