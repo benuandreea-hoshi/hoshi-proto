@@ -165,15 +165,22 @@ const LineChart=({points=[5,8,6,9,12,10,14,15,13,16,18,17]})=>{
     <path d={d} fill="none" stroke="#6AA6FF" strokeWidth="2"/><path d={`${d} L 280 100 L 0 100 Z`} fill="url(#g)" opacity="0.2"/>
   </svg>);
 };
-const Section=({title,desc,right,children})=>(
-<section className="card p-5 md:p-6 box-border w-full max-w-full"
-           style={{ overflow: "visible" }}>
+const Section = ({ title, desc, right, children }) => (
+  <section
+    className="card p-5 md:p-6 box-border"
+    style={{ overflow: "visible" }}
+  >
     <div className="flex items-start justify-between gap-4 mb-4">
-      <div><h3 className="text-slate-50 text-lg font-semibold">{title}</h3>{desc&&<p className="text-slate-400 text-sm mt-1">{desc}</p>}</div>
+      <div>
+        <h3 className="text-slate-50 text-lg font-semibold">{title}</h3>
+        {desc && <p className="text-slate-400 text-sm mt-1">{desc}</p>}
+      </div>
       {right}
-    </div>{children}
+    </div>
+    {children}
   </section>
 );
+
 
 const StarLogo=({size=28})=>(
   <svg width={size} height={size} viewBox="0 0 100 100" aria-hidden>
@@ -2324,7 +2331,7 @@ const ArticleBody = () => {
        {article?.hero && <HeroImage src={article.hero} alt={article.title} />}
 
         {/* Body */}
-<div className="prose prose-invert max-w-none mt-4 w-full max-w-full break-words [hyphens:auto] [overflow-wrap:anywhere]">
+<div className="prose prose-invert max-w-none mt-4">
           <p className="text-slate-300">
             Real estate runs on promises across many hands—owners, lenders, tenants, facilities
             teams, ESCOs, insurers. Each party optimizes locally: reduce a bill here, tick an ESG
@@ -2432,10 +2439,10 @@ const ArticleBody = () => {
       <div className="rounded-xl p-4 mb-4" style={{background:"rgba(148,163,184,.06)",border:"1px solid var(--stroke)"}}>
         <div className="text-slate-100 font-semibold">TL;DR (60 seconds)</div>
         <p className="text-slate-300 text-sm mt-1">
-          Hoshi turns messy building data (bills, meters, comfort logs) into <b>decision-grade signals</b>:
-          <b> NPV</b> (money), <b>β</b>/<b> sensitivity</b> (exposure to market-wide drivers),
-          and a split between <b>systematic</b> and <b>idiosyncratic</b> risk. Real estate can’t just
-          “diversify away” idiosyncratic risk; buildings are few, large, and unique, so we measure and manage it.
+          Hoshi is <b></b>the decision layer for real‑estate decarbonisation.</b> 
+          It ingests metered data and targets, then converts them into decision‑grade outputs: <b></b>service‑performance indicators (SPIs), scenario stress‑tests, retrofit economics
+        (NPV/IRR with capex curves & downtime risk), building comparisons, and investment‑committee‑ready packs</div>b>.
+        Real estate can’t just “diversify away” idiosyncratic risk; buildings are few, large, and unique, so we measure and manage it.
         </p>
       </div>
 
@@ -2584,8 +2591,8 @@ const ArticleBody = () => {
   </div>
 </div>
    <div
-className="rounded-2xl p-4 md:p-5 pb-[calc(88px+max(env(safe-area-inset-bottom),16px))] md:pb-5 box-border min-w-0 w-full max-w-full pr-px"
- style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)", overflow: "visible" }}
+     className="rounded-2xl p-4 md:p-5 pb-[calc(88px+max(env(safe-area-inset-bottom),16px))] md:pb-5 box-border min-w-0 w-full max-w-full pr-px"
+  style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)", overflow: "visible" }}
 >
   <ArticleBody />
 
