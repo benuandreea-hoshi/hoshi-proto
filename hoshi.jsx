@@ -2373,8 +2373,8 @@ function Blog({ openPortfolio, openBuilding }) {
     </Section>
   );
 
-  // ---------- ARTICLE (fallback route if an item has no URL) ----------
-  const Article = () => (
+ // ---------- ARTICLE (fallback route if an item has no URL) ----------
+const Article = () => {
   // if the article is an external HTML, don't pass title/desc to Section
   const headerProps = article.url ? {} : { title: article.title, desc: article.summary };
 
@@ -2417,6 +2417,7 @@ function Blog({ openPortfolio, openBuilding }) {
       {view === "home" ? <Home /> : <Article />}
     </div>
   );
+};
 
 function App(){
   const [active,setActive]=useState("story");
