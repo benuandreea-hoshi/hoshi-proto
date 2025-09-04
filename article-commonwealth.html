@@ -1,5 +1,8 @@
 <section id="hoshi-article" class="a">
   <style>
+    <script>
+  try { if (window.self !== window.top) document.documentElement.classList.add('embedded'); } catch(e){}
+</script>
     .a{--bg:#0b1220;--card:#0c111b;--stroke:#20293a;--text:#e5e7eb;--muted:#9aa4b2;
        --chip-bg:rgba(148,163,184,.12);--chip-bd:rgba(148,163,184,.35);--accent:#22d3ee;--accent2:#34d399}
     .a{background:var(--bg); color:var(--text); font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
@@ -74,7 +77,9 @@
       <h2>Why now</h2>
       <p>Rates ↑, energy noisy, policy tighter, tenant expectations higher. A <b>Commonwealth of People</b> supplies the shared floor, the public carbon rate, fair enforcement, and the ledger to prove it.</p>
 
-      <a class="back" href="javascript:history.back()">← Back to blog</a>
+     <a class="back" href="#" onclick="parent.postMessage({type:'HOSHI_BACK'}, '*'); return false;">
+  ← Back to Blog
+</a>
     </article>
   </div>
 </section>
