@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Forward Energy Premium (FEP)</title>
+
+  <!-- Hide in-article Back link when embedded in your app -->
+  <script>
+    try { if (window.self !== window.top) document.documentElement.classList.add('embedded'); } catch(e){}
+  </script>
+
+  <!-- Preload hero -->
+  <link rel="preload" as="image"
+        href="https://cdn.prod.website-files.com/68a8baf20ad5978747d9d44d/68ba19a4160886b0a71ae9c4_embracing-world-peace-poster-freedom-happiness-global-harmony_1020495-8806.jpg"/>
+
+  <style>
+    :root{
+      --bg:#0b1220;--card:#0c111b;--stroke:#20293a;--text:#e5e7eb;--muted:#9aa4b2;
+      --chip-bg:rgba(148,163,184,.12);--chip-bd:rgba(148,163,184,.35);
+      --accent:#22d3ee;--accent2:#34d399
+    }
+    *{box-sizing:border-box}
+    body{background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,Segoe UI,Inter,Roboto,Arial,sans-serif;margin:0}
+    .wrap{max-width:860px;margin:0 auto;padding:16px}
+    h1{font-size:clamp(26px,6vw,36px);line-height:1.15;margin:0 0 6px}
+    .sub{color:var(--muted);margin:0 0 10px}
+    .chips{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 0}
+    .chip{font-size:12px;color:#e2e8f0;padding:.35rem .6rem;border-radius:999px;border:1px solid var(--chip-bd);background:var(--chip-bg);white-space:nowrap}
+    figure{margin:14px 0 0;border-radius:16px;overflow:hidden;border:1px solid var(--stroke);background:#0c1220}
+    figure img{display:block;width:100%;height:auto;object-fit:contain;max-height:56svh}
+    article.body{background:var(--card);border:1px solid var(--stroke);border-radius:16px;padding:16px;margin-top:14px}
+    h2{font-size:18px;margin:20px 0 8px}
+    h3{font-size:16px;margin:14px 0 8px}
+    p{margin:10px 0;color:#ccd4de}
+    ul,ol{margin:10px 0 10px 20px;color:#ccd4de}
+    .cards{display:grid;gap:12px}
+    .card{border:1px solid var(--stroke);border-radius:14px;padding:12px;background:#0b1420}
+    .grad{background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:600}
+    .code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.92em;background:rgba(148,163,184,.12);border:1px solid var(--stroke);border-radius:10px;padding:10px}
+    .back{margin:16px 0 0;display:inline-block;padding:.6rem .9rem;border-radius:12px;border:1px solid var(--stroke);color:var(--text);text-decoration:none}
+    .embedded .back{display:none!important}
+    @media (min-width:760px){article.body{padding:22px}.cards{grid-template-columns:repeat(3,1fr)}}
+    @supports (padding:max(0px)){body{padding-bottom:max(24px,env(safe-area-inset-bottom))}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Forward Energy Premium (FEP)</h1>
+    <p class="sub">A single, forward-looking signal that tells you how energy, policy and climate exposure show up in ROI.</p>
+
+    <div class="chips">
+      <span class="chip">Investors</span>
+      <span class="chip">Operators</span>
+      <span class="chip">Signals</span>
+      <span class="chip">5 min read</span>
+    </div>
+
+    <figure>
+      <img alt="Hoshi"
+           src="https://cdn.prod.website-files.com/68a8baf20ad5978747d9d44d/68a8fe47145ebb756d01c372_hoshi.jpeg"
+           width="1600" height="900" fetchpriority="high" decoding="async">
+    </figure>
+
+    <article class="body">
+      <h2>What FEP is</h2>
+      <p><span class="grad">FEP = Forward Energy Premium.</span> It estimates the return impact from shared drivers
+         (energy prices, policy, climate) and isolates what’s asset-specific. Think of it as
+         an “exposure meter” that points to where value is most at risk—or most improvable.</p>
+
+      <h2>Why it matters</h2>
+      <ul>
+        <li><b>Comparable across assets.</b> A single signal you can rank on a portfolio page.</li>
+        <li><b>Forward, not backward.</b> Built from plausible futures, not just last year’s bills.</li>
+        <li><b>Actionable.</b> Links straight to retrofit bundles that move FEP the most per £.</li>
+      </ul>
+
+      <h2>How we compute it (conceptual)</h2>
+      <ol>
+        <li>Model a few plausible futures (prices, grid carbon, weather).</li>
+        <li>Simulate each asset’s costs/comfort under each future (“as-is”).</li>
+        <li>Estimate sensitivity to shared drivers → <b>β</b> (systematic) and what remains → <b>idiosyncratic</b>.</li>
+        <li>Summarise into a forward premium: expected impact and band of uncertainty.</li>
+      </ol>
+      <p class="code">Outcome: FEP number + band, plus β split (systematic vs idiosyncratic) shown on the portfolio screen.</p>
+
+      <h2>What you see in Hoshi</h2>
+      <ul>
+        <li><b>FEP sparkline</b> per building and a portfolio roll-up.</li>
+        <li><b>β split</b>: how much is market-wide vs asset-specific.</li>
+        <li><b>Actions ranked</b> by expected FEP improvement × confidence.</li>
+      </ul>
+
+      <h2>Why it’s better than static intensity or EPC alone</h2>
+      <ul>
+        <li>Intensity is descriptive; <b>FEP is predictive</b> and scenario-aware.</li>
+        <li>EPC is compliance; <b>FEP speaks finance</b> (exposure, bands, expected gain).</li>
+        <li>It ties directly to <b>NPV</b> and comfort, not just kWh/ft².</li>
+      </ul>
+
+      <h2>Use-cases</h2>
+      <div class="cards">
+        <div class="card">
+          <h3>Portfolio triage</h3>
+          <p>Sort by FEP to see where exposure is highest. Click through to actions that deliver the biggest improvement under most futures.</p>
+        </div>
+        <div class="card">
+          <h3>Capex planning</h3>
+          <p>Compare bundles (“controls + LEDs” vs “ASHP + fabric”) by their FEP delta and scenario NPV band.</p>
+        </div>
+        <div class="card">
+          <h3>IC story</h3>
+          <p>“Here’s the exposure, here’s how the bundle changes it, here’s the NPV band and assumptions.”</p>
+        </div>
+      </div>
+
+      <h2>Quick start</h2>
+      <ol>
+        <li>Upload 12–36 months of bills/meters + floor area + hours.</li>
+        <li>Pick a target path; Hoshi sets default futures you can adjust.</li>
+        <li>Open the portfolio → sort by FEP → shortlist actions.</li>
+      </ol>
+
+      <a class="back" href="javascript:history.back()">← Back to blog</a>
+    </article>
+  </div>
+</body>
+</html>
