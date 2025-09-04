@@ -2260,34 +2260,60 @@ function Blog({ openPortfolio, openBuilding }) {
   const PAGES_BASE = "https://benuandreea-hoshi.github.io/hoshi-proto";
 
   // simple registry (two articles)
-  const BLOG = [
-    {
-      slug: "hoshi-in-5-minutes",
-      label: "Getting started",
-      title: "Hoshi in 5 minutes",
-      summary:
-        "From utility bills to decision-grade signals (NPV, β, systematic vs idiosyncratic).",
-      img: LOGO_SRC,
-      hero: LOGO_SRC,
-      readingMins: 5,
-      tags: ["Investors", "Operators", "Signals"],
-      // NEW: static page URL (served by GitHub Pages)
-      url: `${PAGES_BASE}/article-hoshi.html`,
-    },
-    {
-      slug: "commonwealth-of-people",
-      label: "Governance",
-      title: "Commonwealth of People",
-      summary:
-        "Why real estate needs a different kind of order; a practical frame for real-estate governance where choices become decision-grade capital signals.",
-      img: PEOPLE_SRC,
-      hero: PEOPLE_SRC,
-      readingMins: 7,
-      tags: ["Hobbes", "Commonwealth Cost of Carbon", "Sustainability", "Eco ledger", "Governance"],
-      // NEW: static page URL (served by GitHub Pages)
-      url: `${PAGES_BASE}/article-commonwealth.html`,
-    },
-  ];
+const BLOG = [
+  {
+    slug: "hoshi-in-5-minutes",
+    label: "Getting started",
+    title: "Hoshi in 5 minutes",
+    summary:
+      "From utility bills to decision-grade signals (NPV, β, systematic vs idiosyncratic).",
+    img: LOGO_SRC,
+    hero: LOGO_SRC,
+    readingMins: 5,
+    tags: ["Investors", "Operators", "Signals"],
+    url: `${PAGES_BASE}/article-hoshi.html`,
+  },
+  {
+    slug: "commonwealth-of-people",
+    label: "Governance",
+    title: "Commonwealth of People",
+    summary:
+      "A practical governance frame: public ecological floor, shared carbon price, and enforceable actions with an audit trail.",
+    img: PEOPLE_SRC,
+    hero: PEOPLE_SRC,
+    readingMins: 7,
+    tags: ["Governance","CCC","Ledger","Alarms"],
+    url: `${PAGES_BASE}/article-commonwealth.html`,
+  },
+
+  // NEW — FEP article
+  {
+    slug: "forward-energy-premium",
+    label: "Signals",
+    title: "Forward Energy Premium (FEP)",
+    summary:
+      "A forward ROI signal that blends price/policy/climate exposure with asset specifics.",
+    img: LOGO_SRC,      // swap to a FEP hero if you have one
+    hero: LOGO_SRC,
+    readingMins: 5,
+    tags: ["Investors","Operators","Signals"],
+    url: `${PAGES_BASE}/article-fep.html`,
+  },
+
+  // NEW — Governance loop article
+  {
+    slug: "alarm-action-plan-mv",
+    label: "Governance",
+    title: "Alarm → Action → Plan → M&V",
+    summary:
+      "The operating rhythm that turns data into enforceable decisions—with proof.",
+    img: PEOPLE_SRC,    // swap to a governance image if you have one
+    hero: PEOPLE_SRC,
+    readingMins: 6,
+    tags: ["Governance","Operations","Evidence"],
+    url: `${PAGES_BASE}/article-governance-loop.html`,
+  },
+];
 
   const [view, setView] = React.useState("home"); // 'home' | 'article' (fallback route)
   const [active, setActive] = React.useState(BLOG[0].slug);
