@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Alarm → Action → Plan → M&V</title>
+
+  <!-- Hide in-article Back link when embedded -->
+  <script>
+    try { if (window.self !== window.top) document.documentElement.classList.add('embedded'); } catch(e){}
+  </script>
+
+  <!-- Preload hero -->
+  <link rel="preload" as="image"
+        href="https://cdn.prod.website-files.com/68a8baf20ad5978747d9d44d/68ba19acb16e631d19f816c5_2400271147_13bcbafa3c_w.jpg"/>
+
+  <style>
+    :root{
+      --bg:#0b1220;--card:#0c111b;--stroke:#20293a;--text:#e5e7eb;--muted:#9aa4b2;
+      --chip-bg:rgba(148,163,184,.12);--chip-bd:rgba(148,163,184,.35);
+      --accent:#22d3ee;--accent2:#34d399
+    }
+    *{box-sizing:border-box}
+    body{background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,Segoe UI,Inter,Roboto,Arial,sans-serif;margin:0}
+    .wrap{max-width:860px;margin:0 auto;padding:16px}
+    h1{font-size:clamp(26px,6vw,36px);line-height:1.15;margin:0 0 6px}
+    .sub{color:var(--muted);margin:0 0 10px}
+    .chips{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 0}
+    .chip{font-size:12px;color:#e2e8f0;padding:.35rem .6rem;border-radius:999px;border:1px solid var(--chip-bd);background:var(--chip-bg);white-space:nowrap}
+    figure{margin:14px 0 0;border-radius:16px;overflow:hidden;border:1px solid var(--stroke);background:#0c1220}
+    figure img{display:block;width:100%;height:auto;object-fit:contain;max-height:56svh}
+    article.body{background:var(--card);border:1px solid var(--stroke);border-radius:16px;padding:16px;margin-top:14px}
+    h2{font-size:18px;margin:20px 0 8px}
+    h3{font-size:16px;margin:14px 0 8px}
+    p{margin:10px 0;color:#ccd4de}
+    ul,ol{margin:10px 0 10px 20px;color:#ccd4de}
+    .cards{display:grid;gap:12px}
+    .card{border:1px solid var(--stroke);border-radius:14px;padding:12px;background:#0b1420}
+    .code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.92em;background:rgba(148,163,184,.12);border:1px solid var(--stroke);border-radius:10px;padding:10px}
+    .back{margin:16px 0 0;display:inline-block;padding:.6rem .9rem;border-radius:12px;border:1px solid var(--stroke);color:var(--text);text-decoration:none}
+    .embedded .back{display:none!important}
+    @media (min-width:760px){article.body{padding:22px}.cards{grid-template-columns:repeat(3,1fr)}}
+    @supports (padding:max(0px)){body{padding-bottom:max(24px,env(safe-area-inset-bottom))}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Alarm → Action → Plan → M&V</h1>
+    <p class="sub">The operating rhythm that turns data into enforceable decisions—with proof.</p>
+
+    <div class="chips">
+      <span class="chip">Governance</span>
+      <span class="chip">Operations</span>
+      <span class="chip">Evidence</span>
+      <span class="chip">6 min read</span>
+    </div>
+
+    <figure>
+      <img alt="Hoshi"
+           src="https://cdn.prod.website-files.com/68a8baf20ad5978747d9d44d/68a8fe47145ebb756d01c372_hoshi.jpeg"
+           width="1600" height="900" fetchpriority="high" decoding="async">
+    </figure>
+
+    <article class="body">
+      <h2>The loop at a glance</h2>
+      <ol>
+        <li><b>Alarm.</b> A shared breach (e.g., P2 electricity overrun; overheating hours) with context and priority.</li>
+        <li><b>Action.</b> A proposed fix (bundle of measures) with capex, savings, <b>NPV</b>, β exposure change, comfort impact.</li>
+        <li><b>Plan.</b> Ownership, dates, dependencies, and <b>acceptance criteria</b>.</li>
+        <li><b>M&amp;V.</b> How success will be verified (method, window, factors) and where evidence is stored.</li>
+      </ol>
+
+      <h2>What’s inside each step</h2>
+      <h3>Alarm</h3>
+      <ul>
+        <li>Standard priority ladder (P1 critical → P4 optimisation).</li>
+        <li>Evidence: time window, baseline and factors used for the check.</li>
+        <li>Link to a ruling (playbook) if one exists.</li>
+      </ul>
+
+      <h3>Action</h3>
+      <ul>
+        <li>Bundle: e.g., <i>LED + schedules</i>, <i>ASHP + controls</i>, <i>shading + NV tuning</i>.</li>
+        <li>Economics: <b>NPV/IRR</b>, payback, confidence, scenario band.</li>
+        <li>Impact: FEP delta, β shift, tCO₂e, comfort/overheating badge.</li>
+      </ul>
+
+      <h3>Plan</h3>
+      <ul>
+        <li>Owner, start/finish, dependencies (permits, tenant windows).</li>
+        <li><b>Acceptance criteria</b> (e.g., ≥15% vs modelled baseline; Δ comfort ≤ +0.02 risk).</li>
+      </ul>
+
+      <h3>M&amp;V (measurement &amp; verification)</h3>
+      <ul>
+        <li>Method: <i>Bills 12m (weather-normalised)</i>, or <i>sub-meter before/after 90d</i>, etc.</li>
+        <li>Factors &amp; versions: emissions factors, degree-day sets.</li>
+        <li>Where evidence lives: <b>Lineage</b> entry with baseline, method, factors, license and version history.</li>
+      </ul>
+
+      <h2>Example (office, gas-heavy)</h2>
+      <p class="code">
+        Alarm: P2 Electricity Overrun (12-month window).<br/>
+        Ruling R-E.12 applies → measures: schedule optimisation + LED.<br/>
+        Plan: owner Ops; start 01-Oct; acceptance ≥15% reduction vs modelled baseline; M&amp;V by bills (12m), weather-normalised.<br/>
+        Evidence: ledger entry links to baseline, method, factors, versions.
+      </p>
+
+      <h2>Why this beats ad-hoc projects</h2>
+      <ul>
+        <li><b>Portable responsibility.</b> Everyone understands the rule, the action, and the test.</li>
+        <li><b>Fairness &amp; legitimacy.</b> Playbooks are peer-reviewed; disputes follow a clear procedure.</li>
+        <li><b>IC-ready.</b> Each action carries a decision memo (economics + evidence plan) by default.</li>
+      </ul>
+
+      <h2>Use-cases</h2>
+      <div class="cards">
+        <div class="card">
+          <h3>Budget overrun</h3>
+          <p>P2 alarm proposes a ranked list of fixes; you choose the bundle with the best NPV band and acceptable comfort impact.</p>
+        </div>
+        <div class="card">
+          <h3>Overheating in summer</h3>
+          <p>NV/mixed-mode ruling suggests shading + control tweaks; acceptance is a target reduction in warm-hours with logger evidence.</p>
+        </div>
+        <div class="card">
+          <h3>Green-capex approval</h3>
+          <p>Attach the plan &amp; M&amp;V to the IC paper; funding is tied to a testable outcome and a ledger entry.</p>
+        </div>
+      </div>
+
+      <h2>Quick start</h2>
+      <ol>
+        <li>Adopt the shared priority ladder (P1–P4) and a small rulings library.</li>
+        <li>Require acceptance criteria + M&amp;V on every action.</li>
+        <li>Store evidence in Lineage—baseline, method, factors, versions.</li>
+        <li>Use Hoshi’s Actions to package alarm → action → plan → proof.</li>
+      </ol>
+
+      <a class="back" href="javascript:history.back()">← Back to blog</a>
+    </article>
+  </div>
+</body>
+</html>
