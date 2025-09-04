@@ -1,87 +1,152 @@
-<section class="wrap">
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Commonwealth of People</title>
 
-  <header class="intro">
+  <!-- Hide the in-article Back link when embedded in your app -->
+  <script>
+    try { if (window.self !== window.top) document.documentElement.classList.add('embedded'); } catch(e){}
+  </script>
+
+  <!-- Preload hero for faster paint -->
+  <link rel="preload" as="image"
+        href="https://cdn.prod.website-files.com/68a8baf20ad5978747d9d44d/68a8fe75f8001bf82851cd0f_commonwealthOfPeoples.jpeg">
+
+  <style>
+    :root{
+      --bg:#0b1220;--card:#0c111b;--stroke:#20293a;--text:#e5e7eb;--muted:#9aa4b2;
+      --chip-bg:rgba(148,163,184,.12);--chip-bd:rgba(148,163,184,.35);
+      --accent:#22d3ee;--accent2:#34d399
+    }
+    *{box-sizing:border-box}
+    body{background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;margin:0}
+    .wrap{max-width:860px;margin:0 auto;padding:16px}
+    h1{font-size:clamp(26px,6vw,36px);line-height:1.15;margin:0 0 6px}
+    .sub{color:var(--muted);margin:0 0 8px}
+    .chips{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 0}
+    .chip{font-size:12px;color:#e2e8f0;padding:.35rem .6rem;border-radius:999px;border:1px solid var(--chip-bd);background:var(--chip-bg);white-space:nowrap}
+
+    figure{margin:14px 0 0;border-radius:16px;overflow:hidden;border:1px solid var(--stroke);background:#0c1220}
+    figure img{display:block;width:100%;height:auto;object-fit:contain;max-height:56svh}
+
+    article.body{background:var(--card);border:1px solid var(--stroke);border-radius:16px;padding:16px;margin-top:14px}
+    h2{font-size:18px;margin:20px 0 8px}
+    h3{font-size:16px;margin:14px 0 8px}
+    p{margin:10px 0;color:#ccd4de}
+    ul,ol{margin:10px 0 10px 20px;color:#ccd4de}
+    .cards{display:grid;gap:12px}
+    .card{border:1px solid var(--stroke);border-radius:14px;padding:12px;background:#0b1420}
+    .code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.92em;background:rgba(148,163,184,.12);border:1px solid var(--stroke);border-radius:10px;padding:10px;margin:10px 0}
+    .grad{background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:600}
+
+    .back{margin:16px 0 0;display:inline-block;padding:.6rem .9rem;border-radius:12px;border:1px solid var(--stroke);color:var(--text);text-decoration:none}
+    .embedded .back{display:none!important}
+
+    @media (min-width:760px){
+      article.body{padding:22px}
+      .cards{grid-template-columns:repeat(3,1fr)}
+    }
+    @supports (padding:max(0px)){body{padding-bottom:max(24px,env(safe-area-inset-bottom))}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
     <h1>Commonwealth of People</h1>
-    <p class="lead">
-      A practical governance frame for real estate: set a public ecological floor, price carbon with a shared rate, and turn alarms into enforceable actions you can audit.
-    </p>
-  </header>
+    <p class="sub">A practical governance frame for real estate: set a public ecological floor, use a shared carbon price, and turn alarms into enforceable actions with an audit trail.</p>
 
-  <figure class="hero">
-    <img alt="Commonwealth" src="YOUR_IMAGE_URL" loading="eager" decoding="async" fetchpriority="high">
-    <figcaption>Shared rules that travel across contracts.</figcaption>
-  </figure>
+    <div class="chips">
+      <span class="chip">7 min read</span>
+      <span class="chip">Governance</span>
+      <span class="chip">Commonwealth Cost of Carbon</span>
+    </div>
 
-  <h2>Why this exists: WGA</h2>
-  <p><b>WGA (“war of all against all”):</b> when many actors share the same critical systems (carbon budget, power grids, breathable air) but no one has standing to set and enforce minimums, everyone optimises locally and risk lives in the gaps. Cooperation frays; long-horizon projects stall. Hobbes’ cure was a <i>commonwealth</i>: people covenant to an authority that can set common rules so peace and promise-keeping are possible. :contentReference[oaicite:0]{index=0}</p>
+    <figure>
+      <img
+        alt="Commonwealth of People"
+        src="https://cdn.prod.website-files.com/68a8baf20ad5978747d9d44d/68a8fe75f8001bf82851cd0f_commonwealthOfPeoples.jpeg"
+        width="1600" height="900" fetchpriority="high" decoding="async">
+    </figure>
 
-  <p>Translated to buildings: owners, tenants, lenders, facilities teams and vendors each “do their bit” (save a bill here, report an ESG metric there), but nobody guarantees the shared floor that keeps the whole system safe and investable. That’s the gap the Commonwealth frame closes. :contentReference[oaicite:1]{index=1}</p>
+    <article class="body">
+      <h2>The problem in one screen</h2>
+      <ul>
+        <li><b>Many hands, shared dependencies.</b> Owners, tenants, lenders, FM and vendors all “do their bit,” but choices don’t add up across contracts.</li>
+        <li><b>Coordination failure.</b> Carbon, comfort and grid stability are shared resources; without common rules, local optimisations leave gaps and delays.</li>
+        <li><b>Private prices, soft promises.</b> Internal carbon prices change; claims aren’t versioned; disputes are about opinion, not evidence.</li>
+        <li><b>Fairness risk.</b> Decisions feel arbitrary without peer-reviewed standards and due process.</li>
+      </ul>
 
-  <h2>The answer: a shared floor + four instruments</h2>
-  <ol>
-    <li>
-      <b>Commonwealth Cost of Carbon (CCC).</b>
-      A public carbon price—owned by the commonwealth, not by a firm—referenced in underwriting, budgeting and leases. It disciplines decisions with a non-optional ecological price floor. :contentReference[oaicite:2]{index=2}
-      <div class="example">
-        <b>Example.</b> A heat-pump retrofit that barely clears payback at today’s tariffs becomes NPV-positive once you value avoided emissions at the CCC; the decision stops depending on fuel-price luck. :contentReference[oaicite:3]{index=3}
+      <h2>The answer: a shared floor + four instruments</h2>
+      <ol>
+        <li>
+          <b>Commonwealth Cost of Carbon (CCC).</b>
+          A public, published <b>carbon price floor</b> referenced in underwriting, budgeting and leases. Carbon becomes <i>non-optional</i> in decisions.
+          <div class="card" style="margin-top:8px">
+            <b>Effect:</b> a heat-pump retrofit that’s marginal at today’s tariffs becomes NPV-positive once avoided emissions are valued at the CCC—so the decision doesn’t hinge on fuel-price luck.
+          </div>
+        </li>
+        <li>
+          <b>Assured ecological ledger.</b>
+          Every claim is recorded with <b>baseline, method, factors, license and version</b>. Numbers are inspectable rather than asserted; promises become rely-able assets.
+        </li>
+        <li>
+          <b>Public alarms &amp; rulings.</b>
+          Breaches raise alarms with shared priority (P1–P4). <b>Rulings</b> specify what “good” looks like and how success is verified (M&amp;V, acceptance criteria). They function as enforceable promise-templates.
+        </li>
+        <li>
+          <b>Executive function (fairness).</b>
+          Rulings are peer-reviewed, explained in clear terms (baseline, method, factors), commissioned in situ, and escalated through a transparent procedure.
+        </li>
+      </ol>
+
+      <h2>How it shows up in practice</h2>
+      <ul>
+        <li><b>In leases.</b> Add: <span class="code">Operating plans and capex appraisal will apply the Commonwealth Cost of Carbon at the prevailing public rate.</span></li>
+        <li><b>In appraisal.</b> Model retrofit NPV/IRR with CCC, not only tariff savings; compare bundles by resilience across scenarios.</li>
+        <li><b>In operations.</b> Alarms (e.g., “P2 electricity overrun, 12-month”) map to rulings with acceptance criteria and M&amp;V; outcomes are written to the ledger.</li>
+      </ul>
+
+      <h2>Three quick use-cases</h2>
+      <div class="cards">
+        <div class="card">
+          <h3>Gas-heavy office</h3>
+          <p>P2 overrun proposes: “LED + schedule + heat-pump pre-study.” Pack shows CapEx, savings, <b>NPV</b> at CCC, β/sensitivity, comfort risk and tCO₂e; acceptance “≥15% vs modelled baseline; M&amp;V by bills (12m), weather-normalised.”</p>
+        </div>
+        <div class="card">
+          <h3>Tenant fit-out</h3>
+          <p>Lease addendum binds both parties to CCC and the rulings for overheating/plug-loads. Disputes escalate; ledger keeps versions and licenses.</p>
+        </div>
+        <div class="card">
+          <h3>Lender covenant</h3>
+          <p>Green-capex facility references the ledger for method/factor versions and uses alarm priorities to trigger remedial plans instead of generic defaults.</p>
+        </div>
       </div>
-    </li>
-    <li>
-      <b>Assured ecological ledger.</b>
-      Claims (baselines, methods, factors, licenses) are recorded and versioned, so numbers are inspectable rather than asserted. That turns promises into assets you can rely on. :contentReference[oaicite:4]{index=4}
-    </li>
-    <li>
-      <b>Public alarms & rulings.</b>
-      Breaches trigger alarms with shared priority (P1–P4). Rulings state “what good looks like” and how success is verified; they’re treated as enforceable promise-templates, not tips. :contentReference[oaicite:5]{index=5}
-    </li>
-    <li>
-      <b>Executive function (fairness).</b>
-      Rulings are peer-reviewed and justified in clear terms (baseline, method, factors) with in-situ commissioning and due-process, so enforcement is legitimate, not capricious. :contentReference[oaicite:6]{index=6}
-    </li>
-  </ol>
 
-  <h2>How it shows up in property</h2>
-  <ul>
-    <li><b>Leases.</b> Add a clause: “Operating plans and capex appraisal will apply the Commonwealth Cost of Carbon at the prevailing public rate.” Tenants, owners, and auditors now share the same price floor. :contentReference[oaicite:7]{index=7}</li>
-    <li><b>Underwriting.</b> Model retrofit NPV/IRR with CCC, not only tariff savings; compare actions by ROI at a portfolio scale.</li>
-    <li><b>Operations.</b> Alarms (“P2 Electricity Overrun 12-month”) map to rulings (playbooks) with acceptance criteria and M&amp;V method; results are logged in the ledger. :contentReference[oaicite:8]{index=8}</li>
-  </ul>
+      <h2>Where Hoshi fits</h2>
+      <ul>
+        <li>Applies the <b>CCC</b> inside cash-flows and NPV so decisions are disciplined by a shared price floor.</li>
+        <li>Turns alarms into <b>commissioned actions</b> with acceptance criteria and M&amp;V.</li>
+        <li>Writes every claim to a <b>versioned ledger</b> (baseline, method, factors, license).</li>
+        <li>Publishes short, <b>IC-ready</b> packs: scenario band, NPV/IRR, β, comfort and rationale.</li>
+      </ul>
 
-  <h2>Three quick use-cases</h2>
-  <div class="cards">
-    <div class="card">
-      <h3>Gas-heavy office</h3>
-      <p>P2 overrun triggers an action: “LED + schedule + heat-pump pre-study.” The plan shows CapEx, savings, <b>NPV</b> at CCC, β/sensitivity to prices, comfort risk, and tCO₂e; acceptance = “≥15% reduction vs baseline; M&amp;V by bills (12m) with weather normalization.” :contentReference[oaicite:9]{index=9}</p>
-    </div>
-    <div class="card">
-      <h3>Tenant fit-out</h3>
-      <p>Lease addendum binds both parties to the CCC and to the rulings library for overheating and plug-load management. Disputes escalate through the executive function; the ledger keeps versions and licenses. :contentReference[oaicite:10]{index=10}</p>
-    </div>
-    <div class="card">
-      <h3>Lender covenant</h3>
-      <p>Green-capex facility references the ledger for method/factor versions and uses alarm priorities to trigger remedial plans rather than generic default clauses. :contentReference[oaicite:11]{index=11}</p>
-    </div>
+      <h2>FAQ (brief)</h2>
+      <p><b>Why a public carbon price?</b> It removes discretion and keeps owners, tenants and lenders on the same floor; internal prices drift and weaken trust.</p>
+      <p><b>Who sets it?</b> A public body or delegated association with transparent methods and change-control; the latest rate is published and versioned.</p>
+      <p><b>Is this a new reporting system?</b> No. Use your reporting stack; the Commonwealth adds a **governance floor** so actions are priced fairly and proven with M&amp;V.</p>
+
+      <h2>Quick start</h2>
+      <ol>
+        <li>Add the <b>CCC clause</b> to leases and appraisal templates.</li>
+        <li>Adopt a <b>rulings library</b> for common alarms (overrun, overheating, air-quality).</li>
+        <li>Write claims to a simple <b>versioned ledger</b> (even a spreadsheet to start).</li>
+        <li>Use Hoshi to package alarms → actions → acceptance → evidence.</li>
+      </ol>
+
+      <a class="back" href="javascript:history.back()">← Back to blog</a>
+    </article>
   </div>
-
-  <h2>Key terms (1-minute refresher)</h2>
-  <dl class="gloss">
-    <dt>WGA</dt>
-    <dd>“War of all against all.” Hobbes’ diagnosis: without a coordinating authority over shared systems, trust collapses and long-term cooperation fails. :contentReference[oaicite:12]{index=12}</dd>
-    <dt>CCC</dt>
-    <dd>Commonwealth Cost of Carbon: a public carbon price floor used in budgets, leases and appraisal. :contentReference[oaicite:13]{index=13}</dd>
-    <dt>Assured ledger</dt>
-    <dd>Governed record of promises with baseline, method, factors, licenses and versioning. :contentReference[oaicite:14]{index=14}</dd>
-    <dt>Alarms & rulings</dt>
-    <dd>Shared priorities + reviewed playbooks that turn breaches into testable actions with M&amp;V and acceptance criteria. :contentReference[oaicite:15]{index=15}</dd>
-    <dt>Executive function</dt>
-    <dd>Peer-review + explainability + escalation, so enforcement has legitimacy and due-process. :contentReference[oaicite:16]{index=16}</dd>
-  </dl>
-
-  <h2>Why now</h2>
-  <p>Rates are higher; energy is noisy; policy is tightening; tenants expect comfort and proof. The Commonwealth frame gives portfolios a shared floor, a public carbon rate, fair enforcement, and an audit-ready record—so choices become decision-grade capital signals. :contentReference[oaicite:17]{index=17}</p>
-
-  <footer class="source-note">
-    <small><b>Further reading:</b> Aidan T. Parkinson, <i>Ecosystem Alarm Management</i>; Andreea’s review and notes on CCC, alarms, rulings, and the ledger. </small>
-  </footer>
-
-</section>
+</body>
+</html>
