@@ -3,6 +3,9 @@
     <script>
   try { if (window.self !== window.top) document.documentElement.classList.add('embedded'); } catch(e){}
 </script>
+    /* Hide the article's own Back link when shown inside the app iframe */
+.embedded .back { display: none !important; }
+
     .a{--bg:#0b1220;--card:#0c111b;--stroke:#20293a;--text:#e5e7eb;--muted:#9aa4b2;
        --chip-bg:rgba(148,163,184,.12);--chip-bd:rgba(148,163,184,.35);--accent:#22d3ee;--accent2:#34d399}
     .a{background:var(--bg); color:var(--text); font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
