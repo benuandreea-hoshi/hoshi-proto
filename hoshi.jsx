@@ -2374,40 +2374,37 @@ function Blog({ openPortfolio, openBuilding }) {
   );
 
   // ---------- ARTICLE (fallback route if an item has no URL) ----------
-   const Article = () => (
+  const Article = () => (
   <Section title={article.title} desc={article.summary}>
     <div
       className="rounded-2xl p-0 box-border w-full"
       style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}
     >
       {article.url ? (
-        <>
-          <iframe
-            key={article.url}                 // forces reload when switching posts
-            title={article.title}
-            src={article.url}                 // your GitHub Pages HTML
-            className="w-full rounded-2xl block"
-            style={{ height: "75svh", border: 0 }}
-            sandbox="allow-forms allow-popups allow-scripts allow-same-origin"
-          />
-          <div className="p-4 md:p-5">
-            <button className="btn btn-ghost" onClick={() => setView("home")}>
-              ← Back to Blog
-            </button>
-          </div>
-        </>
+        <iframe
+          key={article.url}                 // reload when switching posts
+          title={article.title}
+          src={article.url}                 // static HTML
+          className="w-full rounded-2xl block"
+          style={{ height: "75svh", border: 0 }}
+          loading="lazy"
+          sandbox="allow-forms allow-popups allow-scripts allow-same-origin"
+        />
       ) : (
         <div className="p-4 md:p-5">
           <ArticleBody />
-          <div className="mt-6">
-            <button className="btn btn-ghost" onClick={() => setView("home")}>← Back to Blog</button>
-          </div>
         </div>
       )}
+
+      {/* Single Back button for both branches */}
+      <div className="p-4 md:p-5">
+        <button className="btn btn-ghost" onClick={() => setView("home")}>
+          ← Back to Blog
+        </button>
+      </div>
     </div>
   </Section>
 );
-
 
   // render
   return (
