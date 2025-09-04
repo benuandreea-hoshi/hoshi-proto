@@ -1,8 +1,12 @@
 <section id="hoshi-article" class="a">
+  <script>
+    try {
+      if (window.self !== window.top) {
+        document.documentElement.classList.add('embedded');
+      }
+    } catch (e) {}
+  </script>
   <style>
-    <script>
-  try { if (window.self !== window.top) document.documentElement.classList.add('embedded'); } catch(e){}
-</script>
     /* Hide the article's own Back link when shown inside the app iframe */
 .embedded .back { display: none !important; }
 
