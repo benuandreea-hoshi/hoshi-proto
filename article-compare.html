@@ -37,6 +37,30 @@
     .code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.92em;background:rgba(148,163,184,.12);border:1px solid var(--stroke);border-radius:10px;padding:10px}
     .back{margin:16px 0 0;display:inline-block;padding:.6rem .9rem;border-radius:12px;border:1px solid var(--stroke);color:var(--text);text-decoration:none}
     .embedded .back{display:none!important}
+/* Card frame like your other posts */
+figure{
+  margin:12px 0 0;
+  padding:18px;
+  border-radius:16px;
+  overflow:hidden;
+  border:1px solid var(--stroke);
+  background:#0c1220;
+}
+
+/* Image: natural aspect, centered, never stretched */
+figure img{
+  display:block;
+  width:auto;               /* don't stretch */
+  height:auto;              /* keep aspect ratio */
+  margin:0 auto;            /* center the image */
+  max-width:min(720px, 92%);/* same visual size as other articles */
+}
+
+/* Phone: let it use the card width */
+@media (max-width:640px){
+  figure{ padding:10px; }
+  figure img{ width:100%; max-width:100%; height:auto; }
+}
 
     @media (min-width:760px){
       article.body{padding:22px}
