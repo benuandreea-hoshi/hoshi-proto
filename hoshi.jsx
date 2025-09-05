@@ -2503,7 +2503,7 @@ const BLOG = [
   readingMins: 5,
   tags: ["Tenants","Owners","Investors"],
   url: `${PAGES_BASE}/article-compare.html`,
-}
+},
   // NEW — FEP article
   {
     slug: "forward-energy-premium",
