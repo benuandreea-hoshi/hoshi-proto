@@ -857,20 +857,46 @@ function BuildingCard({ b, onPick, picked }) {
   );
 }
 
-function CompareTable({ cols }) {
+function CompareTable({ cols, scenario, buildings }) {
   const rows = [
-    { k: "Location", f: b => b.city || "—" },
-    { k: "Sector", f: b => b.sector || "—" },
+    { k: "Location",  f: b => b.city || "—" },
+    { k: "Sector",    f: b => b.sector || "—" },
     { k: "Servicing", f: b => b.servicing || "—" },
-    { k: "Year built", f: b => b.yearBuilt || "—" },
+    { k: "Year built",f: b => b.yearBuilt || "—" },
     { k: "Area (m²)", f: b => (b.area || 0).toLocaleString() },
     { k: "Energy (kWh)", f: b => Math.round(hoshiKPIs(b).kwh).toLocaleString() },
-    { k: "tCO₂e/yr", f: b => hoshiKPIs(b).tco2e.toFixed(1) },
+    { k: "tCO₂e/yr",  f: b => hoshiKPIs(b).tco2e.toFixed(1) },
     { k: "Intensity (kWh/m²)", f: b => hoshiKPIs(b).intensity ? Math.round(hoshiKPIs(b).intensity) : "—" },
     { k: "Annual spend", f: b => b.spend ? fmtMoney(b.spend) : "—" },
+
+    // --- NEW: scenario-aware risk group ---
+    { k: "Scenario", f: () => scenario.label },
+
+    { k: "NCM (asset rating)", f: b => {
+        const r = computeNCMProxy(b, scenario);                  // uses intensity vs notional
+        return r.score != null ? `${r.score}% · ${r.band}` : "—";
+      } },
+
+    { k: "Forward price deviation", f: b => {
+        const f = computeFinancialSignal(b, buildings);           // β vs portfolio
+        const s = (f.fwd>=0?"+":"") + f.fwd.toFixed?.(1) + "%";
+        return s;
+      } },
+
+    { k: "β (sensitivity)", f: b => computeFinancialSignal(b, buildings).beta.toFixed(2) },
+
+    { k: "Idiosyncratic (RMSE)", f: b => {
+        const { idio } = computeFinancialSignal(b, buildings);
+        return fmtMoney(idio);
+      } },
+
+    { k: "Overheating (DSY hours)", f: b => {
+        const oh = computeOverheat(b, scenario);                  // NV/Mixed more exposed
+        return `${oh.hours} h (${oh.level})`;
+      } },
+
     { k: "Updated", f: b => b.updated || "—" },
   ];
-
 
   return (
     <div className="overflow-x-auto">
@@ -923,7 +949,7 @@ function CompareView({ buildings, setBuildings }) {
   const [picked, setPicked] = React.useState([]);
   const toggle = (id) =>
     setPicked(xs => xs.includes(id) ? xs.filter(x=>x!==id) : (xs.length<3 ? [...xs,id] : xs));
-
+const [scenario, setScenario] = React.useState(HOSHI_SCENARIOS[0]);
   return (
     <Section
       title="Compare buildings"
@@ -943,13 +969,19 @@ function CompareView({ buildings, setBuildings }) {
 
       {/* table */}
       {picked.length>0 && (
-        <div className="mt-4 rounded-2xl p-4 md:p-5"
-             style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
+        <div className="mt-4 rounded-2xl p-4 md:p-5" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
           <div className="flex items-center justify-between mb-3">
             <div className="text-slate-50 font-semibold">Side-by-side</div>
             <div className="text-slate-400 text-xs">{picked.length} selected (max 3)</div>
           </div>
-          <CompareTable cols={buildings.filter(b=>picked.includes(b.id))}/>
+           {/* NEW: scenario selector */}
+          <ScenarioBar value={scenario} onChange={setScenario} />
+          
+          <CompareTable
+            cols={buildings.filter(b=>picked.includes(b.id))}
+            scenario={scenario}
+            buildings={buildings}
+          />
         </div>
       )}
     </Section>
