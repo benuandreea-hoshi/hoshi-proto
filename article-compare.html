@@ -28,25 +28,32 @@
     .chips{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 0}
     .chip{font-size:12px;color:#e2e8f0;padding:.35rem .6rem;border-radius:999px;border:1px solid var(--chip-bd);background:var(--chip-bg);white-space:nowrap}
 
- figure{
+/* Card frame */
+figure{
   margin:12px 0 0;
+  padding:14px;
   border-radius:16px;
   overflow:hidden;
   border:1px solid var(--stroke);
   background:#0c1220;
 }
 
-/* Show full image, keep aspect ratio, cap height */
+/* Hero image: centered, never cropped, never upscaled, modest size on desktop */
 figure img{
   display:block;
-  width:100%;
-  height:auto;          /* no crop */
-  max-height:62vh;      /* adjust 56–64vh to taste */
-  background:#0c1220;   /* blends letterbox bars */
+  height:auto;                      /* preserve aspect */
+  width:auto;                       /* no forced stretch */
+  margin:0 auto;                    /* center */
+  max-width: clamp(460px, 48vw, 600px);  /* ⬅️ smaller than Option A (720px) */
 }
 
+/* Mobile: use the card’s width for readability */
 @media (max-width:640px){
-  figure img{ max-height:60svh; }
+  figure{ padding:10px; }
+  figure img{
+    width:100%;
+    max-width:100%;
+  }
 }
 
 
