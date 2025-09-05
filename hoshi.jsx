@@ -489,11 +489,14 @@ function HeroOrb({ value = 0.42, label = "Good" }) {
 }
 
  function HoshiAddBuildingModal({ open, onClose, onSave, defaultCurrency="GBP" }) {
-  const [form, setForm] = React.useState({
-    name: "", city: "", sector: "Office",
-    area: "", elec_kwh: "", gas_kwh: "",
-    spend: "", ef_elec: HOSHI_DEFAULT_EF.elec, ef_gas: HOSHI_DEFAULT_EF.gas,
-  });
+   
+const [form, setForm] = React.useState({
+  name: "", city: "", sector: "Office",
+  area: "", elec_kwh: "", gas_kwh: "", spend: "",
+  ef_elec: HOSHI_DEFAULT_EF.elec, ef_gas: HOSHI_DEFAULT_EF.gas,
+  yearBuilt: "", servicing: "Mixed mode", rent_sqm: ""
+});
+const [imgs, setImgs] = React.useState([""]);
 
   const b = {
     ...form,
@@ -558,12 +561,79 @@ return (
               style={{background:"var(--panel-2)",border:"1px solid var(--stroke)",color:"var(--text)"}}
               value={form.gas_kwh} onChange={e=>setForm({...form,gas_kwh:e.target.value})} placeholder="47000"/>
           </div>
+          
           <div>
             <label className="text-xs text-slate-400">Annual spend ({defaultCurrency})</label>
             <input type="number" min="0" className="w-full mt-1 px-3 py-2 rounded-lg"
               style={{background:"var(--panel-2)",border:"1px solid var(--stroke)",color:"var(--text)"}}
               value={form.spend} onChange={e=>setForm({...form,spend:e.target.value})} placeholder="30150"/>
           </div>
+          {/* --- NEW: descriptors (place after Spend, before EF inputs) --- */}
+<div>
+  <label className="text-xs text-slate-400">Year built</label>
+  <input
+    type="number"
+    className="w-full mt-1 px-3 py-2 rounded-lg"
+    style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)", color: "var(--text)" }}
+    value={form.yearBuilt}
+    onChange={(e) => setForm({ ...form, yearBuilt: e.target.value })}
+    placeholder="2009"
+  />
+</div>
+
+<div>
+  <label className="text-xs text-slate-400">Servicing strategy</label>
+  <select
+    className="w-full mt-1 px-3 py-2 rounded-lg"
+    style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)", color: "var(--text)" }}
+    value={form.servicing}
+    onChange={(e) => setForm({ ...form, servicing: e.target.value })}
+  >
+    <option>Fully air-conditioned</option>
+    <option>Mixed mode</option>
+    <option>Naturally ventilated</option>
+  </select>
+</div>
+
+<div>
+  <label className="text-xs text-slate-400">Rent £/m² (optional)</label>
+  <input
+    type="number"
+    min="0"
+    className="w-full mt-1 px-3 py-2 rounded-lg"
+    style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)", color: "var(--text)" }}
+    value={form.rent_sqm}
+    onChange={(e) => setForm({ ...form, rent_sqm: e.target.value })}
+    placeholder="243"
+  />
+</div>
+
+{/* --- NEW: image URLs (full width in a 2-col grid) --- */}
+<div className="md:col-span-2">
+  <label className="text-xs text-slate-400">Images (URLs, up to 3)</label>
+
+  {imgs.map((u, i) => (
+    <div key={i} className="flex gap-2 mt-1">
+      <input
+        className="flex-1 px-3 py-2 rounded-lg"
+        style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)", color: "var(--text)" }}
+        placeholder="https://…/building.jpg"
+        value={u}
+        onChange={(e) => setImgs(imgs.map((x, ii) => (ii === i ? e.target.value : x)))}
+      />
+      <button type="button" className="btn btn-ghost" onClick={() => setImgs(imgs.filter((_, ii) => ii !== i))}>
+        Remove
+      </button>
+    </div>
+  ))}
+
+  {imgs.length < 3 && (
+    <button type="button" className="btn btn-ghost mt-2" onClick={() => setImgs([...imgs, ""])}>
+      + Add image
+    </button>
+  )}
+</div>
+
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs text-slate-400">EF elec (kgCO₂e/kWh)</label>
@@ -609,12 +679,16 @@ return (
             className="btn btn-primary"
             disabled={disabled}
             onClick={() => {
-              onSave({
-                id: hoshiUid(),
-                ...b,
-                spend: +form.spend || null,
-                updated: new Date().toISOString().slice(0,10),
-              });
+             onSave({
+  id: hoshiUid(),
+  ...b,                                    // your existing mapped fields
+  spend: +form.spend || null,
+  yearBuilt: +form.yearBuilt || null,
+  servicing: form.servicing || null,
+  rent_sqm: +form.rent_sqm || null,
+  images: imgs.filter(Boolean),            // <— add this
+  updated: new Date().toISOString().slice(0,10),
+});
               onClose();
             }}
           >
@@ -628,6 +702,130 @@ return (
 
 }
 
+function BuildingCard({ b, onPick, picked }) {
+  const k = hoshiKPIs(b);
+  const hero = (b.images && b.images[0]) || LOGO_SRC;
+  return (
+    <div className={`rounded-2xl overflow-hidden border ${picked ? "ring-2 ring-sky-400" : ""}`}
+         style={{borderColor:"var(--stroke)", background:"var(--panel-2)"}}>
+      <div className="w-full h-40 sm:h-48 overflow-hidden">
+        <img src={hero} alt={b.name} className="w-full h-full object-cover" loading="lazy"/>
+      </div>
+      <div className="p-4">
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <div className="text-slate-50 font-semibold">{b.name}</div>
+            <div className="text-slate-400 text-xs">{b.city || "—"} · {b.sector || "—"}</div>
+          </div>
+          <button className="btn btn-ghost text-xs" onClick={onPick}>
+            {picked ? "Remove" : "Compare"}
+          </button>
+        </div>
+        <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
+          {b.servicing && <span className="chip">{b.servicing}</span>}
+          {b.yearBuilt ? <span className="chip">{b.yearBuilt}</span> : null}
+          {b.rent_sqm ? <span className="chip">£{b.rent_sqm}/m²</span> : null}
+        </div>
+        <div className="mt-3 grid grid-cols-3 gap-2">
+          <div className="rounded-lg p-2" style={{background:"rgba(148,163,184,.06)",border:"1px solid var(--stroke)"}}>
+            <div className="text-[10px] text-slate-400">kWh</div>
+            <div className="text-slate-100 font-semibold text-sm">{Math.round(k.kwh).toLocaleString()}</div>
+          </div>
+          <div className="rounded-lg p-2" style={{background:"rgba(148,163,184,.06)",border:"1px solid var(--stroke)"}}>
+            <div className="text-[10px] text-slate-400">tCO₂e</div>
+            <div className="text-slate-100 font-semibold text-sm">{k.tco2e.toFixed(1)}</div>
+          </div>
+          <div className="rounded-lg p-2" style={{background:"rgba(148,163,184,.06)",border:"1px solid var(--stroke)"}}>
+            <div className="text-[10px] text-slate-400">kWh/m²</div>
+            <div className="text-slate-100 font-semibold text-sm">{k.intensity?Math.round(k.intensity):"—"}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CompareTable({ cols }) {
+  const rows = [
+    { k: "Location", f: b => b.city || "—" },
+    { k: "Sector", f: b => b.sector || "—" },
+    { k: "Servicing", f: b => b.servicing || "—" },
+    { k: "Year built", f: b => b.yearBuilt || "—" },
+    { k: "Area (m²)", f: b => (b.area || 0).toLocaleString() },
+    { k: "Energy (kWh)", f: b => Math.round(hoshiKPIs(b).kwh).toLocaleString() },
+    { k: "tCO₂e/yr", f: b => hoshiKPIs(b).tco2e.toFixed(1) },
+    { k: "Intensity (kWh/m²)", f: b => hoshiKPIs(b).intensity ? Math.round(hoshiKPIs(b).intensity) : "—" },
+    { k: "Annual spend", f: b => b.spend ? fmtMoney(b.spend) : "—" },
+    { k: "Updated", f: b => b.updated || "—" },
+  ];
+  return (
+    <div className="overflow-x-auto">
+      <table className="min-w-[640px] w-full text-sm">
+        <thead>
+          <tr>
+            <th className="text-left py-2 pr-3 text-slate-400">Metric</th>
+            {cols.map(b => (
+              <th key={b.id} className="text-left py-2 px-3 text-slate-300">
+                <div className="flex items-center gap-2">
+                  <img src={(b.images&&b.images[0])||LOGO_SRC} alt="" className="w-9 h-9 rounded object-cover"/>
+                  <div>
+                    <div className="text-slate-50 font-medium">{b.name}</div>
+                    <div className="text-slate-400 text-xs">{b.city || "—"}</div>
+                  </div>
+                </div>
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map(r => (
+            <tr key={r.k} className="border-t" style={{borderColor:"var(--stroke)"}}>
+              <td className="py-2 pr-3 text-slate-400">{r.k}</td>
+              {cols.map(b => <td key={b.id} className="py-2 px-3 text-slate-100">{r.f(b)}</td>)}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function CompareView({ buildings, setBuildings }) {
+  const [picked, setPicked] = React.useState([]);
+  const toggle = (id) =>
+    setPicked(xs => xs.includes(id) ? xs.filter(x=>x!==id) : (xs.length<3 ? [...xs,id] : xs));
+
+  return (
+    <Section
+      title="Compare buildings"
+      desc="Pick up to three assets and see them side-by-side. Supports images, servicing, and core KPIs."
+    >
+      {/* cards */}
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+        {buildings.map(b => (
+          <BuildingCard
+            key={b.id}
+            b={b}
+            picked={picked.includes(b.id)}
+            onPick={()=>toggle(b.id)}
+          />
+        ))}
+      </div>
+
+      {/* table */}
+      {picked.length>0 && (
+        <div className="mt-4 rounded-2xl p-4 md:p-5"
+             style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-slate-50 font-semibold">Side-by-side</div>
+            <div className="text-slate-400 text-xs">{picked.length} selected (max 3)</div>
+          </div>
+          <CompareTable cols={buildings.filter(b=>picked.includes(b.id))}/>
+        </div>
+      )}
+    </Section>
+  );
+}
 
 
 function Story({ goApp, goBlog }) {
@@ -678,6 +876,7 @@ function Story({ goApp, goBlog }) {
       <path d="M20 7a5 5 0 01-7 7l-6 6-3-3 6-6a5 5 0 017-7z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   );
+
 
   // money formatter (single copy)
   const fmtMoney = (n) =>
@@ -2224,6 +2423,14 @@ ICONS.blog = function BlogIcon() {
     </svg>
   );
 };
+ICONS.compare = (is) => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <rect x="4" y="5" width="6" height="14" rx="1.5"
+          stroke="currentColor" strokeWidth="1.6"/>
+    <rect x="14" y="5" width="6" height="14" rx="1.5"
+          stroke="currentColor" strokeWidth="1.6"/>
+  </svg>
+);
 // REPLACE the whole HeroImage with this exact version
 function HeroImage({ src, alt = "" }) {
   return (
@@ -2470,6 +2677,9 @@ const tabs = [
 
 { key: "portfolio", label: "Portfolio",
   comp: <Portfolio buildings={buildings} setBuildings={setBuildings} /> },
+  { key: "compare", label: "Compare",
+  comp: <CompareView buildings={buildings} setBuildings={setBuildings} /> },
+
 
     { key: "building",   label: "Building",   comp: <Building /> },
 
