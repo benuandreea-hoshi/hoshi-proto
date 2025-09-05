@@ -6,6 +6,118 @@ const {useMemo,useState,useRef,useEffect} = React;
 // === Hoshi MVP: building store + KPI helpers (isolated) ===
 const HOSHI_STORE_KEY = "hoshi.buildings.v1";
 const hoshiUid = () => Math.random().toString(36).slice(2, 9);
+/** ---------------- SCENARIOS (lightweight) ---------------- **/
+const HOSHI_SCENARIOS = [
+  { key:"today",  label:"Today",  year:2025, gridEF:0.20, elecP:0.28, gasP:0.07, dsyMult:1.00 },
+  { key:"30-hi",  label:"2030 · High decarb", year:2030, gridEF:0.10, elecP:0.24, gasP:0.09, dsyMult:1.20 },
+  { key:"30-lo",  label:"2030 · Low decarb",  year:2030, gridEF:0.18, elecP:0.27, gasP:0.08, dsyMult:1.10 },
+  { key:"50-hi",  label:"2050 · High decarb", year:2050, gridEF:0.02, elecP:0.22, gasP:0.11, dsyMult:1.50 },
+  { key:"50-ncc", label:"2050 · No climate change", year:2050, gridEF:0.20, elecP:0.20, gasP:0.07, dsyMult:1.00 },
+];
+
+/** Notional intensities for a quick NCM-like proxy (kWh/m²·yr).
+ *  Keep this tiny (you can refine later by sector/age).
+ */
+const NOTIONAL_INTENSITY = {
+  Office: { AC: 210, Mixed: 170, NV: 120 },
+  _default: { AC: 210, Mixed: 170, NV: 120 }
+};
+
+/** EPC-ish band mapping from % of notional (simple, transparent).
+ *   <=25%A, <=50%B, <=75%C, <=100%D, <=125%E, <=150%F, else G
+ */
+function ncmBandFromPct(pct){
+  if (pct <= 25)  return "A";
+  if (pct <= 50)  return "B";
+  if (pct <= 75)  return "C";
+  if (pct <= 100) return "D";
+  if (pct <= 125) return "E";
+  if (pct <= 150) return "F";
+  return "G";
+}
+
+/** ---------------- COMPUTE HELPERS ---------------- **/
+
+// Energy intensity (kWh/m²·yr)
+function intensityKWhm2(b){
+  const kwh = (b.electricity_kwh||0) + (b.gas_kwh||0);
+  return b.area_m2 ? kwh / b.area_m2 : null;
+}
+
+// NCM-like proxy (relative to notional for sector + servicing)
+function computeNCMProxy(b, scenario){
+  const sector = b.sector || "Office";
+  const svc = (b.servicing||"AC");            // AC | Mixed | NV
+  const notional = (NOTIONAL_INTENSITY[sector]||NOTIONAL_INTENSITY._default)[svc] || 170;
+  const inten = intensityKWhm2(b);
+  if (!inten) return { band:"–", score:null, note:"Missing area/energy." };
+  const pct = (inten / notional) * 100;
+  const band = ncmBandFromPct(pct);
+  return { band, score:Math.round(pct), note:`Relative to notional ${notional} kWh/m²·yr` };
+}
+
+// Financial risk (APT-flavoured) from scenario panel.
+// We compute costs across the 5 scenario points to get a β vs portfolio.
+function computeFinancialSignal(b, buildings){
+  // Build a 5-point vector of building cost across scenarios
+  const costVec = HOSHI_SCENARIOS.map(s=>{
+    const elec = (b.electricity_kwh||0) * s.elecP;
+    const gas  = (b.gas_kwh||0)        * s.gasP;
+    return elec + gas;
+  });
+  // Portfolio "market": mean across buildings for each scenario
+  const marketVec = HOSHI_SCENARIOS.map((_,i)=>{
+    const vals = buildings.map(B=>{
+      const e=(B.electricity_kwh||0)*HOSHI_SCENARIOS[i].elecP;
+      const g=(B.gas_kwh||0)       *HOSHI_SCENARIOS[i].gasP;
+      return e+g;
+    });
+    return vals.length? vals.reduce((a,c)=>a+c,0)/vals.length : 0;
+  });
+  // β = cov(building, market)/var(market)
+  const mean = a => a.reduce((x,y)=>x+y,0)/a.length;
+  const mB = mean(costVec), mM = mean(marketVec);
+  let num=0, den=0;
+  for(let i=0;i<costVec.length;i++){
+    num += (costVec[i]-mB)*(marketVec[i]-mM);
+    den += (marketVec[i]-mM)**2;
+  }
+  const beta = den>0 ? num/den : 0;
+  // Idiosyncratic = RMSE of (b - (α+β·m))
+  const alpha = mB - beta*mM;
+  let se=0;
+  for(let i=0;i<costVec.length;i++){
+    const pred = alpha + beta*marketVec[i];
+    se += (costVec[i]-pred)**2;
+  }
+  const idio = Math.sqrt(se/costVec.length);
+  // Risk premium → forward deviation (% of "market" cost)
+  const rf = 0.0167;               // 10y gilt (fixed assumption)
+  const mp = 0.0400;               // market premium we target
+  const premium = beta*mp;         // simple: ignore idio in premium
+  const fwdDev = ((alpha + beta*mM) - mM) / (mM||1); // % vs market baseline
+  return { beta:+beta.toFixed(2), idio:Math.round(idio), fwd:+(fwdDev*100).toFixed(1) };
+}
+
+// Overheating risk (adaptive-comfort proxy).
+// Only meaningful for naturally ventilated / mixed-mode.
+function computeOverheat(b, scenario){
+  const city = (b.city||"London").toLowerCase();
+  // crude baselines for DSY "hot-year" hours >=23°C indoors (NV proxy)
+  const BASE = { london:250, bristol:180, _default:220 };
+  const base = BASE[city] || BASE._default;
+  const svc = (b.servicing||"AC");
+  let adj = 0;
+  if (svc==="NV")    adj = 1.0;
+  else if (svc==="Mixed") adj = 0.5;
+  else adj = 0.1; // AC managed
+  const shading = b.shading ? 0.8 : 1.0;
+  const hours = Math.round(base * scenario.dsyMult * adj * shading);
+  let level = "Low";
+  if (hours>=300) level="High";
+  else if (hours>=120) level="Moderate";
+  return { hours, level };
+}
 
 function hoshiLoadBuildings() {
   try { return JSON.parse(localStorage.getItem(HOSHI_STORE_KEY) || "[]"); }
@@ -758,6 +870,8 @@ function CompareTable({ cols }) {
     { k: "Annual spend", f: b => b.spend ? fmtMoney(b.spend) : "—" },
     { k: "Updated", f: b => b.updated || "—" },
   ];
+
+
   return (
     <div className="overflow-x-auto">
       <table className="min-w-[640px] w-full text-sm">
@@ -776,6 +890,7 @@ function CompareTable({ cols }) {
               </th>
             ))}
           </tr>
+          
         </thead>
         <tbody>
           {rows.map(r => (
@@ -786,6 +901,20 @@ function CompareTable({ cols }) {
           ))}
         </tbody>
       </table>
+    </div>
+  );
+}
+function ScenarioBar({ value, onChange }){
+  return (
+    <div className="flex flex-wrap gap-2 items-center text-xs text-slate-300 mb-3">
+      <span className="opacity-70">Scenario:</span>
+      {HOSHI_SCENARIOS.map(s=>(
+        <button key={s.key}
+          onClick={()=>onChange(s)}
+          className={"chip "+(value.key===s.key?"ring-1 ring-sky-400":"")}>
+          {s.label}
+        </button>
+      ))}
     </div>
   );
 }
