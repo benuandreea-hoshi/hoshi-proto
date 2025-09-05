@@ -2492,7 +2492,18 @@ const BLOG = [
     tags: ["Governance","CCC","Ledger","Alarms"],
     url: `${PAGES_BASE}/article-commonwealth.html`,
   },
-
+ {
+  slug: "compare-buildings",
+  label: "Feature",
+  title: "Compare Buildings",
+  summary:
+    "Side-by-side decisions: photos, servicing, age, energy, carbon, intensity, and spend—on one screen.",
+  img: "https://cdn.prod.website-files.com/68a8baf20ad5978747d9d44d/68ba19a4160886b0a71ae9c4_embracing-world-peace-poster-freedom-happiness-global-harmony_1020495-8806.jpg", // ← card thumbnail
+  hero: "https://cdn.prod.website-files.com/68a8baf20ad5978747d9d44d/68ba19a4160886b0a71ae9c4_embracing-world-peace-poster-freedom-happiness-global-harmony_1020495-8806.jpg", // ← optional
+  readingMins: 5,
+  tags: ["Tenants","Owners","Investors"],
+  url: `${PAGES_BASE}/article-compare.html`,
+}
   // NEW — FEP article
   {
     slug: "forward-energy-premium",
