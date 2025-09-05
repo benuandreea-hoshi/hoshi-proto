@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Compare Buildings</title>
+
+  <!-- Hide the in-article Back link when embedded in your app -->
+  <script>
+    try { if (window.self !== window.top) document.documentElement.classList.add('embedded'); } catch(e){}
+  </script>
+
+  <!-- Preload hero -->
+  <link rel="preload" as="image"
+        href="https://cdn.prod.website-files.com/68a8baf20ad5978747d9d44d/68ba19a4160886b0a71ae9c4_embracing-world-peace-poster-freedom-happiness-global-harmony_1020495-8806.jpg"/>
+
+  <style>
+    :root{
+      --bg:#0b1220;--card:#0c111b;--stroke:#20293a;--text:#e5e7eb;--muted:#9aa4b2;
+      --chip-bg:rgba(148,163,184,.12);--chip-bd:rgba(148,163,184,.35);
+      --accent:#22d3ee;--accent2:#34d399
+    }
+    *{box-sizing:border-box}
+    body{background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,Segoe UI,Inter,Roboto,Arial,sans-serif;margin:0}
+    .wrap{max-width:860px;margin:0 auto;padding:16px}
+    h1{font-size:clamp(26px,6vw,36px);line-height:1.15;margin:0 0 6px}
+    .sub{color:var(--muted);margin:0 0 10px}
+    .chips{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 0}
+    .chip{font-size:12px;color:#e2e8f0;padding:.35rem .6rem;border-radius:999px;border:1px solid var(--chip-bd);background:var(--chip-bg);white-space:nowrap}
+
+    figure{margin:14px 0 0;border-radius:16px;overflow:hidden;border:1px solid var(--stroke);background:#0c1220}
+    figure img{display:block;width:100%;height:auto;object-fit:cover;max-height:56svh}
+
+    article.body{background:var(--card);border:1px solid var(--stroke);border-radius:16px;padding:16px;margin-top:14px}
+    h2{font-size:18px;margin:20px 0 8px}
+    h3{font-size:16px;margin:14px 0 8px}
+    p{margin:10px 0;color:#ccd4de}
+    ul,ol{margin:10px 0 10px 20px;color:#ccd4de}
+    .cards{display:grid;gap:12px}
+    .card{border:1px solid var(--stroke);border-radius:14px;padding:12px;background:#0b1420}
+    .code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.92em;background:rgba(148,163,184,.12);border:1px solid var(--stroke);border-radius:10px;padding:10px}
+    .back{margin:16px 0 0;display:inline-block;padding:.6rem .9rem;border-radius:12px;border:1px solid var(--stroke);color:var(--text);text-decoration:none}
+    .embedded .back{display:none!important}
+
+    @media (min-width:760px){
+      article.body{padding:22px}
+      .cards{grid-template-columns:repeat(3,1fr)}
+    }
+    @supports (padding:max(0px)){body{padding-bottom:max(24px,env(safe-area-inset-bottom))}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Compare Buildings</h1>
+    <p class="sub">Side-by-side decisions: photos, servicing, age, energy, carbon, intensity, and spend—on one screen.</p>
+
+    <div class="chips">
+      <span class="chip">Feature</span>
+      <span class="chip">Tenants</span>
+      <span class="chip">Owners</span>
+      <span class="chip">Investors</span>
+      <span class="chip">5 min read</span>
+    </div>
+
+    <figure>
+      <img
+        alt="Compare buildings"
+        src="https://cdn.prod.website-files.com/68a8baf20ad5978747d9d44d/68ba19a4160886b0a71ae9c4_embracing-world-peace-poster-freedom-happiness-global-harmony_1020495-8806.jpg"
+        width="1600" height="900" fetchpriority="high" decoding="async">
+    </figure>
+
+    <article class="body">
+      <h2>What it is</h2>
+      <p><b>Buildings Comparison</b> lets you select up to three assets and see them side-by-side with a photo header and the essentials: location, sector, servicing strategy, year built, area, energy, tCO₂e, intensity and spend. It’s built for quick triage and fast, shared understanding.</p>
+
+      <h2>Who benefits</h2>
+      <ul>
+        <li><b>Tenants.</b> Compare comfort context (servicing strategy, age), energy and carbon before shortlisting a space.</li>
+        <li><b>Owners/Operators.</b> Spot which asset is most improvable and why—then jump to actions.</li>
+        <li><b>Investors.</b> A crisp view of asset specifics you can’t diversify away; perfect for IC memos and portfolio reviews.</li>
+      </ul>
+
+      <h2>How it works in Hoshi</h2>
+      <ol>
+        <li>Open <b>Compare</b> from the left nav.</li>
+        <li>Select up to <b>three buildings</b> from the card grid (each card can show a photo).</li>
+        <li>Review the <b>side-by-side table</b>: location, sector, servicing, year, area, energy (kWh), tCO₂e, intensity (kWh/m²), spend, last updated.</li>
+      </ol>
+      <p class="code">Tip: add 1–3 image URLs, year built and servicing strategy when creating a building.
+      That context makes comparisons click for non-technical stakeholders.</p>
+
+      <h2>Why it matters</h2>
+      <ul>
+        <li><b>Asset-specific clarity.</b> Buildings are few, large and idiosyncratic; photos + servicing + KPIs show why assets differ.</li>
+        <li><b>Decision-ready.</b> Pairs visual context with numbers that feed actions and planning.</li>
+        <li><b>Faster consensus.</b> Tenants, owners and investors look at the same facts—less debate, more decision.</li>
+      </ul>
+
+      <h2>Use-cases</h2>
+      <div class="cards">
+        <div class="card">
+          <h3>Leasing shortlist</h3>
+          <p>Tenant rep compares three options. The naturally-ventilated, newer building shows lower intensity and overheating risk; photos confirm façade shading. Shortlist made.</p>
+        </div>
+        <div class="card">
+          <h3>Capex sprint</h3>
+          <p>Owner compares two laggards and a median site. The gas-heavy building has the weakest intensity; actions for electrifying heat + controls get priority.</p>
+        </div>
+        <div class="card">
+          <h3>IC pack slide</h3>
+          <p>Investor pulls the side-by-side into a memo with one paragraph of rationale and a link to actions and lineage.</p>
+        </div>
+      </div>
+
+      <h2>What’s next</h2>
+      <ul>
+        <li><b>Comfort overlays.</b> Warm-hours / overheating badges in the table.</li>
+        <li><b>Scenario tags.</b> Show which assets win across most futures.</li>
+        <li><b>Export.</b> One-click PNG/PDF for IC packs.</li>
+      </ul>
+
+      <h2>Quick start</h2>
+      <ol>
+        <li>Add or edit buildings to include <b>1–3 images</b>, <b>year built</b>, and <b>servicing</b>.</li>
+        <li>Open <b>Compare</b> → select up to 3 assets.</li>
+        <li>Use the table to pick your next action bundle.</li>
+      </ol>
+
+      <a class="back" href="javascript:history.back()">← Back to blog</a>
+    </article>
+  </div>
+</body>
+</html>
