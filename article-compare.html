@@ -28,21 +28,34 @@
     .chips{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 0}
     .chip{font-size:12px;color:#e2e8f0;padding:.35rem .6rem;border-radius:999px;border:1px solid var(--chip-bd);background:var(--chip-bg);white-space:nowrap}
 
-  figure {
-  margin:14px 0 0;
+ /* Frame */
+figure{
+  margin:12px 0 0;
+  padding:18px;                      /* inner padding like your Hoshi article */
   border-radius:16px;
   overflow:hidden;
   border:1px solid var(--stroke);
   background:#0c1220;
 }
 
-/* ✅ Show the whole image on desktop */
+/* Desktop: show image at its natural aspect, centered, not full width */
 figure img{
   display:block;
-  width:100%;
-  height:auto;        /* no fixed height = no crop */
-  max-height:80vh;    /* safety cap so it never gets too tall */
+  width:auto;                        /* ← was 100% (caused the stretch) */
+  height:auto;
+  margin:0 auto;                     /* center */
+  max-width:min(720px, 92%);         /* cap so it matches the Hoshi feel */
 }
+
+/* Mobile: let it use the width for readability */
+@media (max-width:640px){
+  figure{ padding:10px; }
+  figure img{
+    width:100%;
+    max-width:100%;
+  }
+}
+
 
 
     article.body{background:var(--card);border:1px solid var(--stroke);border-radius:16px;padding:16px;margin-top:14px}
