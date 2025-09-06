@@ -120,40 +120,7 @@ function computeFinancialSignal(b, buildings){
   };
 }
 
-  // Portfolio "market": mean across buildings for each scenario
-  const marketVec = HOSHI_SCENARIOS.map((_,i)=>{
-    const vals = buildings.map(B=>{
-      const e=(B.electricity_kwh||0)*HOSHI_SCENARIOS[i].elecP;
-      const g=(B.gas_kwh||0)       *HOSHI_SCENARIOS[i].gasP;
-      return e+g;
-    });
-    return vals.length? vals.reduce((a,c)=>a+c,0)/vals.length : 0;
-  });
-  // β = cov(building, market)/var(market)
-  const mean = a => a.reduce((x,y)=>x+y,0)/a.length;
-  const mB = mean(costVec), mM = mean(marketVec);
-  let num=0, den=0;
-  for(let i=0;i<costVec.length;i++){
-    num += (costVec[i]-mB)*(marketVec[i]-mM);
-    den += (marketVec[i]-mM)**2;
-  }
-  const beta = den>0 ? num/den : 0;
-  // Idiosyncratic = RMSE of (b - (α+β·m))
-  const alpha = mB - beta*mM;
-  let se=0;
-  for(let i=0;i<costVec.length;i++){
-    const pred = alpha + beta*marketVec[i];
-    se += (costVec[i]-pred)**2;
-  }
-  const idio = Math.sqrt(se/costVec.length);
-  // Risk premium → forward deviation (% of "market" cost)
-  const rf = 0.0167;               // 10y gilt (fixed assumption)
-  const mp = 0.0400;               // market premium we target
-  const premium = beta*mp;         // simple: ignore idio in premium
-  const fwdDev = ((alpha + beta*mM) - mM) / (mM||1); // % vs market baseline
-  return { beta:+beta.toFixed(2), idio:Math.round(idio), fwd:+(fwdDev*100).toFixed(1) };
-}
-
+  
 // Overheating risk (adaptive-comfort proxy).
 // Only meaningful for naturally ventilated / mixed-mode.
 function computeOverheat(b, scenario){
