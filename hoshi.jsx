@@ -35,36 +35,91 @@ function ncmBandFromPct(pct){
   if (pct <= 150) return "F";
   return "G";
 }
+// --- PATCH START: field aliases ---
+function getEnergySplit(b){
+  // Accept both the new modal fields and any older names
+  return {
+    elec: +(b.elec_kwh ?? b.electricity_kwh ?? b.electricity ?? b.elec ?? 0),
+    gas:  +(b.gas_kwh  ?? b.gas ?? 0)
+  };
+}
+// --- PATCH END ---
 
 /** ---------------- COMPUTE HELPERS ---------------- **/
 
-// Energy intensity (kWh/m²·yr)
 function intensityKWhm2(b){
-  const kwh = (b.electricity_kwh||0) + (b.gas_kwh||0);
-  return b.area_m2 ? kwh / b.area_m2 : null;
+  const { elec, gas } = getEnergySplit(b);
+  const area = +(b.area ?? b.area_m2 ?? b.gia ?? 0);
+  return area ? (elec + gas) / area : null;
 }
+function svcCode(s){
+  const x = (s || "").toLowerCase();
+  if (x.includes("natural")) return "NV";     // Naturally ventilated
+  if (x.includes("mixed"))   return "Mixed";  // Mixed mode
+  return "AC";                                 // Fully air-conditioned / default
+}
+
 
 // NCM-like proxy (relative to notional for sector + servicing)
 function computeNCMProxy(b, scenario){
   const sector = b.sector || "Office";
-  const svc = (b.servicing||"AC");            // AC | Mixed | NV
-  const notional = (NOTIONAL_INTENSITY[sector]||NOTIONAL_INTENSITY._default)[svc] || 170;
+  const svc = svcCode(b.servicing);
+  const notional = (NOTIONAL_INTENSITY[sector] || NOTIONAL_INTENSITY._default)[svc] || 170;
   const inten = intensityKWhm2(b);
-  if (!inten) return { band:"–", score:null, note:"Missing area/energy." };
+  if (inten == null) return { band:"–", score:null, note:"Missing area/energy." };
   const pct = (inten / notional) * 100;
-  const band = ncmBandFromPct(pct);
-  return { band, score:Math.round(pct), note:`Relative to notional ${notional} kWh/m²·yr` };
+  return { band: ncmBandFromPct(pct), score: Math.round(pct), note:`Relative to notional ${notional} kWh/m²·yr` };
 }
 
 // Financial risk (APT-flavoured) from scenario panel.
 // We compute costs across the 5 scenario points to get a β vs portfolio.
 function computeFinancialSignal(b, buildings){
-  // Build a 5-point vector of building cost across scenarios
-  const costVec = HOSHI_SCENARIOS.map(s=>{
-    const elec = (b.electricity_kwh||0) * s.elecP;
-    const gas  = (b.gas_kwh||0)        * s.gasP;
-    return elec + gas;
+  // a cost for this building across the scenario vector
+  const costVec = HOSHI_SCENARIOS.map(s => {
+    const { elec, gas } = getEnergySplit(b);
+    return elec * s.elecP + gas * s.gasP;
   });
+
+  // the “market” = average cost of all buildings under each scenario
+  const marketVec = HOSHI_SCENARIOS.map((s) => {
+    if (!Array.isArray(buildings) || buildings.length === 0) return 0;
+    const list = buildings.map(B => {
+      const { elec, gas } = getEnergySplit(B);
+      return elec * s.elecP + gas * s.gasP;
+    });
+    return list.reduce((a,c)=>a+c,0) / list.length;
+  });
+
+  const mean = a => a.reduce((x,y)=>x+y,0)/(a.length || 1);
+  const mB = mean(costVec), mM = mean(marketVec);
+
+  // β (slope) via simple OLS on the scenario vector
+  let num=0, den=0;
+  for (let i=0;i<costVec.length;i++){
+    num += (costVec[i]-mB) * (marketVec[i]-mM);
+    den += (marketVec[i]-mM) ** 2;
+  }
+  const beta  = den > 0 ? num/den : 0;
+  const alpha = mB - beta * mM;
+
+  // idiosyncratic error (RMSE) across scenarios
+  let se=0;
+  for (let i=0;i<costVec.length;i++){
+    const pred = alpha + beta * marketVec[i];
+    se += (costVec[i] - pred) ** 2;
+  }
+  const idio = Math.sqrt(se / (costVec.length || 1));
+
+  // forward deviation vs market (percent)
+  const fwdDev = ((alpha + beta * mM) - mM) / (mM || 1);
+
+  return {
+    beta: +beta.toFixed(2),
+    idio: Math.round(idio),
+    fwd: +(fwdDev * 100).toFixed(1),
+  };
+}
+
   // Portfolio "market": mean across buildings for each scenario
   const marketVec = HOSHI_SCENARIOS.map((_,i)=>{
     const vals = buildings.map(B=>{
@@ -103,22 +158,15 @@ function computeFinancialSignal(b, buildings){
 // Only meaningful for naturally ventilated / mixed-mode.
 function computeOverheat(b, scenario){
   const city = (b.city||"London").toLowerCase();
-  // crude baselines for DSY "hot-year" hours >=23°C indoors (NV proxy)
   const BASE = { london:250, bristol:180, _default:220 };
   const base = BASE[city] || BASE._default;
-  const svc = (b.servicing||"AC");
-  let adj = 0;
-  if (svc==="NV")    adj = 1.0;
-  else if (svc==="Mixed") adj = 0.5;
-  else adj = 0.1; // AC managed
+  const svc = svcCode(b.servicing);
+  const adj = svc==="NV" ? 1.0 : svc==="Mixed" ? 0.5 : 0.1;
   const shading = b.shading ? 0.8 : 1.0;
   const hours = Math.round(base * scenario.dsyMult * adj * shading);
-  let level = "Low";
-  if (hours>=300) level="High";
-  else if (hours>=120) level="Moderate";
+  const level = hours>=300 ? "High" : hours>=120 ? "Moderate" : "Low";
   return { hours, level };
 }
-
 function hoshiLoadBuildings() {
   try { return JSON.parse(localStorage.getItem(HOSHI_STORE_KEY) || "[]"); }
   catch { return []; }
