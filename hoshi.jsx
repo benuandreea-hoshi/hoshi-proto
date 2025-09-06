@@ -2839,6 +2839,49 @@ const Article = () => {
   );
 };
 
+// Demo pair shown on first load (if user has no buildings)
+const HOSHI_SAMPLE_BUILDINGS = [
+  {
+    id: "demo-a",
+    name: "Kings Court",
+    city: "London",
+    sector: "Office",
+    area: 6300,                // m²
+    elec_kwh: 1_850_000,
+    gas_kwh:  1_200_000,
+    spend:  520000,
+    yearBuilt: 1998,
+    servicing: "Fully air-conditioned",
+    shading: false,
+    rent_sqm: 820,
+    images: [
+      "https://www.cbre.co.uk/resources/fileassets/GB-Plus-513936/7b28e999/Screenshot%202025-08-21%20163623_Photo_1_medium.jpg"
+    ],
+    updated: new Date().toISOString().slice(0,10),
+    isDemo: true,
+  },
+  {
+    id: "demo-b",
+    name: "Harbourside House",
+    city: "Bristol",
+    sector: "Office",
+    area: 1150,
+    elec_kwh: 240_000,
+    gas_kwh:  180_000,
+    spend:  78000,
+    yearBuilt: 1976,
+    servicing: "Naturally ventilated",
+    shading: true,
+    rent_sqm: 310,
+    images: [
+      "https://content.knightfrank.com/property/cpd241874/images/e4667fb9-57ce-44d1-ac2d-979a443b1cbe-0.jpg?cio=true&w=1440&f=webp"
+    ],
+    updated: new Date().toISOString().slice(0,10),
+    isDemo: true,
+  },
+];
+
+
 function App(){
   const [active,setActive]=useState("story");
  const [open,setOpen]=useState(false);
@@ -2846,6 +2889,16 @@ const [lineageCtx, setLineageCtx] = useState(null);
   // === Hoshi MVP: buildings state ===
 const [buildings, setBuildings] = React.useState(hoshiLoadBuildings());
 React.useEffect(() => hoshiSaveBuildings(buildings), [buildings]);
+
+  // Seed demo buildings on first visit if none exist
+React.useEffect(() => {
+  if (!Array.isArray(buildings) || buildings.length > 0) return;
+  if (localStorage.getItem("hoshi.seeded")) return;
+  setBuildings(HOSHI_SAMPLE_BUILDINGS);
+  localStorage.setItem("hoshi.seeded", "1");
+  // (hoshiSaveBuildings runs from your existing effect)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, []);
 
   
 const tabs = [
