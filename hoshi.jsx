@@ -330,7 +330,7 @@ const LineChart=({points=[5,8,6,9,12,10,14,15,13,16,18,17]})=>{
 const Section = ({ title, desc, right, children }) => (
   <section
     className="card p-5 md:p-6 box-border w-full max-w-full"
-    style={{ overflow: "visible" }}   // override .card { overflow:hidden }
+    style={{ overflow: "visible" }}   
   >
     <div className="flex items-start justify-between gap-4 mb-4">
       <div>
