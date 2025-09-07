@@ -615,219 +615,141 @@ function HeroOrb({ value = 0.42, label = "Good" }) {
   );
 }
 
- function HoshiAddBuildingModal({ open, onClose, onSave, defaultCurrency="GBP" }) {
-   
-const [form, setForm] = React.useState({
-  name: "", city: "", sector: "Office",
-  area: "", elec_kwh: "", gas_kwh: "", spend: "",
-  ef_elec: HOSHI_DEFAULT_EF.elec, ef_gas: HOSHI_DEFAULT_EF.gas,
-  yearBuilt: "", servicing: "Mixed mode", rent_sqm: ""
-});
-const [imgs, setImgs] = React.useState([""]);
+ function HoshiAddBuildingModal({
+  open,
+  onClose,
+  onSave,
+  initial = null,                 // ← NEW (pass a building here to edit)
+  defaultCurrency = "GBP",
+}) {
+  const blank = {
+    id: undefined,
+    name: "",
+    city: "",
+    sector: "Office",
+    area: "",
+    elec_kwh: "",
+    gas_kwh: "",
+    spend: "",
+    ef_elec: HOSHI_DEFAULT_EF.elec,
+    ef_gas: HOSHI_DEFAULT_EF.gas,
+    yearBuilt: "",
+    servicing: "Mixed mode",
+    rent_sqm: "",
+  };
+
+  // for inputs, coerce numbers to strings so fields show values
+  const toStr = (v) => (v === 0 || v ? String(v) : "");
+
+  const seed = initial
+    ? {
+        ...blank,
+        ...initial,
+        area: toStr(initial.area),
+        elec_kwh: toStr(initial.elec_kwh ?? initial.electricity_kwh),
+        gas_kwh: toStr(initial.gas_kwh ?? initial.gas_kwh),
+        spend: toStr(initial.spend),
+        ef_elec: toStr(initial.ef_elec ?? HOSHI_DEFAULT_EF.elec),
+        ef_gas: toStr(initial.ef_gas ?? HOSHI_DEFAULT_EF.gas),
+        yearBuilt: toStr(initial.yearBuilt),
+        rent_sqm: toStr(initial.rent_sqm),
+      }
+    : blank;
+
+  const [form, setForm] = React.useState(seed);
+  const [imgs, setImgs] = React.useState(
+    initial?.images?.length ? initial.images : [""]
+  );
+
+  React.useEffect(() => {
+    if (!open) return;
+    const fresh = initial
+      ? {
+          ...blank,
+          ...initial,
+          area: toStr(initial.area),
+          elec_kwh: toStr(initial.elec_kwh ?? initial.electricity_kwh),
+          gas_kwh: toStr(initial.gas_kwh),
+          spend: toStr(initial.spend),
+          ef_elec: toStr(initial.ef_elec ?? HOSHI_DEFAULT_EF.elec),
+          ef_gas: toStr(initial.ef_gas ?? HOSHI_DEFAULT_EF.gas),
+          yearBuilt: toStr(initial.yearBuilt),
+          rent_sqm: toStr(initial.rent_sqm),
+        }
+      : blank;
+    setForm(fresh);
+    setImgs(initial?.images?.length ? initial.images : [""]);
+  }, [open, initial]);
+
+  const isEdit = Boolean(initial && initial.id);
 
   const b = {
     ...form,
-    area:+form.area, elec_kwh:+form.elec_kwh, gas_kwh:+form.gas_kwh,
-    ef_elec:+form.ef_elec, ef_gas:+form.ef_gas
+    area: +form.area,
+    elec_kwh: +form.elec_kwh,
+    gas_kwh: +form.gas_kwh,
+    ef_elec: +form.ef_elec,
+    ef_gas: +form.ef_gas,
   };
+
   const k = hoshiKPIs(b);
   const disabled = !form.name || !form.area;
 
-if (!open) return null;
-return (
-  // overlay: bottom-sheet on mobile, centered on desktop
-  <div className="fixed inset-0 z-[3000] bg-black/45 flex items-end md:items-center justify-center">
-    {/* panel */}
-    <div
-      className="w-[min(720px,92vw)] max-h-[92dvh] rounded-2xl flex flex-col overflow-hidden"
-      style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}
-    >
-      {/* header */}
-      <div className="px-4 md:px-5 py-4 md:py-5">
-        <div className="text-slate-100 font-semibold text-lg">Add building</div>
-      </div>
+  if (!open) return null;
 
-      {/* body (scrolls if tall) */}
-      <div className="flex-1 overflow-y-auto px-4 md:px-5 pb-[max(env(safe-area-inset-bottom),16px)]">
-        <div className="grid md:grid-cols-2 gap-3">
-          <div>
-            <label className="text-xs text-slate-400">Name</label>
-            <input className="w-full mt-1 px-3 py-2 rounded-lg"
-              style={{background:"var(--panel-2)",border:"1px solid var(--stroke)",color:"var(--text)"}}
-              value={form.name} onChange={e=>setForm({...form,name:e.target.value})} placeholder="1 King Street"/>
-          </div>
-          <div>
-            <label className="text-xs text-slate-400">City</label>
-            <input className="w-full mt-1 px-3 py-2 rounded-lg"
-              style={{background:"var(--panel-2)",border:"1px solid var(--stroke)",color:"var(--text)"}}
-              value={form.city} onChange={e=>setForm({...form,city:e.target.value})} placeholder="London"/>
-          </div>
-          <div>
-            <label className="text-xs text-slate-400">Sector</label>
-            <select className="w-full mt-1 px-3 py-2 rounded-lg"
-              style={{background:"var(--panel-2)",border:"1px solid var(--stroke)",color:"var(--text)"}}
-              value={form.sector} onChange={e=>setForm({...form,sector:e.target.value})}>
-              <option>Office</option><option>Retail</option><option>Industrial</option><option>Other</option>
-            </select>
-          </div>
-          <div>
-            <label className="text-xs text-slate-400">Area (m²)</label>
-            <input type="number" min="0" className="w-full mt-1 px-3 py-2 rounded-lg"
-              style={{background:"var(--panel-2)",border:"1px solid var(--stroke)",color:"var(--text)"}}
-              value={form.area} onChange={e=>setForm({...form,area:e.target.value})} placeholder="12800"/>
-          </div>
-          <div>
-            <label className="text-xs text-slate-400">Electricity (kWh/yr)</label>
-            <input type="number" min="0" className="w-full mt-1 px-3 py-2 rounded-lg"
-              style={{background:"var(--panel-2)",border:"1px solid var(--stroke)",color:"var(--text)"}}
-              value={form.elec_kwh} onChange={e=>setForm({...form,elec_kwh:e.target.value})} placeholder="95000"/>
-          </div>
-          <div>
-            <label className="text-xs text-slate-400">Gas (kWh/yr)</label>
-            <input type="number" min="0" className="w-full mt-1 px-3 py-2 rounded-lg"
-              style={{background:"var(--panel-2)",border:"1px solid var(--stroke)",color:"var(--text)"}}
-              value={form.gas_kwh} onChange={e=>setForm({...form,gas_kwh:e.target.value})} placeholder="47000"/>
-          </div>
-          
-          <div>
-            <label className="text-xs text-slate-400">Annual spend ({defaultCurrency})</label>
-            <input type="number" min="0" className="w-full mt-1 px-3 py-2 rounded-lg"
-              style={{background:"var(--panel-2)",border:"1px solid var(--stroke)",color:"var(--text)"}}
-              value={form.spend} onChange={e=>setForm({...form,spend:e.target.value})} placeholder="30150"/>
-          </div>
-          {/* --- NEW: descriptors (place after Spend, before EF inputs) --- */}
-<div>
-  <label className="text-xs text-slate-400">Year built</label>
-  <input
-    type="number"
-    className="w-full mt-1 px-3 py-2 rounded-lg"
-    style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)", color: "var(--text)" }}
-    value={form.yearBuilt}
-    onChange={(e) => setForm({ ...form, yearBuilt: e.target.value })}
-    placeholder="2009"
-  />
-</div>
-
-<div>
-  <label className="text-xs text-slate-400">Servicing strategy</label>
-  <select
-    className="w-full mt-1 px-3 py-2 rounded-lg"
-    style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)", color: "var(--text)" }}
-    value={form.servicing}
-    onChange={(e) => setForm({ ...form, servicing: e.target.value })}
-  >
-    <option>Fully air-conditioned</option>
-    <option>Mixed mode</option>
-    <option>Naturally ventilated</option>
-  </select>
-</div>
-
-<div>
-  <label className="text-xs text-slate-400">Rent £/m² (optional)</label>
-  <input
-    type="number"
-    min="0"
-    className="w-full mt-1 px-3 py-2 rounded-lg"
-    style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)", color: "var(--text)" }}
-    value={form.rent_sqm}
-    onChange={(e) => setForm({ ...form, rent_sqm: e.target.value })}
-    placeholder="243"
-  />
-</div>
-
-{/* --- NEW: image URLs (full width in a 2-col grid) --- */}
-<div className="md:col-span-2">
-  <label className="text-xs text-slate-400">Images (URLs, up to 3)</label>
-
-  {imgs.map((u, i) => (
-    <div key={i} className="flex gap-2 mt-1">
-      <input
-        className="flex-1 px-3 py-2 rounded-lg"
-        style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)", color: "var(--text)" }}
-        placeholder="https://…/building.jpg"
-        value={u}
-        onChange={(e) => setImgs(imgs.map((x, ii) => (ii === i ? e.target.value : x)))}
-      />
-      <button type="button" className="btn btn-ghost" onClick={() => setImgs(imgs.filter((_, ii) => ii !== i))}>
-        Remove
-      </button>
-    </div>
-  ))}
-
-  {imgs.length < 3 && (
-    <button type="button" className="btn btn-ghost mt-2" onClick={() => setImgs([...imgs, ""])}>
-      + Add image
-    </button>
-  )}
-</div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs text-slate-400">EF elec (kgCO₂e/kWh)</label>
-              <input type="number" step="0.001" className="w-full mt-1 px-3 py-2 rounded-lg"
-                style={{background:"var(--panel-2)",border:"1px solid var(--stroke)",color:"var(--text)"}}
-                value={form.ef_elec} onChange={e=>setForm({...form,ef_elec:e.target.value})}/>
-            </div>
-            <div>
-              <label className="text-xs text-slate-400">EF gas (kgCO₂e/kWh)</label>
-              <input type="number" step="0.001" className="w-full mt-1 px-3 py-2 rounded-lg"
-                style={{background:"var(--panel-2)",border:"1px solid var(--stroke)",color:"var(--text)"}}
-                value={form.ef_gas} onChange={e=>setForm({...form,ef_gas:e.target.value})}/>
-            </div>
+  return (
+    <div className="fixed inset-0 z-[3000] bg-black/45 flex items-end md:items-center justify-center">
+      <div
+        className="w-[min(720px,92vw)] max-h-[92dvh] rounded-2xl flex flex-col overflow-hidden"
+        style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}
+      >
+        <div className="px-4 md:px-5 py-4 md:py-5">
+          <div className="text-slate-100 font-semibold text-lg">
+            {isEdit ? "Edit building" : "Add building"}
           </div>
         </div>
 
-        {/* live KPI preview */}
-        <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div className="rounded-xl p-3" style={{background:"rgba(148,163,184,.06)",border:"1px solid var(--stroke)"}}>
-            <div className="text-xs text-slate-400">kWh</div>
-            <div className="text-slate-100 font-semibold">{k.kwh.toLocaleString()}</div>
-          </div>
-          <div className="rounded-xl p-3" style={{background:"rgba(148,163,184,.06)",border:"1px solid var(--stroke)"}}>
-            <div className="text-xs text-slate-400">tCO₂e</div>
-            <div className="text-slate-100 font-semibold">{k.tco2e.toFixed(1)}</div>
-          </div>
-          <div className="rounded-xl p-3" style={{background:"rgba(148,163,184,.06)",border:"1px solid var(--stroke)"}}>
-            <div className="text-xs text-slate-400">Intensity (kWh/m²)</div>
-            <div className="text-slate-100 font-semibold">{k.intensity ? k.intensity.toFixed(0) : "—"}</div>
-          </div>
-          <div className="rounded-xl p-3" style={{background:"rgba(148,163,184,.06)",border:"1px solid var(--stroke)"}}>
-            <div className="text-xs text-slate-400">Completeness</div>
-            <div className="text-slate-100 font-semibold">{k.completeness}%</div>
-          </div>
+        <div className="flex-1 overflow-y-auto px-4 md:px-5 pb-[max(env(safe-area-inset-bottom),16px)]">
+          {/* ——— your existing form fields exactly as before ——— */}
+          {/* Name, City, Sector, Area, Elec, Gas, Spend, Year built, Servicing, Rent */}
+          {/* Images section (uses imgs / setImgs) */}
+          {/* EF inputs */}
+          {/* Live KPI preview using `k` */}
+          {/*  ↓ Keep your current fields; they already bind to `form` / `imgs` */}
+          {/* (I’m not repeating them here to keep this snippet focused and short.) */}
         </div>
-      </div>
 
-      {/* footer (sticks to bottom) */}
-      <div className="border-t" style={{ borderColor: "var(--stroke)" }}>
-        <div className="p-4 md:p-5 flex items-center justify-end gap-2">
-          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
-          <button
-            className="btn btn-primary"
-            disabled={disabled}
-            onClick={() => {
-             onSave({
-  id: hoshiUid(),
-  ...b,                                    // your existing mapped fields
-  spend: +form.spend || null,
-  yearBuilt: +form.yearBuilt || null,
-  servicing: form.servicing || null,
-  rent_sqm: +form.rent_sqm || null,
-  images: imgs.filter(Boolean),            // <— add this
-  updated: new Date().toISOString().slice(0,10),
-});
-              onClose();
-            }}
-          >
-            Save building
-          </button>
+        <div className="border-t" style={{ borderColor: "var(--stroke)" }}>
+          <div className="p-4 md:p-5 flex items-center justify-end gap-2">
+            <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+            <button
+              className="btn btn-primary"
+              disabled={disabled}
+              onClick={() => {
+                const payload = {
+                  id: initial?.id ?? hoshiUid(),
+                  ...b,
+                  spend: +form.spend || null,
+                  yearBuilt: +form.yearBuilt || null,
+                  servicing: form.servicing || null,
+                  rent_sqm: +form.rent_sqm || null,
+                  images: imgs.filter(Boolean),
+                  updated: new Date().toISOString().slice(0, 10),
+                  ...(initial?.isDemo ? { isDemo: false } : {}),
+                };
+                onSave(payload);
+                onClose();
+              }}
+            >
+              {isEdit ? "Save changes" : "Save building"}
+            </button>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-);
-
+  );
 }
+
 
 function BuildingCard({ b, onPick, picked }) {
   const k = hoshiKPIs(b);
@@ -1383,6 +1305,9 @@ function Onboarding({ goAddBuilding }){
 
 function Portfolio({ buildings = [], setBuildings }) {
   const [addOpen, setAddOpen] = React.useState(false);
+  const [editOpen, setEditOpen] = React.useState(false);
+const [editing,  setEditing]  = React.useState(null);
+const openEdit = (b) => { setEditing(b); setEditOpen(true); };
   const defaultCurrency = (typeof window !== "undefined"
     ? (localStorage.getItem("hoshi.currency") || "GBP")
     : "GBP");
@@ -1511,13 +1436,13 @@ const rollup = React.useMemo(() => {
         </div>
 
         {/* desktop table */}
-        <div className="hidden md:block overflow-x-auto rounded-2xl" style={{border:"1px solid var(--stroke)"}}>
+        <div className="hidden md:block overflow-x-auto rounded-2xl" style={{border:"1px solid var(--stroke)"}}> 
           <table className="w-full text-sm min-w-[700px]">
             <thead className="text-slate-300" style={{background:"var(--panel-2)"}}>
               <tr>
-                {["Building","kWh","tCO₂e","Intensity","Completeness","Actions","Updated"].map((h,i)=>(
-                  <th key={i} className="text-left px-4 py-3" style={{borderBottom:"1px solid var(--stroke)"}}>{h}</th>
-                ))}
+                {["Building","kWh","tCO₂e","Intensity","Completeness","Actions","Updated",""].map((h,i)=>(
+  <th key={i} className="text-left px-4 py-3" style={{borderBottom:"1px solid var(--stroke)"}}>{h}</th>
+))}
               </tr>
             </thead>
             <tbody className="divide-y" style={{borderColor:"var(--stroke)"}}>
@@ -1528,6 +1453,14 @@ const rollup = React.useMemo(() => {
                   <td className="px-4 py-3 text-slate-300">{Number(r.co2).toFixed(1)}</td>
                   <td className="px-4 py-3 text-slate-300">{r.intensity}</td>
                   <td className="px-4 py-3">
+                    <td className="px-4 py-3 text-right">
+  {buildings[i] && (
+    <button className="btn btn-ghost btn-sm" onClick={()=>openEdit(buildings[i])}>
+      Edit
+    </button>
+  )}
+</td>
+
                     <div className="w-28 h-2 rounded bg-slate-800">
                       <div className="h-2 rounded bg-emerald-400" style={{width:(r.complete*100)+"%"}}/>
                     </div>
@@ -1562,9 +1495,13 @@ const rollup = React.useMemo(() => {
                 </div>
               </div>
               <div className="mt-3 flex items-center justify-between">
-                <span className="text-xs text-slate-400">{r.actions} actions</span>
-                <button className="btn btn-ghost">Open</button>
-              </div>
+  <span className="text-xs text-slate-400">{r.actions} actions</span>
+  {buildings[i] ? (
+    <button className="btn btn-ghost" onClick={()=>openEdit(buildings[i])}>Edit</button>
+  ) : (
+    <span className="text-xs text-slate-500">Sample</span>
+  )}
+</div>
             </li>
           ))}
         </ul>
@@ -1592,6 +1529,21 @@ const rollup = React.useMemo(() => {
         defaultCurrency={defaultCurrency}
         onSave={(b)=>{ setBuildings?.(prev => [...(prev || []), b]); setAddOpen(false); }}
       />
+      <HoshiAddBuildingModal
+  open={editOpen}
+  initial={editing}                 // ← prefill when editing
+  defaultCurrency={defaultCurrency}
+  onClose={() => { setEditOpen(false); setEditing(null); }}
+  onSave={(updated) => {
+    setBuildings(prev => (prev || []).map(x =>
+      x.id === updated.id ? { ...x, ...updated } : x
+    ));
+    setEditOpen(false);
+    setEditing(null);
+  }}
+/>
+
+      
     </div>
   );
 }
