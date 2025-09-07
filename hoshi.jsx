@@ -638,21 +638,23 @@ function HeroOrb({ value = 0.42, label = "Good" }) {
 
   // for inputs, coerce numbers to strings so fields show values
   const toStr = (v) => (v === 0 || v ? String(v) : "");
+const i = initial || {};
+ const seed = initial
+   ? {
+      ...blank,
+       ...i,
+      area:      toStr(i.area),
+      elec_kwh:  toStr(i.elec_kwh ?? i.electricity_kwh),
+       gas_kwh:   toStr(i.gas_kwh  ?? i.gas),
+       spend:     toStr(i.spend),
+       ef_elec:   toStr(i.ef_elec ?? HOSHI_DEFAULT_EF.elec),
+       ef_gas:    toStr(i.ef_gas  ?? HOSHI_DEFAULT_EF.gas),
+       yearBuilt: toStr(i.yearBuilt),
+       rent_sqm:  toStr(i.rent_sqm),
+   }
+  : blank;
 
-  const seed = initial
-    ? {
-        ...blank,
-        ...initial,
-        area: toStr(initial.area),
-        elec_kwh: toStr(initial.elec_kwh ?? initial.electricity_kwh),
-        gas_kwh: toStr(initial.gas_kwh ?? initial.gas),
-        spend: toStr(initial.spend),
-        ef_elec: toStr(initial.ef_elec ?? HOSHI_DEFAULT_EF.elec),
-        ef_gas: toStr(initial.ef_gas ?? HOSHI_DEFAULT_EF.gas),
-        yearBuilt: toStr(initial.yearBuilt),
-        rent_sqm: toStr(initial.rent_sqm),
-      }
-    : blank;
+          
 
   const [form, setForm] = React.useState(seed);
   const [imgs, setImgs] = React.useState(
@@ -661,22 +663,22 @@ function HeroOrb({ value = 0.42, label = "Good" }) {
 
   React.useEffect(() => {
     if (!open) return;
-    const fresh = initial
-      ? {
-          ...blank,
-          ...initial,
-          area: toStr(initial.area),
-          elec_kwh: toStr(initial.elec_kwh ?? initial.electricity_kwh),
-          gas_kwh: toStr(initial.gas_kwh ?? initial.gas),
-          spend: toStr(initial.spend),
-          ef_elec: toStr(initial.ef_elec ?? HOSHI_DEFAULT_EF.elec),
-          ef_gas: toStr(initial.ef_gas ?? HOSHI_DEFAULT_EF.gas),
-          yearBuilt: toStr(initial.yearBuilt),
-          rent_sqm: toStr(initial.rent_sqm),
-        }
-      : blank;
+    const i = initial || {};
+   const fresh = initial
+    ? {
+         ...blank, ...i,
+         area:      toStr(i.area),
+         elec_kwh:  toStr(i.elec_kwh ?? i.electricity_kwh),
+         gas_kwh:   toStr(i.gas_kwh  ?? i.gas),
+         spend:     toStr(i.spend),
+         ef_elec:   toStr(i.ef_elec ?? HOSHI_DEFAULT_EF.elec),
+         ef_gas:    toStr(i.ef_gas  ?? HOSHI_DEFAULT_EF.gas),
+         yearBuilt: toStr(i.yearBuilt),
+         rent_sqm:  toStr(i.rent_sqm),
+       }
+    : blank;
     setForm(fresh);
-    setImgs(initial?.images?.length ? initial.images : [""]);
+    setImgs(i.images && i.images.length ? i.images : [""]);
   }, [open, initial]);
 
   const isEdit = Boolean(initial && initial.id);
