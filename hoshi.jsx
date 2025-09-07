@@ -711,12 +711,209 @@ function HeroOrb({ value = 0.42, label = "Good" }) {
 
         <div className="flex-1 overflow-y-auto px-4 md:px-5 pb-[max(env(safe-area-inset-bottom),16px)]">
           {/* ——— your existing form fields exactly as before ——— */}
-          {/* Name, City, Sector, Area, Elec, Gas, Spend, Year built, Servicing, Rent */}
-          {/* Images section (uses imgs / setImgs) */}
-          {/* EF inputs */}
-          {/* Live KPI preview using `k` */}
-          {/*  ↓ Keep your current fields; they already bind to `form` / `imgs` */}
-          {/* (I’m not repeating them here to keep this snippet focused and short.) */}
+          <div className="grid md:grid-cols-2 gap-3">
+  {/* Name */}
+  <div>
+    <label className="text-xs text-slate-400">Name</label>
+    <input
+      className="w-full mt-1 px-3 py-2 rounded-lg"
+      style={{ background:"var(--panel-2)", border:"1px solid var(--stroke)", color:"var(--text)" }}
+      value={form.name}
+      onChange={e=>setForm({ ...form, name:e.target.value })}
+      placeholder="1 King Street"
+    />
+  </div>
+
+  {/* City */}
+  <div>
+    <label className="text-xs text-slate-400">City</label>
+    <input
+      className="w-full mt-1 px-3 py-2 rounded-lg"
+      style={{ background:"var(--panel-2)", border:"1px solid var(--stroke)", color:"var(--text)" }}
+      value={form.city}
+      onChange={e=>setForm({ ...form, city:e.target.value })}
+      placeholder="London"
+    />
+  </div>
+
+  {/* Sector */}
+  <div>
+    <label className="text-xs text-slate-400">Sector</label>
+    <select
+      className="w-full mt-1 px-3 py-2 rounded-lg"
+      style={{ background:"var(--panel-2)", border:"1px solid var(--stroke)", color:"var(--text)" }}
+      value={form.sector}
+      onChange={e=>setForm({ ...form, sector:e.target.value })}
+    >
+      <option>Office</option>
+      <option>Retail</option>
+      <option>Industrial</option>
+      <option>Other</option>
+    </select>
+  </div>
+
+  {/* Area */}
+  <div>
+    <label className="text-xs text-slate-400">Area (m²)</label>
+    <input
+      type="number" min="0"
+      className="w-full mt-1 px-3 py-2 rounded-lg"
+      style={{ background:"var(--panel-2)", border:"1px solid var(--stroke)", color:"var(--text)" }}
+      value={form.area}
+      onChange={e=>setForm({ ...form, area:e.target.value })}
+      placeholder="12800"
+    />
+  </div>
+
+  {/* Electricity */}
+  <div>
+    <label className="text-xs text-slate-400">Electricity (kWh/yr)</label>
+    <input
+      type="number" min="0"
+      className="w-full mt-1 px-3 py-2 rounded-lg"
+      style={{ background:"var(--panel-2)", border:"1px solid var(--stroke)", color:"var(--text)" }}
+      value={form.elec_kwh}
+      onChange={e=>setForm({ ...form, elec_kwh:e.target.value })}
+      placeholder="95000"
+    />
+  </div>
+
+  {/* Gas */}
+  <div>
+    <label className="text-xs text-slate-400">Gas (kWh/yr)</label>
+    <input
+      type="number" min="0"
+      className="w-full mt-1 px-3 py-2 rounded-lg"
+      style={{ background:"var(--panel-2)", border:"1px solid var(--stroke)", color:"var(--text)" }}
+      value={form.gas_kwh}
+      onChange={e=>setForm({ ...form, gas_kwh:e.target.value })}
+      placeholder="47000"
+    />
+  </div>
+
+  {/* Spend */}
+  <div>
+    <label className="text-xs text-slate-400">Annual spend ({defaultCurrency})</label>
+    <input
+      type="number" min="0"
+      className="w-full mt-1 px-3 py-2 rounded-lg"
+      style={{ background:"var(--panel-2)", border:"1px solid var(--stroke)", color:"var(--text)" }}
+      value={form.spend}
+      onChange={e=>setForm({ ...form, spend:e.target.value })}
+      placeholder="30150"
+    />
+  </div>
+
+  {/* Year built */}
+  <div>
+    <label className="text-xs text-slate-400">Year built</label>
+    <input
+      type="number"
+      className="w-full mt-1 px-3 py-2 rounded-lg"
+      style={{ background:"var(--panel-2)", border:"1px solid var(--stroke)", color:"var(--text)" }}
+      value={form.yearBuilt}
+      onChange={e=>setForm({ ...form, yearBuilt:e.target.value })}
+      placeholder="2009"
+    />
+  </div>
+
+  {/* Servicing */}
+  <div>
+    <label className="text-xs text-slate-400">Servicing strategy</label>
+    <select
+      className="w-full mt-1 px-3 py-2 rounded-lg"
+      style={{ background:"var(--panel-2)", border:"1px solid var(--stroke)", color:"var(--text)" }}
+      value={form.servicing}
+      onChange={e=>setForm({ ...form, servicing:e.target.value })}
+    >
+      <option>Fully air-conditioned</option>
+      <option>Mixed mode</option>
+      <option>Naturally ventilated</option>
+    </select>
+  </div>
+
+  {/* Rent */}
+  <div>
+    <label className="text-xs text-slate-400">Rent £/m² (optional)</label>
+    <input
+      type="number" min="0"
+      className="w-full mt-1 px-3 py-2 rounded-lg"
+      style={{ background:"var(--panel-2)", border:"1px solid var(--stroke)", color:"var(--text)" }}
+      value={form.rent_sqm}
+      onChange={e=>setForm({ ...form, rent_sqm:e.target.value })}
+      placeholder="243"
+    />
+  </div>
+
+  {/* Images (full width) */}
+  <div className="md:col-span-2">
+    <label className="text-xs text-slate-400">Images (URLs, up to 3)</label>
+    {imgs.map((u, i) => (
+      <div key={i} className="flex gap-2 mt-1">
+        <input
+          className="flex-1 px-3 py-2 rounded-lg"
+          style={{ background:"var(--panel-2)", border:"1px solid var(--stroke)", color:"var(--text)" }}
+          placeholder="https://…/building.jpg"
+          value={u}
+          onChange={e=>setImgs(imgs.map((x, ii)=>(ii===i? e.target.value : x)))}
+        />
+        <button type="button" className="btn btn-ghost" onClick={()=>setImgs(imgs.filter((_,ii)=>ii!==i))}>
+          Remove
+        </button>
+      </div>
+    ))}
+    {imgs.length < 3 && (
+      <button type="button" className="btn btn-ghost mt-2" onClick={()=>setImgs([...imgs, ""])}>
+        + Add image
+      </button>
+    )}
+  </div>
+
+  {/* Emission factors */}
+  <div className="grid grid-cols-2 gap-3 md:col-span-2">
+    <div>
+      <label className="text-xs text-slate-400">EF elec (kgCO₂e/kWh)</label>
+      <input
+        type="number" step="0.001"
+        className="w-full mt-1 px-3 py-2 rounded-lg"
+        style={{ background:"var(--panel-2)", border:"1px solid var(--stroke)", color:"var(--text)" }}
+        value={form.ef_elec}
+        onChange={e=>setForm({ ...form, ef_elec:e.target.value })}
+      />
+    </div>
+    <div>
+      <label className="text-xs text-slate-400">EF gas (kgCO₂e/kWh)</label>
+      <input
+        type="number" step="0.001"
+        className="w-full mt-1 px-3 py-2 rounded-lg"
+        style={{ background:"var(--panel-2)", border:"1px solid var(--stroke)", color:"var(--text)" }}
+        value={form.ef_gas}
+        onChange={e=>setForm({ ...form, ef_gas:e.target.value })}
+      />
+    </div>
+  </div>
+</div>
+
+{/* Live KPI preview */}
+<div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+  <div className="rounded-xl p-3" style={{background:"rgba(148,163,184,.06)",border:"1px solid var(--stroke)"}}>
+    <div className="text-xs text-slate-400">kWh</div>
+    <div className="text-slate-100 font-semibold">{k.kwh.toLocaleString()}</div>
+  </div>
+  <div className="rounded-xl p-3" style={{background:"rgba(148,163,184,.06)",border:"1px solid var(--stroke)"}}>
+    <div className="text-xs text-slate-400">tCO₂e</div>
+    <div className="text-slate-100 font-semibold">{k.tco2e.toFixed(1)}</div>
+  </div>
+  <div className="rounded-xl p-3" style={{background:"rgba(148,163,184,.06)",border:"1px solid var(--stroke)"}}>
+    <div className="text-xs text-slate-400">Intensity (kWh/m²)</div>
+    <div className="text-slate-100 font-semibold">{k.intensity ? k.intensity.toFixed(0) : "—"}</div>
+  </div>
+  <div className="rounded-xl p-3" style={{background:"rgba(148,163,184,.06)",border:"1px solid var(--stroke)"}}>
+    <div className="text-xs text-slate-400">Completeness</div>
+    <div className="text-slate-100 font-semibold">{k.completeness}%</div>
+  </div>
+</div>
+        
         </div>
 
         <div className="border-t" style={{ borderColor: "var(--stroke)" }}>
@@ -1446,31 +1643,30 @@ const rollup = React.useMemo(() => {
               </tr>
             </thead>
             <tbody className="divide-y" style={{borderColor:"var(--stroke)"}}>
-              {rows.map((r,i)=>(
-                <tr key={i} className="hover:bg-[#10131a]">
-                  <td className="px-4 py-3 text-slate-100">{r.name}</td>
-                  <td className="px-4 py-3 text-slate-300">{r.kwh.toLocaleString()}</td>
-                  <td className="px-4 py-3 text-slate-300">{Number(r.co2).toFixed(1)}</td>
-                  <td className="px-4 py-3 text-slate-300">{r.intensity}</td>
-                  <td className="px-4 py-3">
-                    <td className="px-4 py-3 text-right">
-  {buildings[i] && (
-    <button className="btn btn-ghost btn-sm" onClick={()=>openEdit(buildings[i])}>
-      Edit
-    </button>
-  )}
-</td>
-
-                    <div className="w-28 h-2 rounded bg-slate-800">
-                      <div className="h-2 rounded bg-emerald-400" style={{width:(r.complete*100)+"%"}}/>
-                    </div>
-                    <div className="text-xs text-slate-400 mt-1">{Math.round(r.complete*100)}%</div>
-                  </td>
-                  <td className="px-4 py-3 text-slate-300">{r.actions}</td>
-                  <td className="px-4 py-3 text-slate-400">{r.updated}</td>
-                </tr>
-              ))}
-            </tbody>
+  {rows.map((r,i)=>(
+    <tr key={i} className="hover:bg-[#10131a]">
+      <td className="px-4 py-3 text-slate-100">{r.name}</td>
+      <td className="px-4 py-3 text-slate-300">{r.kwh.toLocaleString()}</td>
+      <td className="px-4 py-3 text-slate-300">{Number(r.co2).toFixed(1)}</td>
+      <td className="px-4 py-3 text-slate-300">{r.intensity}</td>
+      <td className="px-4 py-3">
+        <div className="w-28 h-2 rounded bg-slate-800">
+          <div className="h-2 rounded bg-emerald-400" style={{width:(r.complete*100)+"%"}}/>
+        </div>
+        <div className="text-xs text-slate-400 mt-1">{Math.round(r.complete*100)}%</div>
+      </td>
+      <td className="px-4 py-3 text-slate-300">{r.actions}</td>
+      <td className="px-4 py-3 text-slate-400">{r.updated}</td>
+      <td className="px-4 py-3 text-right">
+        {buildings[i] && (
+          <button className="btn btn-ghost btn-sm" onClick={()=>openEdit(buildings[i])}>
+            Edit
+          </button>
+        )}
+      </td>
+    </tr>
+  ))}
+</tbody>
           </table>
         </div>
 
