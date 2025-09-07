@@ -148,9 +148,7 @@ const HOSHI_DEFAULT_EF = { elec: 0.233, gas: 0.184 };
 // derive minimal KPIs for table/compare
 function hoshiKPIs(b) {
   // Accept the modal’s 
-  const elec = +(
-    b.elec_kwh ?? b.electricity ?? b.elec ?? 0
-  );
+ const elec = +( b.elec_kwh ?? b.electricity_kwh ?? b.electricity ?? b.elec ?? 0 );
   const gas  = +(
     b.gas_kwh ?? b.gas ?? 0
   );
@@ -647,7 +645,7 @@ function HeroOrb({ value = 0.42, label = "Good" }) {
         ...initial,
         area: toStr(initial.area),
         elec_kwh: toStr(initial.elec_kwh ?? initial.electricity_kwh),
-        gas_kwh: toStr(initial.gas_kwh ?? initial.gas_kwh),
+        gas_kwh: toStr(initial.gas_kwh ?? initial.gas),
         spend: toStr(initial.spend),
         ef_elec: toStr(initial.ef_elec ?? HOSHI_DEFAULT_EF.elec),
         ef_gas: toStr(initial.ef_gas ?? HOSHI_DEFAULT_EF.gas),
@@ -669,7 +667,7 @@ function HeroOrb({ value = 0.42, label = "Good" }) {
           ...initial,
           area: toStr(initial.area),
           elec_kwh: toStr(initial.elec_kwh ?? initial.electricity_kwh),
-          gas_kwh: toStr(initial.gas_kwh),
+          gas_kwh: toStr(initial.gas_kwh ?? initial.gas),
           spend: toStr(initial.spend),
           ef_elec: toStr(initial.ef_elec ?? HOSHI_DEFAULT_EF.elec),
           ef_gas: toStr(initial.ef_gas ?? HOSHI_DEFAULT_EF.gas),
@@ -1012,9 +1010,9 @@ function CompareTable({ cols, scenario, buildings }) {
       } },
 
     { k: "Forward price deviation", f: b => {
-        const f = computeFinancialSignal(b, buildings);           // β vs portfolio
-        const s = (f.fwd>=0?"+":"") + f.fwd.toFixed?.(1) + "%";
-        return s;
+  const f = computeFinancialSignal(b, buildings);
+  const val = Number(f.fwd);
+ return `${val >= 0 ? "+" : ""}${val.toFixed(1)}%`;
       } },
 
     { k: "β (sensitivity)", f: b => computeFinancialSignal(b, buildings).beta.toFixed(2) },
