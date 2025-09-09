@@ -214,6 +214,74 @@ function hoshiKPIs(b) {
 
   return { kwh, tco2e, intensity, completeness };
 }
+/* ---------- tiny proxies: forward deviation + nat-vent overheating ---------- */
+
+// normalised energy split with field aliases so old/new keys both work
+function getEnergySplit(b){
+  const elec = +(b.elec_kwh ?? b.electricity_kwh ?? b.electricity ?? b.elec ?? 0);
+  const gas  = +(b.gas_kwh  ?? b.gas ?? 0);
+  return { elec, gas };
+}
+
+// pick a scenario by loose name/label match (e.g. "Today", "2030", "2050")
+function pickScenario(label){
+  if (!Array.isArray(HOSHI_SCENARIOS)) return null;
+  const L = String(label).toLowerCase();
+  return HOSHI_SCENARIOS.find(s =>
+    String(s.name ?? s.label ?? "").toLowerCase().includes(L)
+  ) || null;
+}
+
+/* Forward deviation at a single scenario.
+   Simple proxy: my energy cost vs “market mean” cost at that scenario. */
+function fwdAt(b, buildings, scenario){
+  if (!b || !scenario) return 0;
+  const { elec, gas } = getEnergySplit(b);
+  const my = elec*scenario.elecP + gas*scenario.gasP;
+
+  // market = mean cost across whatever buildings we have (fallback: just me)
+  const base = (Array.isArray(buildings) && buildings.length ? buildings : [b]);
+  const list = base.map(B => {
+    const { elec, gas } = getEnergySplit(B);
+    return elec*scenario.elecP + gas*scenario.gasP;
+  });
+  const market = list.reduce((a,c)=>a+c,0) / (list.length || 1);
+
+  return market ? ((my - market)/market)*100 : 0; // %
+}
+
+/* Forward deviation delta between two time slices (e.g., "Today" → "2050").
+   Returns *percentage points* (can be negative or positive). */
+function fwdDiff(b, buildings, fromLabel="Today", toLabel="2050"){
+  const sFrom = pickScenario(fromLabel), sTo = pickScenario(toLabel);
+  if (!sFrom || !sTo) return 0;
+  return fwdAt(b, buildings, sTo) - fwdAt(b, buildings, sFrom);
+}
+
+/* Very light overheating estimate for naturally ventilated buildings.
+   Heuristic (explainable, ballpark):
+   - only if servicing contains "natural"
+   - base ~ 40 h/yr
+   - + (intensity-90)/2 if intensity > 90 kWh/m²
+   - + 20 h if yearBuilt < 1995
+   - + 40 h per +1°C warming you pass in (deltaC)
+   - clamp 0–800 */
+function natVentOverheatHours(b, opts={}){
+  const svc = String(b.servicing || "").toLowerCase();
+  if (!svc.includes("natur")) return 0;
+
+  const intensity = (() => {
+    const area = +b.area || 0;
+    const { elec, gas } = getEnergySplit(b);
+    return area ? (elec+gas)/area : 0;
+  })();
+
+  const deltaC = +opts.deltaC || 0;
+  const older  = (+b.yearBuilt || 9999) < 1995 ? 20 : 0;
+  const above  = Math.max(0, intensity - 90)/2;
+  const base   = 40 + older + above + (40*deltaC);
+  return Math.max(0, Math.min(800, base));
+}
 
 
 /* ===== Hoshi helpers (currency + finance) ===== */
