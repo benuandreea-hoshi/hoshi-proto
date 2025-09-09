@@ -216,13 +216,6 @@ function hoshiKPIs(b) {
 }
 /* ---------- tiny proxies: forward deviation + nat-vent overheating ---------- */
 
-// normalised energy split with field aliases so old/new keys both work
-function getEnergySplit(b){
-  const elec = +(b.elec_kwh ?? b.electricity_kwh ?? b.electricity ?? b.elec ?? 0);
-  const gas  = +(b.gas_kwh  ?? b.gas ?? 0);
-  return { elec, gas };
-}
-
 // pick a scenario by loose name/label match (e.g. "Today", "2030", "2050")
 function pickScenario(label){
   if (!Array.isArray(HOSHI_SCENARIOS)) return null;
