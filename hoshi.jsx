@@ -180,13 +180,6 @@ function computeOverheat(b, scenario){
   const level = hours>=300 ? "High" : hours>=120 ? "Moderate" : "Low";
   return { hours, level };
 }
-function hoshiLoadActions() {
-  try { return JSON.parse(localStorage.getItem("hoshi.actions")||"[]"); }
-  catch { return []; }
-}
-function hoshiSaveActions(list) {
-  try { localStorage.setItem("hoshi.actions", JSON.stringify(list||[])); } catch {}
-}
 
 // illustrative emission factors (kgCO2e/kWh)
 const HOSHI_DEFAULT_EF = { elec: 0.233, gas: 0.184 };
@@ -2305,58 +2298,74 @@ function Actions({ buildings = [], actions = [], setActions, goLineage }) {
 
         {/* Action cards */}
         <ul className="space-y-3">
-          {actions.map(a => {
-            const theNpv = npv(a.save, a.years, 0.08, a.capex);
-            return (
-              <li key={a.id} className="rounded-2xl p-4 md:p-5"
-                  style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}>
-                <div className="flex items-start justify-between gap-3">
-                  <div className="text-slate-100 font-medium">{a.title}</div>
-                  <span className="chip">{a.status}</span>
-                </div>
+       {actions.map(a => {
+  // tolerate both new + legacy seed shapes
+  const save   = Number(a.save ?? a.annualSavings ?? 0);
+  const years  = Number(a.years ?? (a.pay ? Math.max(1, Math.round(a.pay)) : 7));
+  const capex  = Number(a.capex ?? 0);
+  const beta   = Number(a.beta ?? 0);
+  const conf   = Number(a.confidence ?? 0.7);
 
-                {/* chips */}
-                <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                  <span className="chip">Alarm: {a.alarm}</span>
-                  <span className="chip">{a.category}</span>
-                  <span className="chip">{a.window}</span>
-                  <span className="chip">{a.rule}</span>
-                </div>
+  const indexDelta       = Number(a.indexDelta ?? a.kpi?.deltaIndex ?? 0);
+  const co2Delta         = Number(a.co2Delta   ?? a.kpi?.deltaCO2   ?? 0);
+  const comfortDeltaPct  = Number(a.comfortDeltaPct ?? 0);
 
-                {/* metrics */}
-                <div className="mt-3 grid grid-cols-2 md:grid-cols-6 gap-3">
-                  <div className="rounded-xl p-3" style={{ background: "rgba(148,163,184,.06)", border: "1px solid var(--stroke)" }}>
-                    <div className="text-xs text-slate-400">CapEx</div>
-                    <div className="text-slate-100 font-semibold">{fmt(a.capex)}</div>
-                  </div>
-                  <div className="rounded-xl p-3" style={{ background: "rgba(148,163,184,.06)", border: "1px solid var(--stroke)" }}>
-                    <div className="text-xs text-slate-400">Annual savings</div>
-                    <div className="text-slate-100 font-semibold">{fmt(a.save)}</div>
-                  </div>
-                  <div className="rounded-xl p-3" style={{ background: "rgba(148,163,184,.06)", border: "1px solid var(--stroke)" }}>
-                    <div className="text-xs text-slate-400">NPV @ 8% / {a.years}y</div>
-                    <div className="text-emerald-300 font-semibold">{fmt(theNpv)}</div>
-                  </div>
-                  <div className="rounded-xl p-3" style={{ background: "rgba(148,163,184,.06)", border: "1px solid var(--stroke)" }}>
-                    <div className="text-xs text-slate-400">Simple payback</div>
-                    <div className="text-slate-100 font-semibold">{(a.capex / a.save).toFixed(1)}y</div>
-                  </div>
-                  <div className="rounded-xl p-3" style={{ background: "rgba(148,163,184,.06)", border: "1px solid var(--stroke)" }}>
-                    <div className="text-xs text-slate-400">β / sensitivity</div>
-                    <div className="text-slate-100 font-semibold">{a.beta.toFixed(2)}</div>
-                  </div>
-                  <div className="rounded-xl p-3" style={{ background: "rgba(148,163,184,.06)", border: "1px solid var(--stroke)" }}>
-                    <div className="text-xs text-slate-400">Confidence</div>
-                    <div className="text-slate-100 font-semibold">{Math.round(a.confidence * 100)}%</div>
-                  </div>
-                </div>
+  const alarm     = a.alarm     || (a.tags?.[0]?.replace(/^Alarm:\s*/, "") ?? "Alarm");
+  const category  = a.category  || a.tags?.[1] || "";
+  const windowLbl = a.window    || a.tags?.[2] || "Last 12m";
+  const rule      = a.rule      || a.tags?.[3] || "> threshold";
 
-                {/* expected impacts */}
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <span className="chip">Δ service index {a.indexDelta.toFixed(2)}</span>
-                  <span className="chip">Δ comfort risk {a.comfortDeltaPct}%</span>
-                  <span className="chip">Δ emissions {a.co2Delta} tCO₂e/yr</span>
-                </div>
+  const theNpv = npv(save, years, 0.08, capex);
+
+  return (
+    <li key={a.id} className="rounded-2xl p-4 md:p-5" style={{ background:"var(--panel-2)", border:"1px solid var(--stroke)" }}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="text-slate-100 font-medium">{a.title}</div>
+        <span className="chip">{a.status || "To review"}</span>
+      </div>
+
+      {/* chips */}
+      <div className="mt-2 flex flex-wrap gap-2 text-xs">
+        <span className="chip">Alarm: {alarm}</span>
+        {category && <span className="chip">{category}</span>}
+        {windowLbl && <span className="chip">{windowLbl}</span>}
+        {rule && <span className="chip">{rule}</span>}
+      </div>
+
+      {/* metrics */}
+      <div className="mt-3 grid grid-cols-2 md:grid-cols-6 gap-3">
+        <div className="rounded-xl p-3" style={{ background:"rgba(148,163,184,.06)", border:"1px solid var(--stroke)" }}>
+          <div className="text-xs text-slate-400">CapEx</div>
+          <div className="text-slate-100 font-semibold">{fmt(capex)}</div>
+        </div>
+        <div className="rounded-xl p-3" style={{ background:"rgba(148,163,184,.06)", border:"1px solid var(--stroke)" }}>
+          <div className="text-xs text-slate-400">Annual savings</div>
+          <div className="text-slate-100 font-semibold">{fmt(save)}</div>
+        </div>
+        <div className="rounded-xl p-3" style={{ background:"rgba(148,163,184,.06)", border:"1px solid var(--stroke)" }}>
+          <div className="text-xs text-slate-400">NPV @ 8% / {years}y</div>
+          <div className="text-emerald-300 font-semibold">{fmt(theNpv)}</div>
+        </div>
+        <div className="rounded-xl p-3" style={{ background:"rgba(148,163,184,.06)", border:"1px solid var(--stroke)" }}>
+          <div className="text-xs text-slate-400">Simple payback</div>
+          <div className="text-slate-100 font-semibold">{save ? (capex / save).toFixed(1) + "y" : "—"}</div>
+        </div>
+        <div className="rounded-xl p-3" style={{ background:"rgba(148,163,184,.06)", border:"1px solid var(--stroke)" }}>
+          <div className="text-xs text-slate-400">β / sensitivity</div>
+          <div className="text-slate-100 font-semibold">{beta.toFixed(2)}</div>
+        </div>
+        <div className="rounded-xl p-3" style={{ background:"rgba(148,163,184,.06)", border:"1px solid var(--stroke)" }}>
+          <div className="text-xs text-slate-400">Confidence</div>
+          <div className="text-slate-100 font-semibold">{Math.round(conf * 100)}%</div>
+        </div>
+      </div>
+
+      {/* expected impacts */}
+      <div className="mt-3 flex flex-wrap gap-2">
+        <span className="chip">Δ service index {indexDelta.toFixed(2)}</span>
+        <span className="chip">Δ comfort risk {comfortDeltaPct}%</span>
+        <span className="chip">Δ emissions {co2Delta} tCO₂e/yr</span>
+      </div>
 
                 {/* CTAs */}
                 <div className="mt-4 flex flex-wrap gap-3">
@@ -3149,6 +3158,19 @@ comp: <Actions
 },
 
   ];
+      React.useEffect(() => {
+  setActions(xs => xs.map(a => ({
+    ...a,
+    save: a.save ?? a.annualSavings ?? 0,
+    indexDelta: a.indexDelta ?? a.kpi?.deltaIndex ?? 0,
+    co2Delta: a.co2Delta ?? a.kpi?.deltaCO2 ?? 0,
+    alarm: a.alarm || (a.tags?.[0]?.replace(/^Alarm:\s*/, "") ?? "Alarm"),
+    category: a.category || a.tags?.[1] || "",
+    window: a.window || a.tags?.[2] || "Last 12m",
+    rule: a.rule || a.tags?.[3] || "> threshold",
+  })));
+}, []);
+
 
   const NavItem=({t})=>{
     const is=active===t.key;
