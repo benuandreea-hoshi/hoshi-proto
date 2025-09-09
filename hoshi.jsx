@@ -2296,6 +2296,16 @@ function Actions({ buildings = [], actions = [], setActions, goLineage }) {
     co2: s.co2 + a.co2Delta,
     index: s.index + a.indexDelta,
   }), { capex: 0, save: 0, co2: 0, index: 0 });
+  // --- derived: “view” = actions + tiny proxies
+const view = React.useMemo(() => {
+  return actions.map(a => {
+    const b = buildings.find(x => x.id === a.buildingId);
+    const delta = b ? fwdDiff(b, buildings, "Today", "2050") : 0;
+    const oh    = b ? natVentOverheatHours(b, { deltaC: 2 }) : 0; // ~2050
+    return { ...a, _fwdDelta: delta, _oh: oh };
+  });
+}, [actions, buildings]);
+
 
   // --- modal state
   const [open, setOpen] = React.useState(false);
@@ -2363,7 +2373,7 @@ function Actions({ buildings = [], actions = [], setActions, goLineage }) {
 
         {/* Action cards */}
         <ul className="space-y-3">
-       {actions.map(a => {
+  {view.map(a => {
   // tolerate both new + legacy seed shapes
   const save   = Number(a.save ?? a.annualSavings ?? 0);
   const years  = Number(a.years ?? (a.pay ? Math.max(1, Math.round(a.pay)) : 7));
@@ -2389,13 +2399,23 @@ function Actions({ buildings = [], actions = [], setActions, goLineage }) {
         <span className="chip">{a.status || "To review"}</span>
       </div>
 
-      {/* chips */}
-      <div className="mt-2 flex flex-wrap gap-2 text-xs">
-        <span className="chip">Alarm: {alarm}</span>
-        {category && <span className="chip">{category}</span>}
-        {windowLbl && <span className="chip">{windowLbl}</span>}
-        {rule && <span className="chip">{rule}</span>}
-      </div>
+    {/* chips */}
+<div className="mt-2 flex flex-wrap gap-2 text-xs">
+  <span className="chip">Alarm: {alarm}</span>
+  {category && <span className="chip">{category}</span>}
+  {windowLbl && <span className="chip">{windowLbl}</span>}
+  {rule && <span className="chip">{rule}</span>}
+
+  {/* NEW: tiny proxies */}
+  {Number.isFinite(a._fwdDelta) && (
+    <span className="chip">
+      Δ forward price {a._fwdDelta >= 0 ? "+" : ""}{a._fwdDelta.toFixed(1)}%
+    </span>
+  )}
+  {a._oh > 0 && (
+    <span className="chip">Overheating ~ {Math.round(a._oh)} h</span>
+  )}
+</div>
 
       {/* metrics */}
       <div className="mt-3 grid grid-cols-2 md:grid-cols-6 gap-3">
