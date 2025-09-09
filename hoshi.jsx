@@ -3197,22 +3197,21 @@ comp: <Actions
       </aside>
 
       {/* Top bar (mobile) */}
-  <header
+<header
   className="md:hidden sticky top-0 z-[2000] px-4 py-3 flex items-center justify-between"
   style={{background:"rgba(15,17,21,.85)",backdropFilter:"blur(4px)",borderBottom:"1px solid var(--stroke)"}}
 >
   <button className="navicon" onClick={()=>setOpen(true)} aria-label="Open menu">
-    {/* menu icon */}
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
       <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
     </svg>
   </button>
 
-  {/* BRAND — truly centered on mobile */}
+  {/* Brand centered */}
   <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 md:static md:translate-x-0">
     {LOGO_SRC
       ? <img src={LOGO_SRC} alt="Hoshi logo" className="w-6 h-6 rounded object-cover" />
-      : <StarLogo size={18} />
+      : <span className="font-semibold text-lg leading-none">Hoshi</span>
     }
     <span className="font-semibold text-lg leading-none">Hoshi</span>
   </div>
