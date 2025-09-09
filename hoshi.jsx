@@ -2418,9 +2418,27 @@ function Actions({ buildings=[], actions=[], setActions, goLineage }) {
           <span className="chip">CapEx {tmpl.capex ? "£"+tmpl.capex.toLocaleString() : "—"}</span>
           <span className="chip">Savings {tmpl.opexSave ? "£"+tmpl.opexSave.toLocaleString()+"/yr" : "—"}</span>
           <span className="chip">Confidence {Math.round((tmpl.confidence||0)*100)}%</span>
-          <button className="btn btn-ghost ml-auto" onClick={()=>goLineage?.({source:"ActionTemplate", key:tmpl.key})}>
-            View data lineage
-          </button>
+         <button
+  className="btn btn-ghost ml-auto"
+  onClick={() => {
+    // reuse the delta we already computed for this card
+    const d = active ? computeActionDelta(active, buildings, tmpl, scenario) : null;
+    goLineage?.({
+      source: "ActionTemplate",
+      key: tmpl.key,
+      title: tmpl.title,
+      tags: tmpl.tags,
+      finance: { capex: tmpl.capex, save: tmpl.opexSave, confidence: tmpl.confidence },
+      impacts: d ? {
+        kwh: d.kwh, tco2e: d.tco2e, intensity: d.intensity, fwd: d.fwd, beta: d.beta, overHours: d.overHours
+      } : null,
+      building: active ? { id: active.id, name: active.name } : null,
+      scenario
+    });
+  }}
+>
+  View data lineage
+</button>
         </div>
       </div>
     );
@@ -2492,25 +2510,42 @@ function Actions({ buildings=[], actions=[], setActions, goLineage }) {
 // --- Lineage & Governance ---
 function Lineage({ fromAction, goActions }) {
   const A = fromAction || null;
-const num = (v, d = 0) => {
-  const n = Number(v);
-  return Number.isFinite(n) ? n : d;
-};
-const f1 = (v) => num(v).toFixed(1);
-const f2 = (v) => num(v).toFixed(2);
+
+  // Helpers
+  const num = (v, d = 0) => (Number.isFinite(+v) ? +v : d);
+  const f1 = (v) => num(v).toFixed(1);
+  const f2 = (v) => num(v).toFixed(2);
 
   const Card = ({ title, children }) => (
-    <div className="rounded-xl p-4"
-         style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}>
+    <div className="rounded-xl p-4" style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}>
       <div className="text-slate-100 font-medium">{title}</div>
       <div className="mt-2 text-sm text-slate-300">{children}</div>
     </div>
   );
 
+  // Determine shape: legacy planned action vs. template preview
+  const isTemplate = A && A.source === "ActionTemplate";
+  const T = isTemplate ? ACTION_TEMPLATES.find(t => t.key === A.key) : null;
+
+  const title =
+    "Data lineage" +
+    (A
+      ? " — " + (A.title || T?.title || "Action")
+      : "");
+
+  // Normalised fields (so JSX stays simple)
+  const alarm = !isTemplate ? (A?.alarm || {}) : null;
+  const finance = A?.finance || (isTemplate
+    ? { capex: T?.capex, save: T?.opexSave, confidence: T?.confidence }
+    : null);
+
+  const impacts = A?.impacts || null;
+  const tags = (A?.tags && A.tags.length ? A.tags : T?.tags) || [];
+
   return (
     <div className="grid gap-4 md:gap-6">
       <Section
-        title={"Data lineage" + (A ? ` — ${A.title}` : "")}
+        title={title}
         desc="Inputs → transforms → factors → formulas → versions. This is how we make numbers audit-ready."
         right={A && <button className="btn btn-ghost" onClick={goActions}>← Back to actions</button>}
       >
@@ -2539,25 +2574,54 @@ const f2 = (v) => num(v).toFixed(2);
           </Card>
         </div>
 
-        {/* If we came from an action, show its snapshot */}
+        {/* Snapshot */}
         {A ? (
           <div className="grid md:grid-cols-2 gap-3 md:gap-4">
             <Card title="Lineage snapshot">
               <div className="grid grid-cols-1 gap-2">
-                <div><span className="text-slate-400">Alarm</span> · {A.alarm.type} — {A.alarm.category} ({A.alarm.window}; {A.alarm.rule})</div>
-                <div><span className="text-slate-400">Baseline</span> · {A.lineage?.baseline || "—"}</div>
-                <div><span className="text-slate-400">Method</span> · {A.lineage?.method || "—"}</div>
-                <div><span className="text-slate-400">Factors</span> · {(A.lineage?.factors || []).join(", ") || "—"}</div>
-                <div className="flex flex-wrap gap-2 mt-1">
-                 <span className="chip">Δ index {f2(A?.impacts?.indexDelta)}</span>
-<span className="chip">Δ comfort {num(A?.impacts?.comfortDeltaPct)}%</span>
-<span className="chip">Δ tCO₂e {num(A?.impacts?.co2Delta)} /yr</span>
-                </div>
+                {!isTemplate ? (
+                  <>
+                    <div>
+                      <span className="text-slate-400">Alarm</span> ·
+                      {" "}{alarm?.type || A?.alarm || "—"}
+                      {alarm?.category ? ` — ${alarm.category}` : ""}
+                      {(alarm?.window || alarm?.rule) && (
+                        <> ({alarm?.window || "—"}; {alarm?.rule || "—"})</>
+                      )}
+                    </div>
+                    <div><span className="text-slate-400">Baseline</span> · {A?.lineage?.baseline || "—"}</div>
+                    <div><span className="text-slate-400">Method</span> · {A?.lineage?.method || "—"}</div>
+                    <div><span className="text-slate-400">Factors</span> · {(A?.lineage?.factors || []).join(", ") || "—"}</div>
+                  </>
+                ) : (
+                  <>
+                    <div><span className="text-slate-400">Template</span> · {T?.title || A?.title || A?.key}</div>
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      {tags.map((t,i)=><span key={i} className="chip">{t}</span>)}
+                      {A?.scenario && <span className="chip">{A.scenario}</span>}
+                      {A?.building?.name && <span className="chip">{A.building.name}</span>}
+                    </div>
+                  </>
+                )}
+
+                {/* Impacts if available */}
+                {impacts && (
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    {"kwh" in impacts && <span className="chip">Δ kWh {impacts.kwh.toLocaleString()}</span>}
+                    {"tco2e" in impacts && <span className="chip">Δ tCO₂e {f1(impacts.tco2e)}/yr</span>}
+                    {"intensity" in impacts && <span className="chip">Δ intensity {impacts.intensity} kWh/m²</span>}
+                    {"fwd" in impacts && <span className="chip">Δ forward {num(impacts.fwd)>=0?"+":""}{f1(impacts.fwd)}%</span>}
+                    {"beta" in impacts && <span className="chip">Δ β {num(impacts.beta)>=0?"+":""}{f2(impacts.beta)}</span>}
+                    {"overHours" in impacts && typeof impacts.overHours === "number" && (
+                      <span className="chip">Δ overheating {impacts.overHours} h/yr</span>
+                    )}
+                  </div>
+                )}
               </div>
             </Card>
 
             <Card title="Verification & acceptance">
-              {A.plan ? (
+              {A?.plan ? (
                 <div className="grid gap-2">
                   <div><span className="text-slate-400">Owner</span> · {A.plan.owner}</div>
                   <div><span className="text-slate-400">Start</span> · {A.plan.start}</div>
@@ -2577,62 +2641,75 @@ const f2 = (v) => num(v).toFixed(2);
             <Card title="Trace (demo)">
               <div className="text-xs">
                 <div className="grid grid-cols-[160px_1fr] gap-y-1">
-                  <div className="text-slate-400">Source</div><div>{A.lineage?.baseline || "FY24 bills"}</div>
-                  <div className="text-slate-400">Transforms</div><div>OCR → clean → normalise (HDD/CDD)</div>
-                  <div className="text-slate-400">Model</div><div>{A.lineage?.method || "Top-down regression"}</div>
-   <div>Outputs</div>
-<div>Δ index {f2(A?.impacts?.indexDelta)}; Δ tCO₂e {num(A?.impacts?.co2Delta)}/yr</div>
-                  <div className="text-slate-400">Version</div><div>v0.2 · {new Date().toISOString().slice(0,10)}</div>
+                  <div className="text-slate-400">Source</div>
+                  <div>{A?.lineage?.baseline || (isTemplate ? "FY bills / building KPIs" : "—")}</div>
+
+                  <div className="text-slate-400">Transforms</div>
+                  <div>OCR → clean → normalise (HDD/CDD)</div>
+
+                  <div className="text-slate-400">Model</div>
+                  <div>{A?.lineage?.method || (isTemplate ? `template-${A?.key}` : "Top-down regression")}</div>
+
+                  <div>Outputs</div>
+                  <div>
+                    {impacts
+                      ? <>
+                          {"Δ kWh "}{("kwh" in impacts) ? impacts.kwh.toLocaleString() : "—"}
+                          {"; Δ tCO₂e "}{("tco2e" in impacts) ? f1(impacts.tco2e) : "—"}/yr
+                        </>
+                      : "—"}
+                  </div>
+
+                  <div className="text-slate-400">Version</div>
+                  <div>v0.2 · {new Date().toISOString().slice(0,10)}</div>
                 </div>
               </div>
             </Card>
 
-          <Card title="Finance context">
-  <div className="grid grid-cols-2 gap-2">
-    <div>
-      <span className="text-slate-400">CapEx</span>
-      <div className="text-slate-100 font-semibold">
-        {fmtMoney(Number(A?.finance?.capex ?? 0))}
-      </div>
-    </div>
-    <div>
-      <span className="text-slate-400">Savings /yr</span>
-      <div className="text-slate-100 font-semibold">
-        {fmtMoney(Number(A?.finance?.save ?? 0))}
-      </div>
-    </div>
-    <div>
-      <span className="text-slate-400">NPV @8%</span>
-      <div className="text-emerald-300 font-semibold">
-        {fmtMoney(Number(A?.finance?.npv ?? 0))}
-      </div>
-    </div>
-    <div>
-      <span className="text-slate-400">Payback</span>
-      <div className="text-slate-100 font-semibold">
-        {(A?.finance?.payback ?? "—")}y
-      </div>
-    </div>
-    <div>
-      <span className="text-slate-400">β</span>
-      <div className="text-slate-100 font-semibold">
-        {Number(A?.finance?.beta ?? 0).toFixed(2)}
-      </div>
-    </div>
-    <div>
-      <span className="text-slate-400">Confidence</span>
-      <div className="text-slate-100 font-semibold">
-        {Math.round(Number(A?.finance?.confidence ?? 0.7) * 100)}%
-      </div>
-    </div>
-  </div>
-</Card>
-
-
+            <Card title="Finance context">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <span className="text-slate-400">CapEx</span>
+                  <div className="text-slate-100 font-semibold">
+                    {fmtMoney(num(finance?.capex))}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-slate-400">Savings /yr</span>
+                  <div className="text-slate-100 font-semibold">
+                    {fmtMoney(num(finance?.save))}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-slate-400">NPV @8%</span>
+                  <div className="text-emerald-300 font-semibold">
+                    {/* NPV is not computed here for templates; show "—" unless provided */}
+                    {Number.isFinite(num(A?.finance?.npv, NaN)) ? fmtMoney(A.finance.npv) : "—"}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-slate-400">Payback</span>
+                  <div className="text-slate-100 font-semibold">
+                    {A?.finance?.payback ?? "—"}{A?.finance?.payback != null ? "y" : ""}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-slate-400">β</span>
+                  <div className="text-slate-100 font-semibold">
+                    {Number.isFinite(num(A?.finance?.beta, NaN)) ? num(A.finance.beta).toFixed(2) : "—"}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-slate-400">Confidence</span>
+                  <div className="text-slate-100 font-semibold">
+                    {Math.round(num(finance?.confidence, 0.7) * 100)}%
+                  </div>
+                </div>
+              </div>
+            </Card>
           </div>
         ) : (
-          <div className="rounded-xl p-4"
-               style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}>
+          <div className="rounded-xl p-4" style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}>
             <div className="text-slate-300 text-sm">
               Open this page from an action to see a complete lineage snapshot for that recommendation.
               You’ll get: Source → Normalisation → Model → Version → M&V → Acceptance, with links to the
@@ -2644,6 +2721,7 @@ const f2 = (v) => num(v).toFixed(2);
     </div>
   );
 }
+
 
 
 function PublicBPS({ goLineage = ()=>{}, goActions = ()=>{} }){
