@@ -153,11 +153,9 @@ function ncmBandFromPct(pct){
 }
 // --- PATCH START: field aliases ---
 function getEnergySplit(b){
-  // Accept both the new modal fields and any older names
-  return {
-    elec: +(b.elec_kwh ?? b.electricity_kwh ?? b.electricity ?? b.elec ?? 0),
-    gas:  +(b.gas_kwh  ?? b.gas ?? 0)
-  };
+  const elec = +(b.electricity_kwh ?? b.elec_kwh ?? b.electricity ?? 0);
+  const gas  = +(b.gas_kwh ?? b.gas ?? 0);
+  return { elec, gas };
 }
 // --- PATCH END ---
 
@@ -374,36 +372,38 @@ function warmingDelta(label){
 }
 
 // Compute deltas produced by applying a template to building b
-function computeActionDelta(b, buildings, tmpl, scenarioLabel="Today"){
+function computeActionDelta(b, buildings, tmpl, scenarioLabel = "Today") {
   const s = pickScenario(scenarioLabel) || pickScenario("Today");
 
   const baseK   = hoshiKPIs(b);
-  const baseFwd = s ? fwdAt(b, buildings, s) : 0;                 // %
-  const baseB   = (computeFinancialSignal(b, buildings)?.beta) || 0;
+  const baseFwd = s ? fwdAt(b, buildings, s) : 0;                     // %
+  const baseSig = computeFinancialSignal(b, buildings) || {};
+  const baseB   = Number(baseSig.beta || 0);
   const baseHot = natVentOverheatHours(b, { deltaC: warmingDelta(scenarioLabel) });
 
   const after   = applyTemplate(b, tmpl);
   const postK   = hoshiKPIs(after);
-  const postFwd = s ? fwdAt(after, buildings, s) : 0;             // %
-  const postB   = (computeFinancialSignal(after, buildings)?.beta) || 0;
+  const postFwd = s ? fwdAt(after, buildings, s) : 0;                 // %
+  const postSig = computeFinancialSignal(after, buildings) || {};
+  const postB   = Number(postSig.beta || 0);
   const postHot = natVentOverheatHours(after, { deltaC: warmingDelta(scenarioLabel) });
 
-  // comfort benefit: for nat-vent comfort template, reduce hours
-  const comfortDelta =
-    (tmpl.key === "shade_purge_fans" && String(b.servicing||"").toLowerCase().includes("natur"))
-      ? Math.round((postHot - baseHot) * (tmpl.comfortFactor ?? 0.5)) // negative number
-      : (postHot - baseHot);
+  // comfort benefit for nat-vent comfort template
+  let comfortDelta = postHot - baseHot;
+  if (tmpl.key === "shade_purge_fans" && String(b.servicing || "").toLowerCase().includes("natur")) {
+    comfortDelta = Math.round(comfortDelta * (tmpl.comfortFactor ?? 0.5)); // negative saves hours
+  }
 
   return {
-    kwh:       Math.round(postK.kwh - baseK.kwh),                 // change in kWh/yr
-    tco2e:     +(postK.tco2e - baseK.tco2e).toFixed(1),           // change in tCO2e/yr
-    intensity: Math.round((postK.intensity||0) - (baseK.intensity||0)),
-    fwd:       +(postFwd - baseFwd).toFixed(1),                   // Δ forward price (pp)
-    beta:      +((postB - baseB).toFixed(2)),                     // Δ β
-    overHours: comfortDelta,                                      // Δ overheating hours
-    after,                                                        // the “post” building, if you want it
+    kwh: Math.round(postK.kwh - baseK.kwh),
+    tco2e: Number((postK.tco2e - baseK.tco2e).toFixed(1)),
+    intensity: Math.round((postK.intensity || 0) - (baseK.intensity || 0)),
+    fwd: Number((postFwd - baseFwd).toFixed(1)),        // percentage points
+    beta: Number((postB - baseB).toFixed(2)),
+    overHours: Math.round(comfortDelta)
   };
 }
+
 
 
 /* ===== Hoshi helpers (currency + finance) ===== */
@@ -2361,339 +2361,134 @@ function Building(){
   );
 }
  // REPLACE your whole Actions() with this version
-function Actions({ buildings = [], actions = [], setActions, goLineage }) {
-  // --- helpers (local to this component so we don’t leak globals)
-  const npv = (annual, years = 7, rate = 0.08, capex = 0) => {
-    const pv = annual * (1 - Math.pow(1 + rate, -years)) / rate; // annuity PV
-    return Math.round(pv - capex);
-  };
-  const fmt = (n) => fmtMoney(n);
+function Actions({ buildings=[], actions=[], setActions, goLineage }) {
+  const [scenario, setScenario] = React.useState("Today");
+  const [bId, setBId] = React.useState(buildings[0]?.id || null);
+  const active = buildings.find(b => b.id===bId) || buildings[0];
 
-  // --- lineage defaults for demo ids (led/hvac)
-  const DEFAULT_LINEAGE = {
-    led: {
-      baseline: "FY24 bills",
-      method: "Top-down regression adj. for HDD/CDD",
-      factors: ["lamp efficacy", "hours-of-use", "maintenance"],
-    },
-    hvac: {
-      baseline: "FY24 logger data",
-      method: "Schedule optimisation (BMS)",
-      factors: ["occupied hours", "supply temp", "night purge"],
-    }
-  };
-
-  // Turn a compact ACTION row into the richer shape your UI expects
-  const enrich = (a) => {
-    const [alarmType, alarmCat] = (a.alarm || "").split("•").map(s => s && s.trim());
-    const isOverrun = (alarmType || "").toLowerCase().includes("overrun");
-
-    return {
-      id: a.id,
-      title: a.title,
-
-      // chips
-      alarm: alarmType || a.alarm || "Alarm",
-      category: alarmCat || (a.id === "led" ? "Electricity" : "Overheating hours"),
-      window: a.window || (a.id === "hvac" ? "Summer" : "Last 12m"),
-      rule: a.rule || (isOverrun ? ">10% vs budget" : "> threshold"),
-
-      // finance inputs
-      capex: a.capex,
-      save: a.save,
-      years: a.years ?? (a.pay ? Math.max(1, Math.round(a.pay)) : 7),
-      beta: a.beta,
-      confidence: a.confidence, // 0..1
-
-      // impacts
-      indexDelta: a.deltaIndex,
-      comfortDeltaPct: a.comfortDeltaPct ?? (a.id === "hvac" ? -18 : -28),
-      co2Delta: a.co2Delta ?? (a.id === "led" ? -6.5 : -2.3),
-
-      // admin
-      status: a.status || "To review",
-      plan: null,
-      lineage: a.lineage || DEFAULT_LINEAGE[a.id] || { baseline: "FY data", method: "Modelled", factors: [] },
+  const addToPlan = (tmpl) => {
+    if (!active) return;
+    const delta = computeActionDelta(active, buildings, tmpl, scenario);
+    const item = {
+      id: hoshiUid(),
+      buildingId: active.id,
+      title: tmpl.title,
+      tags: tmpl.tags,
+      capex: tmpl.capex,
+      opex_saving: tmpl.opexSave,
+      npv: null, payback: null,
+      delta,
+      confidence: tmpl.confidence,
+      status: "To review",
+      lineage: { method:"template-"+tmpl.key, createdFromKpis: true }
     };
+    setActions(prev => [...prev, item]);
   };
 
-  // --- derived: planned roll-ups for a quick bar at the top
-  const planned = actions.filter(a => a.status === "Planned");
-  const plannedTotals = planned.reduce((s, a) => ({
-    capex: s.capex + a.capex,
-    save: s.save + a.save,
-    co2: s.co2 + a.co2Delta,
-    index: s.index + a.indexDelta,
-  }), { capex: 0, save: 0, co2: 0, index: 0 });
-  // --- derived: “view” = actions + tiny proxies
-const view = React.useMemo(() => {
-  return actions.map(a => {
-    const b = buildings.find(x => x.id === a.buildingId);
-    const delta = b ? fwdDiff(b, buildings, "Today", "2050") : 0;
-    const oh    = b ? natVentOverheatHours(b, { deltaC: 2 }) : 0; // ~2050
-    return { ...a, _fwdDelta: delta, _oh: oh };
-  });
-}, [actions, buildings]);
+  const buildingActions = actions.filter(a => (a.buildingId ?? active?.id) === active?.id);
 
+  const Card = ({tmpl}) => {
+    const d = active ? computeActionDelta(active, buildings, tmpl, scenario) : null;
+    return (
+      <div className="rounded-2xl p-4 md:p-5 mb-4" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="text-slate-50 font-semibold">{tmpl.title}</div>
+            <div className="mt-1 flex flex-wrap gap-2 text-xs text-slate-400">
+              {tmpl.tags.map((t,i)=><span key={i} className="chip">{t}</span>)}
+              <span className="chip">{scenario}</span>
+            </div>
+          </div>
+          <button className="btn btn-primary" onClick={()=>addToPlan(tmpl)}>Add to plan</button>
+        </div>
 
-  // --- modal state
-  const [open, setOpen] = React.useState(false);
-  const [draft, setDraft] = React.useState({
-    actionId: null, owner: "", start: "", funding: "CapEx", mv: "Bills (12m)", accept: "", scope: ""
-  });
+        {active && d && (
+          <div className="grid sm:grid-cols-3 lg:grid-cols-6 gap-3 mt-4">
+            <Metric label="Δ kWh/yr" value={d.kwh.toLocaleString()} />
+            <Metric label="Δ tCO₂e/yr" value={`${d.tco2e}`} />
+            <Metric label="Δ intensity" value={`${d.intensity} kWh/m²`} />
+            <Metric label="Δ forward premium" value={`${d.fwd>=0?"+":""}${d.fwd}%`} />
+            <Metric label="Δ β / sensitivity" value={`${d.beta>=0?"+":""}${d.beta}`} />
+            {(active.servicing||"").toLowerCase().includes("naturally") &&
+              <Metric label="Δ overheating (hrs/yr)" value={d.overHours} />}
+          </div>
+        )}
 
-  const openPlan = (a) => {
-  const save = Number(a.save ?? a.annualSavings ?? 0);
-  const idx  = Number(a.indexDelta ?? a.kpi?.deltaIndex ?? 0);
-
-  setDraft({
-    actionId: a.id,
-    owner: "",
-    start: new Date().toISOString().slice(0, 7), // yyyy-mm
-    funding: "CapEx",
-    mv: "Bills (12m)",
-    accept: `≥ ${fmt(save * 0.85)} saved/yr & Δindex ≤ ${idx.toFixed(2)}`,
-    scope: ""
-  });
-  setOpen(true);
-};
-
-
-  const savePlan = () => {
-    setActions(xs => xs.map(a => a.id !== draft.actionId ? a : ({
-      ...a,
-      status: "Planned",
-      plan: {
-        owner: draft.owner || "Unassigned",
-        start: draft.start,
-        funding: draft.funding,
-        mv: draft.mv,
-        accept: draft.accept,
-        scope: draft.scope,
-        snapshot: {
-          capex: a.capex, save: a.save, years: a.years, beta: a.beta,
-          confidence: a.confidence, indexDelta: a.indexDelta, co2Delta: a.co2Delta
-        }
-      }
-    })));
-    setOpen(false);
+        <div className="mt-3 flex gap-2 text-xs text-slate-400">
+          <span className="chip">CapEx {tmpl.capex ? "£"+tmpl.capex.toLocaleString() : "—"}</span>
+          <span className="chip">Savings {tmpl.opexSave ? "£"+tmpl.opexSave.toLocaleString()+"/yr" : "—"}</span>
+          <span className="chip">Confidence {Math.round((tmpl.confidence||0)*100)}%</span>
+          <button className="btn btn-ghost ml-auto" onClick={()=>goLineage?.({source:"ActionTemplate", key:tmpl.key})}>
+            View data lineage
+          </button>
+        </div>
+      </div>
+    );
   };
 
   return (
     <div className="grid gap-4 md:gap-6">
       <Section
         title="Actions"
-        desc="Each action originates from a monitored alarm and carries a finance view (NPV, payback) plus expected performance impact."
+        desc="Pick a building, explore suggested actions, see the effect, and add the ones you want to your plan."
       >
-        {/* Planned roll-up */}
-        {!!planned.length && (
-          <div className="rounded-xl p-3 mb-3 grid grid-cols-2 md:grid-cols-4 gap-3"
-               style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}>
-            <div><div className="text-xs text-slate-400">Planned CapEx</div>
-              <div className="text-slate-100 font-semibold">{fmt(plannedTotals.capex)}</div></div>
-            <div><div className="text-xs text-slate-400">Planned savings /yr</div>
-              <div className="text-slate-100 font-semibold">{fmt(plannedTotals.save)}</div></div>
-            <div><div className="text-xs text-slate-400">Planned Δ index</div>
-              <div className="text-emerald-300 font-semibold">{plannedTotals.index.toFixed(2)}</div></div>
-            <div><div className="text-xs text-slate-400">Planned Δ tCO₂e/yr</div>
-              <div className="text-emerald-300 font-semibold">{plannedTotals.co2.toFixed(1)}</div></div>
+        {/* Picker */}
+        <div className="flex flex-wrap items-center gap-3 mb-3">
+          <label className="text-slate-300 text-sm">Building</label>
+          <select
+            className="px-3 py-2 rounded-lg"
+            style={{background:"var(--panel-2)", border:"1px solid var(--stroke)", color:"var(--text)"}}
+            value={bId || ""}
+            onChange={e=>setBId(e.target.value)}
+          >
+            {buildings.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}
+          </select>
+
+          <label className="text-slate-300 text-sm ml-2">Scenario</label>
+          <select
+            className="px-3 py-2 rounded-lg"
+            style={{background:"var(--panel-2)", border:"1px solid var(--stroke)", color:"var(--text)"}}
+            value={scenario} onChange={e=>setScenario(e.target.value)}
+          >
+            <option>Today</option>
+            <option>2030</option>
+            <option>2050</option>
+          </select>
+        </div>
+
+        {/* Suggestions for the active building */}
+        <div className="text-slate-400 text-sm mb-2">Suggested actions for this building</div>
+        {(active ? ACTION_TEMPLATES.filter(t=>t.appliesTo(active)) : [])
+          .map(t => <Card key={t.key} tmpl={t} />)}
+
+        {/* Already in your plan for this building */}
+        <div className="mt-6 text-slate-400 text-sm">In your plan for this building</div>
+        {buildingActions.length===0 && <div className="text-slate-500 text-sm mt-2">No actions yet.</div>}
+        {buildingActions.map(a=>(
+          <div key={a.id} className="rounded-xl p-4 mt-3" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
+            <div className="flex items-center justify-between">
+              <div className="text-slate-100 font-medium">{a.title}</div>
+              <div className="flex gap-2">
+                <button className="btn btn-ghost" onClick={()=>setActions(prev=>prev.filter(x=>x.id!==a.id))}>Remove</button>
+              </div>
+            </div>
+            {a.delta && (
+              <div className="mt-3 grid sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                <Metric label="Δ kWh/yr" value={a.delta.kwh.toLocaleString()} />
+                <Metric label="Δ tCO₂e/yr" value={`${a.delta.tco2e}`} />
+                <Metric label="Δ intensity" value={`${a.delta.intensity} kWh/m²`} />
+                <Metric label="Δ forward premium" value={`${a.delta.fwd>=0?"+":""}${a.delta.fwd}%`} />
+                <Metric label="Δ β / sensitivity" value={`${a.delta.beta>=0?"+":""}${a.delta.beta}`} />
+                {typeof a.delta.overHours==="number" && <Metric label="Δ overheating (hrs/yr)" value={a.delta.overHours} />}
+              </div>
+            )}
           </div>
-        )}
-
-        {/* Action cards */}
-        <ul className="space-y-3">
-  {view.map(a => {
-  // tolerate both new + legacy seed shapes
-  const save   = Number(a.save ?? a.annualSavings ?? 0);
-  const years  = Number(a.years ?? (a.pay ? Math.max(1, Math.round(a.pay)) : 7));
-  const capex  = Number(a.capex ?? 0);
-  const beta   = Number(a.beta ?? 0);
-  const conf   = Number(a.confidence ?? 0.7);
-
-  const indexDelta       = Number(a.indexDelta ?? a.kpi?.deltaIndex ?? 0);
-  const co2Delta         = Number(a.co2Delta   ?? a.kpi?.deltaCO2   ?? 0);
-  const comfortDeltaPct  = Number(a.comfortDeltaPct ?? 0);
-
-  const alarm     = a.alarm     || (a.tags?.[0]?.replace(/^Alarm:\s*/, "") ?? "Alarm");
-  const category  = a.category  || a.tags?.[1] || "";
-  const windowLbl = a.window    || a.tags?.[2] || "Last 12m";
-  const rule      = a.rule      || a.tags?.[3] || "> threshold";
-
-  const theNpv = npv(save, years, 0.08, capex);
-
-  return (
-    <li key={a.id} className="rounded-2xl p-4 md:p-5" style={{ background:"var(--panel-2)", border:"1px solid var(--stroke)" }}>
-      <div className="flex items-start justify-between gap-3">
-        <div className="text-slate-100 font-medium">{a.title}</div>
-        <span className="chip">{a.status || "To review"}</span>
-      </div>
-
-    {/* chips */}
-<div className="mt-2 flex flex-wrap gap-2 text-xs">
-  <span className="chip">Alarm: {alarm}</span>
-  {category && <span className="chip">{category}</span>}
-  {windowLbl && <span className="chip">{windowLbl}</span>}
-  {rule && <span className="chip">{rule}</span>}
-
-  {/* NEW: tiny proxies */}
-  {Number.isFinite(a._fwdDelta) && (
-    <span className="chip">
-      Δ forward price {a._fwdDelta >= 0 ? "+" : ""}{a._fwdDelta.toFixed(1)}%
-    </span>
-  )}
-  {a._oh > 0 && (
-    <span className="chip">Overheating ~ {Math.round(a._oh)} h</span>
-  )}
-</div>
-
-      {/* metrics */}
-      <div className="mt-3 grid grid-cols-2 md:grid-cols-6 gap-3">
-        <div className="rounded-xl p-3" style={{ background:"rgba(148,163,184,.06)", border:"1px solid var(--stroke)" }}>
-          <div className="text-xs text-slate-400">CapEx</div>
-          <div className="text-slate-100 font-semibold">{fmt(capex)}</div>
-        </div>
-        <div className="rounded-xl p-3" style={{ background:"rgba(148,163,184,.06)", border:"1px solid var(--stroke)" }}>
-          <div className="text-xs text-slate-400">Annual savings</div>
-          <div className="text-slate-100 font-semibold">{fmt(save)}</div>
-        </div>
-        <div className="rounded-xl p-3" style={{ background:"rgba(148,163,184,.06)", border:"1px solid var(--stroke)" }}>
-          <div className="text-xs text-slate-400">NPV @ 8% / {years}y</div>
-          <div className="text-emerald-300 font-semibold">{fmt(theNpv)}</div>
-        </div>
-        <div className="rounded-xl p-3" style={{ background:"rgba(148,163,184,.06)", border:"1px solid var(--stroke)" }}>
-          <div className="text-xs text-slate-400">Simple payback</div>
-          <div className="text-slate-100 font-semibold">{save ? (capex / save).toFixed(1) + "y" : "—"}</div>
-        </div>
-        <div className="rounded-xl p-3" style={{ background:"rgba(148,163,184,.06)", border:"1px solid var(--stroke)" }}>
-          <div className="text-xs text-slate-400">β / sensitivity</div>
-          <div className="text-slate-100 font-semibold">{beta.toFixed(2)}</div>
-        </div>
-        <div className="rounded-xl p-3" style={{ background:"rgba(148,163,184,.06)", border:"1px solid var(--stroke)" }}>
-          <div className="text-xs text-slate-400">Confidence</div>
-          <div className="text-slate-100 font-semibold">{Math.round(conf * 100)}%</div>
-        </div>
-      </div>
-
-      {/* expected impacts */}
-      <div className="mt-3 flex flex-wrap gap-2">
-        <span className="chip">Δ service index {indexDelta.toFixed(2)}</span>
-        <span className="chip">Δ comfort risk {comfortDeltaPct}%</span>
-        <span className="chip">Δ emissions {co2Delta} tCO₂e/yr</span>
-      </div>
-
-                {/* CTAs */}
-<div className="mt-4 flex flex-wrap gap-3">
-  <button
-    className="btn btn-ghost"
-    onClick={() => {
-      goLineage({
-        id: a.id,
-        title: a.title,
-        status: a.status,
-        alarm: { type: a.alarm, category: a.category, window: a.window, rule: a.rule },
-        finance: { capex, save, years, npv: theNpv, payback: save ? (capex / save).toFixed(1) : "—", beta, confidence: conf },
-        impacts: { indexDelta, comfortDeltaPct, co2Delta },
-        lineage: a.lineage,
-        plan: a.plan || null
-      });
-    }}
-  >
-    View data lineage
-  </button>
-
-  {a.status !== "Planned" ? (
-    <button className="btn btn-primary" onClick={() => openPlan(a)}>Add to plan</button>
-  ) : (
-    <span className="text-xs text-slate-400 mt-2">Planned by {a.plan?.owner} · starts {a.plan?.start}</span>
-  )}
-
-  {/* Preview of first applicable template (optional) */}
-  {(() => {
-    const b = buildings.find(x => x.id === a.buildingId);
-    if (!b || !Array.isArray(ACTION_TEMPLATES)) return null;
-    const list = ACTION_TEMPLATES.filter(t => t.appliesTo(b));
-    if (!list.length) return null;
-
-    const t = list[0]; // pick first applicable for now
-    const delta = computeActionDelta(b, buildings, t, "Today");
-
-    return (
-      <span className="text-xs text-slate-400 md:ml-auto">
-        Try <b>{t.title}</b>: ΔkWh {delta.kwh.toLocaleString()} • ΔtCO₂e {delta.tco2e} • Δfwd {delta.fwd >= 0 ? "+" : ""}{delta.fwd}pp • Δβ {delta.beta} • ΔOH {delta.overHours}h
-      </span>
-    );
-  })()}
-</div>
-
-              </li>
-            );
-          })}
-        </ul>
+        ))}
       </Section>
-
-      {/* lightweight modal */}
-      {open && (
-        <div className="fixed inset-0 z-[3000] grid place-items-center" style={{ background: "rgba(0,0,0,.45)" }}>
-          <div className="w-[min(640px,92vw)] rounded-2xl p-5"
-               style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}>
-            <div className="text-slate-100 font-semibold text-lg">Add to plan</div>
-            <div className="text-slate-400 text-sm">Promote this action to the roadmap and register how we’ll verify it.</div>
-
-            <div className="grid md:grid-cols-2 gap-3 mt-4">
-              <div>
-                <label className="text-xs text-slate-400">Owner</label>
-                <input className="w-full mt-1 px-3 py-2 rounded-lg"
-                       style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)", color: "var(--text)" }}
-                       value={draft.owner} onChange={e => setDraft({ ...draft, owner: e.target.value })} />
-              </div>
-              <div>
-                <label className="text-xs text-slate-400">Start</label>
-                <input type="month" className="w-full mt-1 px-3 py-2 rounded-lg"
-                       style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)", color: "var(--text)" }}
-                       value={draft.start} onChange={e => setDraft({ ...draft, start: e.target.value })} />
-              </div>
-              <div>
-                <label className="text-xs text-slate-400">Funding</label>
-                <select className="w-full mt-1 px-3 py-2 rounded-lg"
-                        style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)", color: "var(--text)" }}
-                        value={draft.funding} onChange={e => setDraft({ ...draft, funding: e.target.value })}>
-                  <option>CapEx</option><option>OpEx</option><option>No-cost ops</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-xs text-slate-400">M&V method</label>
-                <select className="w-full mt-1 px-3 py-2 rounded-lg"
-                        style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)", color: "var(--text)" }}
-                        value={draft.mv} onChange={e => setDraft({ ...draft, mv: e.target.value })}>
-                  <option>Bills (12m)</option>
-                  <option>Interval meter (IPMVP C)</option>
-                  <option>Submeter w/ baseline model</option>
-                </select>
-              </div>
-              <div className="md:col-span-2">
-                <label className="text-xs text-slate-400">Acceptance criteria</label>
-                <input className="w-full mt-1 px-3 py-2 rounded-lg"
-                       style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)", color: "var(--text)" }}
-                       value={draft.accept} onChange={e => setDraft({ ...draft, accept: e.target.value })} />
-              </div>
-              <div className="md:col-span-2">
-                <label className="text-xs text-slate-400">Scope / notes (optional)</label>
-                <textarea rows={3} className="w-full mt-1 px-3 py-2 rounded-lg"
-                          style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)", color: "var(--text)" }}
-                          value={draft.scope} onChange={e => setDraft({ ...draft, scope: e.target.value })} />
-              </div>
-            </div>
-
-            <div className="mt-4 flex items-center justify-end gap-2">
-              <button className="btn btn-ghost" onClick={() => setOpen(false)}>Cancel</button>
-              <button className="btn btn-primary" onClick={savePlan}>Save to plan</button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
+
 // --- Lineage & Governance ---
 function Lineage({ fromAction, goActions }) {
   const A = fromAction || null;
@@ -3403,13 +3198,14 @@ const seedActions = ACTIONS_SEED(buildings);
 
     { key: "building",   label: "Building",   comp: <Building /> },
 
-  { key: "actions", label: "Actions",
-comp: <Actions
+{ key: "actions", label: "Actions",
+  comp: <Actions
           buildings={buildings}
           actions={actions}
           setActions={setActions}
-          goLineage={(payload)=>{ setLineageCtx(payload); setActive("lineage"); }}
-        /> },
+          goLineage={(payload) => { setLineageCtx(payload); setActive("lineage"); }}
+        />
+},
     
     { key: "lineage", label: "Lineage & Governance",
       comp: <Lineage fromAction={lineageCtx} goActions={() => setActive("actions")} /> },
