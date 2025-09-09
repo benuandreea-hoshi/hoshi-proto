@@ -2371,23 +2371,26 @@ function Actions({ buildings = [], actions = [], setActions, goLineage }) {
                 <div className="mt-4 flex flex-wrap gap-3">
                   <button
                     className="btn btn-ghost"
-                    onClick={() => {
-                      goLineage({
-                        id: a.id,
-                        title: a.title,
-                        status: a.status,
-                        alarm: { type: a.alarm, category: a.category, window: a.window, rule: a.rule },
-                        finance: {
-                          capex: a.capex, save: a.save, years: a.years,
-                          npv: theNpv,
-                          payback: (a.capex / a.save).toFixed(1),
-                          beta: a.beta, confidence: a.confidence
-                        },
-                        impacts: { indexDelta: a.indexDelta, comfortDeltaPct: a.comfortDeltaPct, co2Delta: a.co2Delta },
-                        lineage: a.lineage,
-                        plan: a.plan || null
-                      });
-                    }}
+                 onClick={() => {
+  goLineage({
+    id: a.id,
+    title: a.title,
+    status: a.status,
+    alarm: { type: a.alarm, category: a.category, window: a.window, rule: a.rule },
+    finance: {
+      capex,
+      save,
+      years,
+      npv: theNpv,
+      payback: save ? (capex / save).toFixed(1) : "—",
+      beta,
+      confidence: conf
+    },
+    impacts: { indexDelta, comfortDeltaPct, co2Delta },
+    lineage: a.lineage,
+    plan: a.plan || null
+  });
+}}
                   >
                     View data lineage
                   </button>
@@ -2470,6 +2473,12 @@ function Actions({ buildings = [], actions = [], setActions, goLineage }) {
 // --- Lineage & Governance ---
 function Lineage({ fromAction, goActions }) {
   const A = fromAction || null;
+const num = (v, d = 0) => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : d;
+};
+const f1 = (v) => num(v).toFixed(1);
+const f2 = (v) => num(v).toFixed(2);
 
   const Card = ({ title, children }) => (
     <div className="rounded-xl p-4"
@@ -2521,9 +2530,9 @@ function Lineage({ fromAction, goActions }) {
                 <div><span className="text-slate-400">Method</span> · {A.lineage?.method || "—"}</div>
                 <div><span className="text-slate-400">Factors</span> · {(A.lineage?.factors || []).join(", ") || "—"}</div>
                 <div className="flex flex-wrap gap-2 mt-1">
-                  <span className="chip">Δ index {A.impacts.indexDelta.toFixed(2)}</span>
-                  <span className="chip">Δ comfort {A.impacts.comfortDeltaPct}%</span>
-                  <span className="chip">Δ tCO₂e {A.impacts.co2Delta} /yr</span>
+                 <span className="chip">Δ index {f2(A?.impacts?.indexDelta)}</span>
+<span className="chip">Δ comfort {num(A?.impacts?.comfortDeltaPct)}%</span>
+<span className="chip">Δ tCO₂e {num(A?.impacts?.co2Delta)} /yr</span>
                 </div>
               </div>
             </Card>
@@ -2552,7 +2561,8 @@ function Lineage({ fromAction, goActions }) {
                   <div className="text-slate-400">Source</div><div>{A.lineage?.baseline || "FY24 bills"}</div>
                   <div className="text-slate-400">Transforms</div><div>OCR → clean → normalise (HDD/CDD)</div>
                   <div className="text-slate-400">Model</div><div>{A.lineage?.method || "Top-down regression"}</div>
-                  <div className="text-slate-400">Outputs</div><div>Δ index {A.impacts.indexDelta.toFixed(2)}; Δ tCO₂e {A.impacts.co2Delta}/yr</div>
+   <div>Outputs</div>
+<div>Δ index {f2(A?.impacts?.indexDelta)}; Δ tCO₂e {num(A?.impacts?.co2Delta)}/yr</div>
                   <div className="text-slate-400">Version</div><div>v0.2 · {new Date().toISOString().slice(0,10)}</div>
                 </div>
               </div>
@@ -2564,8 +2574,8 @@ function Lineage({ fromAction, goActions }) {
                 <div><span className="text-slate-400">Savings /yr</span><div className="text-slate-100 font-semibold">£{A.finance.save.toLocaleString()}</div></div>
                 <div><span className="text-slate-400">NPV @8%</span><div className="text-emerald-300 font-semibold">£{A.finance.npv.toLocaleString()}</div></div>
                 <div><span className="text-slate-400">Payback</span><div className="text-slate-100 font-semibold">{A.finance.payback}y</div></div>
-                <div><span className="text-slate-400">β</span><div className="text-slate-100 font-semibold">{A.finance.beta.toFixed(2)}</div></div>
-                <div><span className="text-slate-400">Confidence</span><div className="text-slate-100 font-semibold">{Math.round(A.finance.confidence*100)}%</div></div>
+                <div><span className="text-slate-400">β</span><div className="text-slate-100 font-semibold">{f2(A?.finance?.beta)}</div>
+                <div><span className="text-slate-400">Confidence</span><div className="text-slate-100 font-semibold">{Math.round(num(A?.finance?.confidence, 0.7) * 100)}%</div>
               </div>
             </Card>
           </div>
