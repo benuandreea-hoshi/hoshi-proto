@@ -5,6 +5,14 @@ const {useMemo,useState,useRef,useEffect} = React;
 
 // === Hoshi MVP: building store + KPI helpers (isolated) ===
 const HOSHI_STORE_KEY = "hoshi.buildings.v1";
+function hoshiLoadBuildings() {
+  try { return JSON.parse(localStorage.getItem(HOSHI_STORE_KEY) || "[]"); }
+  catch { return []; }
+}
+function hoshiSaveBuildings(list) {
+  try { localStorage.setItem(HOSHI_STORE_KEY, JSON.stringify(list || [])); } catch {}
+}
+
 const hoshiUid = () => Math.random().toString(36).slice(2, 9);
 /** ---------------- SCENARIOS (lightweight) ---------------- **/
 const HOSHI_SCENARIOS = [
@@ -2132,7 +2140,7 @@ function Building(){
   );
 }
  // REPLACE your whole Actions() with this version
-function Actions({ goLineage }) {
+function Actions({ goLineage, actions, setActions, buildings }) {
   // --- helpers (local to this component so we don’t leak globals)
   const npv = (annual, years = 7, rate = 0.08, capex = 0) => {
     const pv = annual * (1 - Math.pow(1 + rate, -years)) / rate; // annuity PV
