@@ -2243,17 +2243,21 @@ function Actions({ buildings = [], actions = [], setActions, goLineage }) {
   });
 
   const openPlan = (a) => {
-    setDraft({
-      actionId: a.id,
-      owner: "",
-      start: new Date().toISOString().slice(0, 7), // yyyy-mm
-      funding: "CapEx",
-      mv: "Bills (12m)",
-      accept: `≥ ${fmt(a.save * 0.85)} saved/yr & Δindex ≤ ${a.indexDelta.toFixed(2)}`,
-      scope: ""
-    });
-    setOpen(true);
-  };
+  const save = Number(a.save ?? a.annualSavings ?? 0);
+  const idx  = Number(a.indexDelta ?? a.kpi?.deltaIndex ?? 0);
+
+  setDraft({
+    actionId: a.id,
+    owner: "",
+    start: new Date().toISOString().slice(0, 7), // yyyy-mm
+    funding: "CapEx",
+    mv: "Bills (12m)",
+    accept: `≥ ${fmt(save * 0.85)} saved/yr & Δindex ≤ ${idx.toFixed(2)}`,
+    scope: ""
+  });
+  setOpen(true);
+};
+
 
   const savePlan = () => {
     setActions(xs => xs.map(a => a.id !== draft.actionId ? a : ({
@@ -2568,8 +2572,7 @@ const f2 = (v) => num(v).toFixed(2);
               </div>
             </Card>
 
-            <Card title="Finance context">
-           <Card title="Finance context">
+          <Card title="Finance context">
   <div className="grid grid-cols-2 gap-2">
     <div>
       <span className="text-slate-400">CapEx</span>
@@ -2609,6 +2612,7 @@ const f2 = (v) => num(v).toFixed(2);
     </div>
   </div>
 </Card>
+
 
           </div>
         ) : (
