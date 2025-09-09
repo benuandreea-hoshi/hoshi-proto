@@ -134,12 +134,12 @@ function computeOverheat(b, scenario){
   const level = hours>=300 ? "High" : hours>=120 ? "Moderate" : "Low";
   return { hours, level };
 }
-function hoshiLoadBuildings() {
-  try { return JSON.parse(localStorage.getItem(HOSHI_STORE_KEY) || "[]"); }
+function hoshiLoadActions() {
+  try { return JSON.parse(localStorage.getItem("hoshi.actions")||"[]"); }
   catch { return []; }
 }
-function hoshiSaveBuildings(xs) {
-  localStorage.setItem(HOSHI_STORE_KEY, JSON.stringify(xs));
+function hoshiSaveActions(list) {
+  try { localStorage.setItem("hoshi.actions", JSON.stringify(list||[])); } catch {}
 }
 
 // illustrative emission factors (kgCO2e/kWh)
@@ -2188,9 +2188,6 @@ function Actions({ goLineage }) {
     };
   };
 
-  // Seed from your ACTIONS array
-  const [actions, setActions] = React.useState(() => ACTIONS.map(enrich));
-
   // --- derived: planned roll-ups for a quick bar at the top
   const planned = actions.filter(a => a.status === "Planned");
   const plannedTotals = planned.reduce((s, a) => ({
@@ -3037,6 +3034,8 @@ const [lineageCtx, setLineageCtx] = useState(null);
   // === Hoshi MVP: buildings state ===
 const [buildings, setBuildings] = React.useState(hoshiLoadBuildings());
 React.useEffect(() => hoshiSaveBuildings(buildings), [buildings]);
+  const [actions, setActions] = React.useState(hoshiLoadActions());
+React.useEffect(() => hoshiSaveActions(actions), [actions]);
 
   // Seed demo buildings on first visit if none exist
 React.useEffect(() => {
@@ -3071,8 +3070,13 @@ const tabs = [
 
     { key: "building",   label: "Building",   comp: <Building /> },
 
-    { key: "actions", label: "Actions",
-      comp: <Actions goLineage={(payload) => { setLineageCtx(payload); setActive("lineage"); }} /> },
+  { key: "actions", label: "Actions",
+  comp: <Actions
+          buildings={buildings}
+          actions={actions}
+          setActions={setActions}
+          goLineage={(payload)=>{ setLineageCtx(payload); setActive("lineage"); }}
+        /> },
 
     { key: "lineage", label: "Lineage & Governance",
       comp: <Lineage fromAction={lineageCtx} goActions={() => setActive("actions")} /> },
