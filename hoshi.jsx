@@ -2569,15 +2569,47 @@ const f2 = (v) => num(v).toFixed(2);
             </Card>
 
             <Card title="Finance context">
-              <div className="grid grid-cols-2 gap-2">
-                <div><span className="text-slate-400">CapEx</span><div className="text-slate-100 font-semibold">£{A.finance.capex.toLocaleString()}</div></div>
-                <div><span className="text-slate-400">Savings /yr</span><div className="text-slate-100 font-semibold">£{A.finance.save.toLocaleString()}</div></div>
-                <div><span className="text-slate-400">NPV @8%</span><div className="text-emerald-300 font-semibold">£{A.finance.npv.toLocaleString()}</div></div>
-                <div><span className="text-slate-400">Payback</span><div className="text-slate-100 font-semibold">{A.finance.payback}y</div></div>
-                <div><span className="text-slate-400">β</span><div className="text-slate-100 font-semibold">{f2(A?.finance?.beta)}</div>
-                <div><span className="text-slate-400">Confidence</span><div className="text-slate-100 font-semibold">{Math.round(num(A?.finance?.confidence, 0.7) * 100)}%</div>
-              </div>
-            </Card>
+           <Card title="Finance context">
+  <div className="grid grid-cols-2 gap-2">
+    <div>
+      <span className="text-slate-400">CapEx</span>
+      <div className="text-slate-100 font-semibold">
+        {fmtMoney(Number(A?.finance?.capex ?? 0))}
+      </div>
+    </div>
+    <div>
+      <span className="text-slate-400">Savings /yr</span>
+      <div className="text-slate-100 font-semibold">
+        {fmtMoney(Number(A?.finance?.save ?? 0))}
+      </div>
+    </div>
+    <div>
+      <span className="text-slate-400">NPV @8%</span>
+      <div className="text-emerald-300 font-semibold">
+        {fmtMoney(Number(A?.finance?.npv ?? 0))}
+      </div>
+    </div>
+    <div>
+      <span className="text-slate-400">Payback</span>
+      <div className="text-slate-100 font-semibold">
+        {(A?.finance?.payback ?? "—")}y
+      </div>
+    </div>
+    <div>
+      <span className="text-slate-400">β</span>
+      <div className="text-slate-100 font-semibold">
+        {Number(A?.finance?.beta ?? 0).toFixed(2)}
+      </div>
+    </div>
+    <div>
+      <span className="text-slate-400">Confidence</span>
+      <div className="text-slate-100 font-semibold">
+        {Math.round(Number(A?.finance?.confidence ?? 0.7) * 100)}%
+      </div>
+    </div>
+  </div>
+</Card>
+
           </div>
         ) : (
           <div className="rounded-xl p-4"
