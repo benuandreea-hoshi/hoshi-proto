@@ -12,9 +12,47 @@ function hoshiLoadBuildings() {
 function hoshiSaveBuildings(list) {
   try { localStorage.setItem(HOSHI_STORE_KEY, JSON.stringify(list || [])); } catch {}
 }
+const HOSHI_ACTIONS_KEY = "hoshi.actions";
 
+function hoshiLoadActions() {
+  try { return JSON.parse(localStorage.getItem(HOSHI_ACTIONS_KEY) || "[]"); }
+  catch { return []; }
+}
+function hoshiSaveActions(list) {
+  try { localStorage.setItem(HOSHI_ACTIONS_KEY, JSON.stringify(list || [])); } catch {}
+}
 const hoshiUid = () => Math.random().toString(36).slice(2, 9);
 /** ---------------- SCENARIOS (lightweight) ---------------- **/
+// Simple actions starter linked to the first two buildings (if present)
+const ACTIONS_SEED = (buildings = []) => {
+  const b1 = buildings[0]?.id ?? null;
+  const b2 = buildings[1]?.id ?? null;
+  return [
+    {
+      id: hoshiUid(),
+      title: "LED retrofit",
+      buildingId: b1,
+      tags: ["Alarm: Overrun", "Electricity", "Last 12m", ">10% vs budget"],
+      status: "To review",
+      capex: 25000,
+      annualSavings: 8500,
+      notes: "Lamp + driver swap in offices + common areas.",
+      kpi: { deltaIndex: -0.03, deltaCO2: -6.5 } // index is your “service index” proxy
+    },
+    {
+      id: hoshiUid(),
+      title: "HVAC schedule",
+      buildingId: b2,
+      tags: ["Alarm: Comfort risk", "Overheating", "Summer", "> threshold"],
+      status: "Approved",
+      capex: 1000,
+      annualSavings: 4200,
+      notes: "Night purge + setpoint discipline.",
+      kpi: { deltaIndex: -0.018, deltaCO2: -2.3 }
+    }
+  ];
+};
+
 const HOSHI_SCENARIOS = [
   { key:"today",  label:"Today",  year:2025, gridEF:0.20, elecP:0.28, gasP:0.07, dsyMult:1.00 },
   { key:"30-hi",  label:"2030 · High decarb", year:2030, gridEF:0.10, elecP:0.24, gasP:0.09, dsyMult:1.20 },
@@ -3054,9 +3092,21 @@ React.useEffect(() => {
   // (hoshiSaveBuildings runs from your existing effect)
   // eslint-disable-next-line react-hooks/exhaustive-deps
 }, []);
-
+React.useEffect(() => {
+  // wait until buildings are there
+  if (!Array.isArray(buildings) || buildings.length === 0) return;
+  // don’t overwrite existing user actions
+  if (Array.isArray(actions) && actions.length > 0) return;
+  // don’t reseed if user intentionally cleared later
+  if (localStorage.getItem("hoshi.actionsSeeded") === "1") return;
   
-const tabs = [
+const seedActions = ACTIONS_SEED(buildings);
+  if (seedActions.length) {
+    setActions(seedActions);
+    localStorage.setItem("hoshi.actionsSeeded", "1");
+  }
+}, [buildings, actions]);
+  const tabs = [
 { key: "story", label: "Story",
   comp: <Story
           goApp={() => setActive("onboarding")}
