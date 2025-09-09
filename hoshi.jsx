@@ -60,6 +60,76 @@ const HOSHI_SCENARIOS = [
   { key:"50-hi",  label:"2050 · High decarb", year:2050, gridEF:0.02, elecP:0.22, gasP:0.11, dsyMult:1.50 },
   { key:"50-ncc", label:"2050 · No climate change", year:2050, gridEF:0.20, elecP:0.20, gasP:0.07, dsyMult:1.00 },
 ];
+/* -------------------- ACTION LIBRARY -------------------- */
+const ACTION_TEMPLATES = [
+  {
+    key: "led",
+    title: "LED retrofit",
+    tags: ["Electricity","Fabric/Lighting"],
+    appliesTo: (_b) => true,
+    apply: (b) => {
+      // ~18% elec cut
+      const e = (+b.electricity_kwh || +b.elec_kwh || +b.electricity || 0);
+      return { ...b, electricity_kwh: Math.max(0, e * 0.82) };
+    },
+    capex: 25000, opexSave: 8500, confidence: 0.70,
+  },
+  {
+    key: "dhw_electrify",
+    title: "Electrify DHW",
+    tags: ["Gas→Elec","DHW"],
+    appliesTo: (b) => (+b.gas_kwh || +b.gas || 0) > 0,
+    apply: (b) => {
+      const g = (+b.gas_kwh || +b.gas || 0);
+      const moved = 0.30 * g;    // move ~30% of gas to DHW HP
+      const COP = 2.5;
+      const e = (+b.electricity_kwh || +b.elec_kwh || +b.electricity || 0);
+      return {
+        ...b,
+        gas_kwh: Math.max(0, g - moved),
+        electricity_kwh: e + moved / COP,
+      };
+    },
+    capex: 18000, opexSave: 3200, confidence: 0.65,
+  },
+  {
+    key: "ashp_space_heat",
+    title: "ASHP for space heat",
+    tags: ["Gas→Elec","Heating"],
+    appliesTo: (b) => (+b.gas_kwh || +b.gas || 0) > 0,
+    apply: (b) => {
+      const g = (+b.gas_kwh || +b.gas || 0);
+      const COP = 3.0;
+      const e = (+b.electricity_kwh || +b.elec_kwh || +b.electricity || 0);
+      return { ...b, gas_kwh: 0, electricity_kwh: e + (g / COP) };
+    },
+    capex: 120000, opexSave: 28500, confidence: 0.60,
+  },
+  {
+    key: "bms_tune",
+    title: "Controls tune-up (set-points, purge, deadbands)",
+    tags: ["Controls"],
+    appliesTo: (_b) => true,
+    apply: (b) => {
+      // ~7% total saving across elec + gas
+      const e = (+b.electricity_kwh || +b.elec_kwh || +b.electricity || 0);
+      const g = (+b.gas_kwh || +b.gas || 0);
+      return { ...b, electricity_kwh: e * 0.93, gas_kwh: g * 0.93 };
+    },
+    capex: 1000, opexSave: 4200, confidence: 0.80,
+  },
+  {
+    key: "shade_purge_fans",
+    title: "Shading + secure night purge + fans",
+    tags: ["Comfort","Nat-vent"],
+    appliesTo: (b) => String(b.servicing || "").toLowerCase().includes("natur"),
+    apply: (b) => b, // first pass: energy unchanged; benefit is comfort
+    capex: 35000, opexSave: 0, confidence: 0.60,
+    comfortFactor: 0.4, // 40% reduction in overheating hours (heuristic)
+  },
+];
+/* ------------------------------------------------------- */
+
 
 /** Notional intensities for a quick NCM-like proxy (kWh/m²·yr).
  *  Keep this tiny (you can refine later by sector/age).
@@ -274,6 +344,65 @@ function natVentOverheatHours(b, opts={}){
   const above  = Math.max(0, intensity - 90)/2;
   const base   = 40 + older + above + (40*deltaC);
   return Math.max(0, Math.min(800, base));
+}
+
+/* -------- apply + delta calculators for templates -------- */
+
+// Normalize aliases after a template modifies fields
+function applyTemplate(b, tmpl){
+  const out = tmpl.apply({ ...b });
+
+  // maintain both alias families so the rest of the app keeps working
+  const e = (out.electricity_kwh ?? out.elec_kwh ?? out.electricity ?? b.electricity_kwh ?? b.elec_kwh ?? b.electricity) || 0;
+  const g = (out.gas_kwh ?? out.gas ?? b.gas_kwh ?? b.gas) || 0;
+
+  return {
+    ...out,
+    electricity_kwh: e,     // preferred
+    elec_kwh: e,            // alias for existing code
+    gas_kwh: g,             // preferred
+    gas: g,                 // alias for existing code
+  };
+}
+
+// map scenario label to an approximate warming delta for nat-vent heuristic
+function warmingDelta(label){
+  const L = String(label || "").toLowerCase();
+  if (L.includes("2050")) return 2.0;
+  if (L.includes("2030")) return 1.0;
+  return 0.0; // "Today" / default
+}
+
+// Compute deltas produced by applying a template to building b
+function computeActionDelta(b, buildings, tmpl, scenarioLabel="Today"){
+  const s = pickScenario(scenarioLabel) || pickScenario("Today");
+
+  const baseK   = hoshiKPIs(b);
+  const baseFwd = s ? fwdAt(b, buildings, s) : 0;                 // %
+  const baseB   = (computeFinancialSignal(b, buildings)?.beta) || 0;
+  const baseHot = natVentOverheatHours(b, { deltaC: warmingDelta(scenarioLabel) });
+
+  const after   = applyTemplate(b, tmpl);
+  const postK   = hoshiKPIs(after);
+  const postFwd = s ? fwdAt(after, buildings, s) : 0;             // %
+  const postB   = (computeFinancialSignal(after, buildings)?.beta) || 0;
+  const postHot = natVentOverheatHours(after, { deltaC: warmingDelta(scenarioLabel) });
+
+  // comfort benefit: for nat-vent comfort template, reduce hours
+  const comfortDelta =
+    (tmpl.key === "shade_purge_fans" && String(b.servicing||"").toLowerCase().includes("natur"))
+      ? Math.round((postHot - baseHot) * (tmpl.comfortFactor ?? 0.5)) // negative number
+      : (postHot - baseHot);
+
+  return {
+    kwh:       Math.round(postK.kwh - baseK.kwh),                 // change in kWh/yr
+    tco2e:     +(postK.tco2e - baseK.tco2e).toFixed(1),           // change in tCO2e/yr
+    intensity: Math.round((postK.intensity||0) - (baseK.intensity||0)),
+    fwd:       +(postFwd - baseFwd).toFixed(1),                   // Δ forward price (pp)
+    beta:      +((postB - baseB).toFixed(2)),                     // Δ β
+    overHours: comfortDelta,                                      // Δ overheating hours
+    after,                                                        // the “post” building, if you want it
+  };
 }
 
 
@@ -2453,39 +2582,49 @@ const view = React.useMemo(() => {
       </div>
 
                 {/* CTAs */}
-                <div className="mt-4 flex flex-wrap gap-3">
-                  <button
-                    className="btn btn-ghost"
-                 onClick={() => {
-  goLineage({
-    id: a.id,
-    title: a.title,
-    status: a.status,
-    alarm: { type: a.alarm, category: a.category, window: a.window, rule: a.rule },
-    finance: {
-      capex,
-      save,
-      years,
-      npv: theNpv,
-      payback: save ? (capex / save).toFixed(1) : "—",
-      beta,
-      confidence: conf
-    },
-    impacts: { indexDelta, comfortDeltaPct, co2Delta },
-    lineage: a.lineage,
-    plan: a.plan || null
-  });
-}}
-                  >
-                    View data lineage
-                  </button>
+<div className="mt-4 flex flex-wrap gap-3">
+  <button
+    className="btn btn-ghost"
+    onClick={() => {
+      goLineage({
+        id: a.id,
+        title: a.title,
+        status: a.status,
+        alarm: { type: a.alarm, category: a.category, window: a.window, rule: a.rule },
+        finance: { capex, save, years, npv: theNpv, payback: save ? (capex / save).toFixed(1) : "—", beta, confidence: conf },
+        impacts: { indexDelta, comfortDeltaPct, co2Delta },
+        lineage: a.lineage,
+        plan: a.plan || null
+      });
+    }}
+  >
+    View data lineage
+  </button>
 
-                  {a.status !== "Planned" ? (
-                    <button className="btn btn-primary" onClick={() => openPlan(a)}>Add to plan</button>
-                  ) : (
-                    <span className="text-xs text-slate-400 mt-2">Planned by {a.plan?.owner} · starts {a.plan?.start}</span>
-                  )}
-                </div>
+  {a.status !== "Planned" ? (
+    <button className="btn btn-primary" onClick={() => openPlan(a)}>Add to plan</button>
+  ) : (
+    <span className="text-xs text-slate-400 mt-2">Planned by {a.plan?.owner} · starts {a.plan?.start}</span>
+  )}
+
+  {/* Preview of first applicable template (optional) */}
+  {(() => {
+    const b = buildings.find(x => x.id === a.buildingId);
+    if (!b || !Array.isArray(ACTION_TEMPLATES)) return null;
+    const list = ACTION_TEMPLATES.filter(t => t.appliesTo(b));
+    if (!list.length) return null;
+
+    const t = list[0]; // pick first applicable for now
+    const delta = computeActionDelta(b, buildings, t, "Today");
+
+    return (
+      <span className="text-xs text-slate-400 md:ml-auto">
+        Try <b>{t.title}</b>: ΔkWh {delta.kwh.toLocaleString()} • ΔtCO₂e {delta.tco2e} • Δfwd {delta.fwd >= 0 ? "+" : ""}{delta.fwd}pp • Δβ {delta.beta} • ΔOH {delta.overHours}h
+      </span>
+    );
+  })()}
+</div>
+
               </li>
             );
           })}
