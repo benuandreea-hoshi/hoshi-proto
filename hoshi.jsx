@@ -2178,7 +2178,7 @@ function Building(){
   );
 }
  // REPLACE your whole Actions() with this version
-function Actions({ goLineage, actions, setActions, buildings }) {
+function Actions({ buildings = [], actions = [], setActions, goLineage }) {
   // --- helpers (local to this component so we don’t leak globals)
   const npv = (annual, years = 7, rate = 0.08, capex = 0) => {
     const pv = annual * (1 - Math.pow(1 + rate, -years)) / rate; // annuity PV
@@ -3129,13 +3129,13 @@ const seedActions = ACTIONS_SEED(buildings);
     { key: "building",   label: "Building",   comp: <Building /> },
 
   { key: "actions", label: "Actions",
-  comp: <Actions
+comp: <Actions
           buildings={buildings}
           actions={actions}
           setActions={setActions}
           goLineage={(payload)=>{ setLineageCtx(payload); setActive("lineage"); }}
         /> },
-
+    
     { key: "lineage", label: "Lineage & Governance",
       comp: <Lineage fromAction={lineageCtx} goActions={() => setActive("actions")} /> },
 
