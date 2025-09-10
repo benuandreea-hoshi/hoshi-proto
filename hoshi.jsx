@@ -2399,53 +2399,83 @@ function Actions({ buildings=[], actions=[], setActions, goLineage, selectedBId=
   }, [selectedBId]);
   
  const active = buildings.find(b => b.id === bId) || buildings[0];
+const [toast, setToast] = React.useState(null);
+const [flashId, setFlashId] = React.useState(null);
+const planRef = React.useRef(null);
 
-  const addToPlan = (tmpl) => {
-    if (!active) return;
-    const delta = computeActionDelta(active, buildings, tmpl, scenario);
-    const item = {
-      id: hoshiUid(),
-      buildingId: active.id,
-      title: tmpl.title,
-      tags: tmpl.tags,
-      capex: tmpl.capex,
-      opex_saving: tmpl.opexSave,
-      npv: null, payback: null,
-      delta,
-      confidence: tmpl.confidence,
-      status: "To review",
-      lineage: { method:"template-"+tmpl.key, createdFromKpis: true }
-    };
-    setActions(prev => [...prev, item]);
+const addToPlan = (tmpl) => {
+  if (!active) return;
+ 
+
+  // already in plan for this building?
+  const exists = actions.some(
+    x => x.buildingId === active.id && (x.tmplKey || x.title) === (tmpl.key || tmpl.title)
+  );
+  if (exists) {
+    setToast("Already in plan — see below");
+    planRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    setTimeout(() => setToast(null), 1400);
+    return;
+  }
+
+  const delta = computeActionDelta(active, buildings, tmpl, scenario);
+  const id = hoshiUid();
+
+  const item = {
+    id,
+    buildingId: active.id,
+    tmplKey: tmpl.key,                 // <— keep template identity for dedupe
+    title: tmpl.title,
+    tags: tmpl.tags,
+    capex: tmpl.capex,
+    opex_saving: tmpl.opexSave,
+    delta,
+    confidence: tmpl.confidence,
+    status: "To review",
+    scenario,
+    lineage: { method: "template-"+tmpl.key, createdFromKpis: true }
   };
 
-  const buildingActions = actions.filter(a => (a.buildingId ?? active?.id) === active?.id);
+  setActions(prev => [...prev, item]);
+  // nudge: toast + scroll + flash
+  setToast("Added to plan");
+  requestAnimationFrame(() => planRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  setTimeout(() => setToast(null), 1200);
+  setFlashId(id);
+  setTimeout(() => setFlashId(null), 1200);
+};
 
-  const Card = ({tmpl}) => {
-    const d = active ? computeActionDelta(active, buildings, tmpl, scenario) : null;
-    return (
-      <div className="rounded-2xl p-4 md:p-5 mb-4" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
-<div className="flex flex-wrap items-start gap-3">
-  <div className="min-w-0 grow order-1 md:order-none">
-    <div className="text-slate-50 font-semibold">{tmpl.title}</div>
 
-    {/* chips row: scroll instead of wrapping on mobile */}
-    <div className="mt-1 flex gap-2 text-xs text-slate-400 overflow-x-auto no-scrollbar pr-1">
-      {tmpl.tags.map((t,i)=>(
-        <span key={i} className="chip whitespace-nowrap">{t}</span>
-      ))}
-      <span className="chip whitespace-nowrap">{scenario}</span>
-    </div>
-  </div>
+ const buildingActions = React.useMemo(
+  () => actions.filter(a => a.buildingId === active?.id),
+  [actions, active?.id]
+);
 
-  {/* Button: full width on mobile, inline on desktop */}
-  <button
-    className="btn btn-primary w-full md:w-auto order-3 md:order-none md:ml-auto mt-2 md:mt-0"
-    onClick={()=>addToPlan(tmpl)}
-  >
-    Add to plan
-  </button>
-</div>
+  const Card = ({ tmpl }) => {
+  const d = active ? computeActionDelta(active, buildings, tmpl, scenario) : null;
+  const inPlan = buildingActions.some(
+    x => (x.tmplKey || x.title) === (tmpl.key || tmpl.title)
+  );
+
+  return (
+    <div className="rounded-2xl p-4 md:p-5 mb-4" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
+      <div className="flex flex-wrap items-start gap-3">
+        <div className="min-w-0 grow order-1 md:order-none">
+          <div className="text-slate-50 font-semibold">{tmpl.title}</div>
+          <div className="mt-1 flex gap-2 text-xs overflow-x-auto no-scrollbar pr-1">
+            {tmpl.tags.map((t,i)=><span key={i} className="chip whitespace-nowrap">{t}</span>)}
+            <span className="chip whitespace-nowrap">{scenario}</span>
+          </div>
+        </div>
+
+        <button
+          className="btn btn-primary w-full md:w-auto order-3 md:order-none md:ml-auto mt-2 md:mt-0"
+          onClick={()=>addToPlan(tmpl)}
+          disabled={inPlan}
+        >
+          {inPlan ? "In plan ✓" : "Add to plan"}
+        </button>
+      </div>
         
         {active && d && (
           <div className="grid sm:grid-cols-3 lg:grid-cols-6 gap-3 mt-4">
@@ -2531,22 +2561,29 @@ function Actions({ buildings=[], actions=[], setActions, goLineage, selectedBId=
           </select>
         </div>
 
-        {/* Suggestions for the active building */}
-        <div className="text-slate-400 text-sm mb-2">Suggested actions for this building</div>
-        {(active ? ACTION_TEMPLATES.filter(t=>t.appliesTo(active)) : [])
-          .map(t => <Card key={t.key} tmpl={t} />)}
+            {/* Suggestions for the active building */}
+<div className="text-slate-400 text-sm mb-2">Suggested actions for this building</div>
+{(active ? ACTION_TEMPLATES.filter(t => t.appliesTo(active)) : [])
+  .map(t => <Card key={t.key} tmpl={t} />)}
 
         {/* Already in your plan for this building */}
-        <div className="mt-6 text-slate-400 text-sm">In your plan for this building</div>
+            <div ref={planRef} className="mt-6 text-slate-400 text-sm">In your plan for this building</div>
+            
         {buildingActions.length===0 && <div className="text-slate-500 text-sm mt-2">No actions yet.</div>}
-        {buildingActions.map(a=>(
-          <div key={a.id} className="rounded-xl p-4 mt-3" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
-            <div className="flex items-center justify-between">
-              <div className="text-slate-100 font-medium">{a.title}</div>
-              <div className="flex gap-2">
-                <button className="btn btn-ghost" onClick={()=>setActions(prev=>prev.filter(x=>x.id!==a.id))}>Remove</button>
-              </div>
-            </div>
+     {buildingActions.map(a => (
+  <div
+    key={a.id}
+    className={`rounded-xl p-4 mt-3 ${flashId === a.id ? "flash-anim ring-2 ring-blue-400/50" : ""}`}
+    style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}
+  >
+    <div className="flex items-center justify-between">
+      <div className="text-slate-100 font-medium">{a.title}</div>
+      <div className="flex gap-2">
+        <button className="btn btn-ghost" onClick={() => setActions(prev => prev.filter(x => x.id !== a.id))}>
+          Remove
+        </button>
+      </div>
+    </div>
             {a.delta && (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-3 mt-3">
                 <Metric label="Δ kWh/yr" value={a.delta.kwh.toLocaleString()} />
@@ -2561,6 +2598,18 @@ function Actions({ buildings=[], actions=[], setActions, goLineage, selectedBId=
         ))}
             </div>
       </Section>
+       {/* Toast lives here – once per page */}
+      {toast && (
+        <div
+          className="fixed bottom-[84px] left-1/2 -translate-x-1/2 z-[4000]
+                     bg-[#0b1220] border border-blue-400/30 text-slate-100
+                     px-3 py-2 rounded-xl shadow"
+          role="status" aria-live="polite"
+        >
+          {toast}
+        </div>
+      )}
+      
     </div>
   );
 }
