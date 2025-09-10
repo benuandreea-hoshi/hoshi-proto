@@ -2391,17 +2391,29 @@ function Actions({ buildings=[], actions=[], setActions, goLineage }) {
     const d = active ? computeActionDelta(active, buildings, tmpl, scenario) : null;
     return (
       <div className="rounded-2xl p-4 md:p-5 mb-4" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <div className="text-slate-50 font-semibold">{tmpl.title}</div>
-            <div className="mt-1 flex flex-wrap gap-2 text-xs text-slate-400">
-              {tmpl.tags.map((t,i)=><span key={i} className="chip">{t}</span>)}
-              <span className="chip">{scenario}</span>
-            </div>
-          </div>
-          <button className="btn btn-primary" onClick={()=>addToPlan(tmpl)}>Add to plan</button>
-        </div>
+    // REPLACE the header block in Card with this:
+<div className="flex flex-wrap items-start gap-3">
+  <div className="min-w-0 grow order-1 md:order-none">
+    <div className="text-slate-50 font-semibold">{tmpl.title}</div>
 
+    {/* chips row: scroll instead of wrapping on mobile */}
+    <div className="mt-1 flex gap-2 text-xs text-slate-400 overflow-x-auto no-scrollbar pr-1">
+      {tmpl.tags.map((t,i)=>(
+        <span key={i} className="chip whitespace-nowrap">{t}</span>
+      ))}
+      <span className="chip whitespace-nowrap">{scenario}</span>
+    </div>
+  </div>
+
+  {/* Button: full width on mobile, inline on desktop */}
+  <button
+    className="btn btn-primary w-full md:w-auto order-3 md:order-none md:ml-auto mt-2 md:mt-0"
+    onClick={()=>addToPlan(tmpl)}
+  >
+    Add to plan
+  </button>
+</div>
+        
         {active && d && (
           <div className="grid sm:grid-cols-3 lg:grid-cols-6 gap-3 mt-4">
             <Metric label="Δ kWh/yr" value={d.kwh.toLocaleString()} />
@@ -2413,33 +2425,44 @@ function Actions({ buildings=[], actions=[], setActions, goLineage }) {
               <Metric label="Δ overheating (hrs/yr)" value={d.overHours} />}
           </div>
         )}
+{/* bottom pills + lineage */}
+<div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-400">
+  <span className="chip stat">
+    CapEx {tmpl.capex ? "£" + tmpl.capex.toLocaleString() : "—"}
+  </span>
+  <span className="chip stat">
+    Savings {tmpl.opexSave ? "£" + tmpl.opexSave.toLocaleString() + "/yr" : "—"}
+  </span>
+  <span className="chip stat">
+    Confidence {Math.round((tmpl.confidence || 0) * 100)}%
+  </span>
 
-        <div className="mt-3 flex gap-2 text-xs text-slate-400">
-          <span className="chip">CapEx {tmpl.capex ? "£"+tmpl.capex.toLocaleString() : "—"}</span>
-          <span className="chip">Savings {tmpl.opexSave ? "£"+tmpl.opexSave.toLocaleString()+"/yr" : "—"}</span>
-          <span className="chip">Confidence {Math.round((tmpl.confidence||0)*100)}%</span>
-         <button
-  className="btn btn-ghost ml-auto"
-  onClick={() => {
-    // reuse the delta we already computed for this card
-    const d = active ? computeActionDelta(active, buildings, tmpl, scenario) : null;
-    goLineage?.({
-      source: "ActionTemplate",
-      key: tmpl.key,
-      title: tmpl.title,
-      tags: tmpl.tags,
-      finance: { capex: tmpl.capex, save: tmpl.opexSave, confidence: tmpl.confidence },
-      impacts: d ? {
-        kwh: d.kwh, tco2e: d.tco2e, intensity: d.intensity, fwd: d.fwd, beta: d.beta, overHours: d.overHours
-      } : null,
-      building: active ? { id: active.id, name: active.name } : null,
-      scenario
-    });
-  }}
->
-  View data lineage
-</button>
-        </div>
+  {/* spacer on desktop so the button hugs the right;
+     on mobile the button is full width */}
+  <div className="hidden md:block grow" />
+
+  <button
+    className="btn btn-ghost w-full md:w-auto md:ml-auto mt-1 md:mt-0"
+    onClick={() => {
+      // use the 'd' you already computed at the top of Card
+      goLineage?.({
+        source: "ActionTemplate",
+        key: tmpl.key,
+        title: tmpl.title,
+        tags: tmpl.tags,
+        finance: { capex: tmpl.capex, save: tmpl.opexSave, confidence: tmpl.confidence },
+        impacts: d ? {
+          kwh: d.kwh, tco2e: d.tco2e, intensity: d.intensity,
+          fwd: d.fwd, beta: d.beta, overHours: d.overHours
+        } : null,
+        building: active ? { id: active.id, name: active.name } : null,
+        scenario
+      });
+    }}
+  >
+    View data lineage
+  </button>
+</div>
       </div>
     );
   };
@@ -2450,6 +2473,7 @@ function Actions({ buildings=[], actions=[], setActions, goLineage }) {
         title="Actions"
         desc="Pick a building, explore suggested actions, see the effect, and add the ones you want to your plan."
       >
+          <div className="actions">  
         {/* Picker */}
         <div className="flex flex-wrap items-center gap-3 mb-3">
           <label className="text-slate-300 text-sm">Building</label>
@@ -2491,7 +2515,7 @@ function Actions({ buildings=[], actions=[], setActions, goLineage }) {
               </div>
             </div>
             {a.delta && (
-              <div className="mt-3 grid sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-3 mt-3">
                 <Metric label="Δ kWh/yr" value={a.delta.kwh.toLocaleString()} />
                 <Metric label="Δ tCO₂e/yr" value={`${a.delta.tco2e}`} />
                 <Metric label="Δ intensity" value={`${a.delta.intensity} kWh/m²`} />
@@ -2502,6 +2526,7 @@ function Actions({ buildings=[], actions=[], setActions, goLineage }) {
             )}
           </div>
         ))}
+            </div>
       </Section>
     </div>
   );
