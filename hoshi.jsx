@@ -1728,7 +1728,7 @@ function Onboarding({ goAddBuilding }){
 }
 
 
-function Portfolio({ buildings = [], setBuildings, openActionsFor }) {
+function Portfolio({ buildings=[], setBuildings, openActionsFor, actions=[] }) {
   const [addOpen, setAddOpen] = React.useState(false);
   const [editOpen, setEditOpen] = React.useState(false);
 const [editing,  setEditing]  = React.useState(null);
@@ -1752,20 +1752,31 @@ const openEdit = (b) => { setEditing(b); setEditOpen(true); };
     }
   }, []);
 
-const rows = buildings.length
-  ? buildings.map(b => {
-      const k = hoshiKPIs(b);
-      return {
-        id: b.id,                                // 👈 add this
-        name: b.name,
-        kwh: Math.round(k.kwh),
-        co2: k.tco2e,
-        intensity: Math.round(k.intensity || 0),
-        complete: (k.completeness || 0) / 100,
-        actions: 0,
-        updated: b.updated || "—",
-      };
-    })
+    // map buildingId -> count
+  const actionCount = React.useMemo(() => {
+    const m = {};
+    buildings.forEach(b => { m[b.id] = 0; });
+    actions.forEach(a => {
+      const id = a.buildingId;
+      if (id && m[id] !== undefined) m[id] += 1;
+    });
+    return m;
+  }, [buildings, actions]);
+
+  // when you build table/list rows...
+  const rows = buildings.map(b => {
+    const { kwh, tco2e, intensity, completeness } = hoshiKPIs(b);
+    return {
+      id: b.id,
+      name: b.name,
+      kwh,
+      co2: tco2e,
+      intensity: Math.round(intensity),
+      complete: (completeness/100),
+      actions: actionCount[b.id] || 0,           // ← use live count
+      updated: b.updated || new Date().toISOString().slice(0,10)
+    };
+  });
     : [
         {name:"1 King Street",kwh:142000,co2:36.2,intensity:92,complete:.92,actions:3,updated:"2025-08-10"},
         {name:"42 Market Way",kwh:98000,co2:24.4,intensity:78,complete:.84,actions:1,updated:"2025-08-07"},
@@ -2618,6 +2629,7 @@ const inPlan = buildingActions.some(x => keyOf(x) === keyOf(tmpl));
         ))}
             </div>
       </Section>
+      
        {/* Toast lives here – once per page */}
       {toast && (
         <div
@@ -2629,7 +2641,111 @@ const inPlan = buildingActions.some(x => keyOf(x) === keyOf(tmpl));
           {toast}
         </div>
       )}
-      
+{customOpen && (
+  <div className="fixed inset-0 z-[3000] grid place-items-center" style={{background:"rgba(0,0,0,.45)"}}>
+    <div className="w-[min(640px,92vw)] rounded-2xl p-5" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
+      <div className="text-slate-100 font-semibold text-lg">Add custom action</div>
+      <div className="grid md:grid-cols-2 gap-3 mt-4">
+        <div>
+          <label className="text-xs text-slate-400">Title</label>
+          <input className="w-full mt-1 px-3 py-2 rounded-lg" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)",color:"var(--text)"}}
+                 value={custom.title} onChange={e=>setCustom({...custom,title:e.target.value})}/>
+        </div>
+        <div>
+          <label className="text-xs text-slate-400">Tags (comma)</label>
+          <input className="w-full mt-1 px-3 py-2 rounded-lg" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)",color:"var(--text)"}}
+                 value={custom.tags} onChange={e=>setCustom({...custom,tags:e.target.value})}/>
+        </div>
+        <div>
+          <label className="text-xs text-slate-400">CapEx (£)</label>
+          <input type="number" className="w-full mt-1 px-3 py-2 rounded-lg"
+                 style={{background:"var(--panel-2)",border:"1px solid var(--stroke)",color:"var(--text)"}}
+                 value={custom.capex} onChange={e=>setCustom({...custom,capex:e.target.value})}/>
+        </div>
+        <div>
+          <label className="text-xs text-slate-400">Savings /yr (£)</label>
+          <input type="number" className="w-full mt-1 px-3 py-2 rounded-lg"
+                 style={{background:"var(--panel-2)",border:"1px solid var(--stroke)",color:"var(--text)"}}
+                 value={custom.opex} onChange={e=>setCustom({...custom,opex:e.target.value})}/>
+        </div>
+        <div>
+          <label className="text-xs text-slate-400">Confidence (%)</label>
+          <input type="number" className="w-full mt-1 px-3 py-2 rounded-lg"
+                 style={{background:"var(--panel-2)",border:"1px solid var(--stroke)",color:"var(--text)"}}
+                 value={custom.confidence} onChange={e=>setCustom({...custom,confidence:e.target.value})}/>
+        </div>
+        <div>
+          <label className="text-xs text-slate-400">Template (optional)</label>
+          <select className="w-full mt-1 px-3 py-2 rounded-lg"
+                  style={{background:"var(--panel-2)",border:"1px solid var(--stroke)",color:"var(--text)"}}
+                  value={custom.tmplKey} onChange={e=>setCustom({...custom,tmplKey:e.target.value})}>
+            <option value="">None (manual)</option>
+            {ACTION_TEMPLATES.map(t=><option key={t.key} value={t.key}>{t.title}</option>)}
+          </select>
+        </div>
+
+        {/* Manual impact overrides (optional) */}
+        {["dkwh","dtco2","dint","dfwd","dbeta","dover"].map((k,i)=>(
+          <div key={k} className="md:col-span-1">
+            <label className="text-xs text-slate-400">
+              {["Δ kWh/yr","Δ tCO₂e/yr","Δ intensity (kWh/m²)","Δ forward premium (pp)","Δ β","Δ overheating (hrs/yr)"][i]}
+            </label>
+            <input type="number" className="w-full mt-1 px-3 py-2 rounded-lg"
+                   style={{background:"var(--panel-2)",border:"1px solid var(--stroke)",color:"var(--text)"}}
+                   value={custom[k]} onChange={e=>setCustom({...custom,[k]:e.target.value})}/>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-4 flex items-center justify-end gap-2">
+        <button className="btn btn-ghost" onClick={()=>setCustomOpen(false)}>Cancel</button>
+        <button className="btn btn-primary" onClick={()=>{
+          if (!active) return;
+
+          // delta: template or manual
+          let delta = null;
+          const tmpl = ACTION_TEMPLATES.find(t=>t.key===custom.tmplKey);
+          if (tmpl) {
+            delta = computeActionDelta(active, buildings, tmpl, scenario);
+          } else {
+            delta = {
+              kwh: +(custom.dkwh||0),
+              tco2e: +(custom.dtco2||0),
+              intensity: +(custom.dint||0),
+              fwd: +(custom.dfwd||0),
+              beta: +(custom.dbeta||0),
+              overHours: +(custom.dover||0)
+            };
+          }
+
+          const item = {
+            id: hoshiUid(),
+            buildingId: active.id,
+            tmplKey: tmpl?.key,
+            title: custom.title || tmpl?.title || "Custom action",
+            tags: (custom.tags || tmpl?.tags?.join(",") || "").split(",").map(s=>s.trim()).filter(Boolean),
+            capex: +custom.capex || tmpl?.capex || 0,
+            opexSave: +custom.opex || tmpl?.opexSave || 0,
+            opex_saving: +custom.opex || tmpl?.opexSave || 0,  // compat
+            confidence: (+custom.confidence || 70)/100,
+            delta,
+            status: "To review",
+            scenario
+          };
+
+          setActions(prev => [...prev, item]);
+          setCustomOpen(false);
+          // use your existing toast + scroll nudge (if you added them)
+          setToast("Added to plan");
+          setTimeout(()=>setToast(""), 1400);
+          setTimeout(()=>planRef.current?.scrollIntoView({behavior:"smooth"}), 50);
+        }}>
+          Save
+        </button>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 }
@@ -3421,9 +3537,11 @@ function App(){
     },
     { key: "portfolio", label: "Portfolio",
       comp: <Portfolio
-              buildings={buildings}
-              setBuildings={setBuildings}
-              openActionsFor={openActionsFor} />
+  buildings={buildings}
+  setBuildings={setBuildings}
+  openActionsFor={openActionsFor}
+  actions={actions}                 // ← add this
+/>
     },
     { key: "compare", label: "Compare",
       comp: <CompareView buildings={buildings} setBuildings={setBuildings} />
