@@ -2399,6 +2399,26 @@ function Actions({ buildings=[], actions=[], setActions, goLineage, selectedBId=
   }, [selectedBId]);
   
  const active = buildings.find(b => b.id === bId) || buildings[0];
+
+   React.useEffect(() => {
+    let changed = false;
+    const upgraded = actions.map(a => {
+      if (a.delta) return a; // already upgraded
+
+      const b = buildings.find(x => x.id === a.buildingId) || active;
+      const tmpl = ACTION_TEMPLATES.find(t =>
+        t.key === a.tmplKey || t.title === a.title
+      );
+      if (!b || !tmpl) return a;
+
+      changed = true;
+      const d = computeActionDelta(b, buildings, tmpl, a.scenario || "Today");
+      return { ...a, tmplKey: tmpl.key, delta: d };
+    });
+
+    if (changed) setActions(upgraded);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 const [toast, setToast] = React.useState(null);
 const [flashId, setFlashId] = React.useState(null);
 const planRef = React.useRef(null);
