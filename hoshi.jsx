@@ -3279,9 +3279,8 @@ const HOSHI_SAMPLE_BUILDINGS = [
   },
 ];
 
-
 function App(){
-  const [active, setActive] = React.useState("portfolio"); // "portfolio" | "actions" | "lineage"
+  const [active, setActive] = React.useState("portfolio");
   const [buildings, setBuildings] = React.useState(hoshiLoadBuildings());
   React.useEffect(() => hoshiSaveBuildings(buildings), [buildings]);
 
@@ -3290,8 +3289,9 @@ function App(){
 
   const [actionsBId, setActionsBId] = React.useState(null);
   const [lineageCtx, setLineageCtx] = React.useState(null);
+  const [open, setOpen] = React.useState(false); // if your mobile drawer uses it
 
-  // seed sample buildings once
+  // Seed sample buildings once
   React.useEffect(() => {
     if (buildings.length === 0 && !localStorage.getItem("hoshi.seeded")) {
       setBuildings(HOSHI_SAMPLE_BUILDINGS);
@@ -3299,7 +3299,7 @@ function App(){
     }
   }, [buildings.length]);
 
-  // seed sample actions once (after buildings exist)
+  // Seed sample actions once (after buildings exist)
   React.useEffect(() => {
     if (actions.length === 0 && buildings.length > 0 && !localStorage.getItem("hoshi.actionsSeeded")) {
       setActions(ACTIONS_SEED(buildings));
@@ -3318,120 +3318,46 @@ function App(){
     setActive("lineage");
   };
 
-  return (
-    <>
-      {active === "portfolio" && (
-        <Portfolio
-          buildings={buildings}
-          setBuildings={setBuildings}
-          openActionsFor={openActionsFor}
-        />
-      )}
-
-      {active === "actions" && (
-        <Actions
-          buildings={buildings}
-          actions={actions}
-          setActions={setActions}
-          goLineage={goLineage}
-          selectedBId={actionsBId}
-        />
-      )}
-
-      {active === "lineage" && (
-        <Lineage
-          fromAction={lineageCtx}
-          goActions={() => setActive("actions")}
-        />
-      )}
-    </>
-  );
-}
-
-React.useEffect(() => {
-  if (!Array.isArray(buildings) || buildings.length > 0) return;
-  if (localStorage.getItem("hoshi.seeded")) return;
-  setBuildings(HOSHI_SAMPLE_BUILDINGS);
-  localStorage.setItem("hoshi.seeded", "1");
-  // (hoshiSaveBuildings runs from your existing effect)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, []);
-React.useEffect(() => {
-  // wait until buildings are there
-  if (!Array.isArray(buildings) || buildings.length === 0) return;
-  // don’t overwrite existing user actions
-  if (Array.isArray(actions) && actions.length > 0) return;
-  // don’t reseed if user intentionally cleared later
-  if (localStorage.getItem("hoshi.actionsSeeded") === "1") return;
-  
-const seedActions = ACTIONS_SEED(buildings);
-  if (seedActions.length) {
-    setActions(seedActions);
-    localStorage.setItem("hoshi.actionsSeeded", "1");
-  }
-}, [buildings, actions]);
+  // ---- tabs (ONE source of truth for routing) ----
   const tabs = [
-{ key: "story", label: "Story",
-  comp: <Story
-          goApp={() => setActive("onboarding")}
-          goBlog={() => setActive("blog")}   // <-- add this
-        />
-},
-{ key: "onboarding", label: "Onboarding", comp: (
-  <Onboarding goAddBuilding={() => {
-    localStorage.setItem("hoshi.intent", "add-building");
-    setActive("portfolio");
-  }} />
-) },
-
-{ key: "portfolio", label: "Portfolio",
-  comp: <Portfolio
-  buildings={buildings}
-  setBuildings={setBuildings}
-  openActionsFor={(id) => { setActionsBId(id); setActive("actions"); }}  // 👈 new
-  openEdit={(b) => {/* your edit modal opener if you have it */}}
-/> },
-  { key: "compare", label: "Compare",
-  comp: <CompareView buildings={buildings} setBuildings={setBuildings} /> },
-
-
-    { key: "building",   label: "Building",   comp: <Building /> },
-
-{ key: "actions", label: "Actions",
-  comp: <Actions
-          buildings={buildings}
-          actions={actions}
-          setActions={setActions}
-          defaultBId={actionsBId}   // ← new
-          goLineage={(payload)=>{ setLineageCtx(payload); setActive("lineage"); }}
-        />
-},
-    
+    { key: "story", label: "Story",
+      comp: <Story goApp={() => setActive("onboarding")} goBlog={() => setActive("blog")} />
+    },
+    { key: "onboarding", label: "Onboarding",
+      comp: <Onboarding goAddBuilding={() => {
+        localStorage.setItem("hoshi.intent","add-building");
+        setActive("portfolio");
+      }} />
+    },
+    { key: "portfolio", label: "Portfolio",
+      comp: <Portfolio
+              buildings={buildings}
+              setBuildings={setBuildings}
+              openActionsFor={openActionsFor} />
+    },
+    { key: "compare", label: "Compare",
+      comp: <CompareView buildings={buildings} setBuildings={setBuildings} />
+    },
+    { key: "building", label: "Building", comp: <Building /> },
+    { key: "actions", label: "Actions",
+      comp: <Actions
+              buildings={buildings}
+              actions={actions}
+              setActions={setActions}
+              goLineage={goLineage}
+              selectedBId={actionsBId} />   // ← be consistent: Actions expects selectedBId
+    },
     { key: "lineage", label: "Lineage & Governance",
-      comp: <Lineage fromAction={lineageCtx} goActions={() => setActive("actions")} /> },
-
+      comp: <Lineage fromAction={lineageCtx} goActions={() => setActive("actions")} />
+    },
     { key: "services", label: "Services", comp: <Services /> },
-  {key:"public",label:"Public BPS",comp:<PublicBPS goLineage={()=>setActive("lineage")} goActions={()=>setActive("actions")} />},
-  { key:"blog", label:"Blog",
-  comp: <Blog
-          openPortfolio={()=>setActive("portfolio")}
-          openBuilding={()=>setActive("building")}
-        />
-},
-
+    { key: "public", label: "Public BPS",
+      comp: <PublicBPS goLineage={() => setActive("lineage")} goActions={() => setActive("actions")} />
+    },
+    { key: "blog", label: "Blog",
+      comp: <Blog openPortfolio={() => setActive("portfolio")} openBuilding={() => setActive("building")} />
+    },
   ];
-      React.useEffect(() => {
-  setActions(xs => xs.map(a => ({
-    ...a,
-    save: a.save ?? a.annualSavings ?? 0,
-    indexDelta: a.indexDelta ?? a.kpi?.deltaIndex ?? 0,
-    co2Delta: a.co2Delta ?? a.kpi?.deltaCO2 ?? 0,
-    alarm: a.alarm || (a.tags?.[0]?.replace(/^Alarm:\s*/, "") ?? "Alarm"),
-    category: a.category || a.tags?.[1] || "",
-    window: a.window || a.tags?.[2] || "Last 12m",
-    rule: a.rule || a.tags?.[3] || "> threshold",
-  })));
-}, []);
 
 
   const NavItem=({t})=>{
