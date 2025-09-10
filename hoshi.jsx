@@ -3281,7 +3281,7 @@ const HOSHI_SAMPLE_BUILDINGS = [
 
 
 function App(){
-  const [active, setActive] = React.useState("portfolio");   // "portfolio" | "actions" | "lineage"
+  const [active, setActive] = React.useState("portfolio"); // "portfolio" | "actions" | "lineage"
   const [buildings, setBuildings] = React.useState(hoshiLoadBuildings());
   React.useEffect(() => hoshiSaveBuildings(buildings), [buildings]);
 
@@ -3289,7 +3289,7 @@ function App(){
   React.useEffect(() => hoshiSaveActions(actions), [actions]);
 
   const [actionsBId, setActionsBId] = React.useState(null);
-  const [lineageCtx, setLineageCtx]   = React.useState(null);
+  const [lineageCtx, setLineageCtx] = React.useState(null);
 
   // seed sample buildings once
   React.useEffect(() => {
@@ -3334,7 +3334,7 @@ function App(){
           actions={actions}
           setActions={setActions}
           goLineage={goLineage}
-          selectedBId={actionsBId}   // ← prop name matches Actions()
+          selectedBId={actionsBId}
         />
       )}
 
