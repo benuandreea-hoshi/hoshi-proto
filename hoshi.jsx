@@ -191,24 +191,24 @@ function computeActionDelta(b, buildings, tmpl, scenarioLabel = "Today"){
 
   // base
   const baseK   = hoshiKPIs(b);
-  const baseFwd = s ? fwdAt(b, buildings, s) : 0;        // %
+  const baseFwd = s ? fwdAt(b, buildings, s) : 0;
   const baseSig = computeFinancialSignal(b, buildings) || {};
   const baseB   = Number(baseSig.beta || 0);
 
-  // overheating only for naturally ventilated buildings
+  // overheating only for nat-vent
   const nat     = isNatVent(b);
   const baseHot = nat ? natVentOverheatHours(b, { deltaC: warmingDelta(scenarioLabel) }) : null;
 
   // after applying template
   const after   = applyTemplate(b, tmpl);
   const postK   = hoshiKPIs(after);
-  const postFwd = s ? fwdAt(after, buildings, s) : 0;    // %
+  const postFwd = s ? fwdAt(after, buildings, s) : 0;
   const postSig = computeFinancialSignal(after, buildings) || {};
   const postB   = Number(postSig.beta || 0);
   const postHot = nat ? natVentOverheatHours(after, { deltaC: warmingDelta(scenarioLabel) }) : null;
 
-  // comfort: only meaningful when nat-vent
-  let overDelta = null; // null = N/A → UI will hide the tile
+  // comfort delta (null = N/A so UI can hide)
+  let overDelta = null;
   if (nat) {
     let d = (postHot ?? 0) - (baseHot ?? 0);
     if (tmpl.key === "shade_purge_fans") d = Math.round(d * (tmpl.comfortFactor ?? 0.5));
@@ -221,7 +221,7 @@ function computeActionDelta(b, buildings, tmpl, scenarioLabel = "Today"){
     intensity: Math.round((postK.intensity || 0) - (baseK.intensity || 0)),
     fwd:       +(postFwd - baseFwd).toFixed(1),
     beta:      +((postB - baseB).toFixed(2)),
-    overHours: overDelta, // null when not applicable
+    overHours: overDelta,
   };
 }
 
