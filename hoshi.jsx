@@ -1753,19 +1753,20 @@ const openEdit = (b) => { setEditing(b); setEditOpen(true); };
     }
   }, []);
 
-  const rows = buildings.length
-    ? buildings.map(b => {
-        const k = hoshiKPIs(b);
-        return {
-          name: b.name,
-          kwh: Math.round(k.kwh),
-          co2: k.tco2e,
-          intensity: Math.round(k.intensity || 0),
-          complete: (k.completeness || 0) / 100,
-          actions: 0,
-          updated: b.updated || "—",
-        };
-      })
+const rows = buildings.length
+  ? buildings.map(b => {
+      const k = hoshiKPIs(b);
+      return {
+        id: b.id,                                // 👈 add this
+        name: b.name,
+        kwh: Math.round(k.kwh),
+        co2: k.tco2e,
+        intensity: Math.round(k.intensity || 0),
+        complete: (k.completeness || 0) / 100,
+        actions: 0,
+        updated: b.updated || "—",
+      };
+    })
     : [
         {name:"1 King Street",kwh:142000,co2:36.2,intensity:92,complete:.92,actions:3,updated:"2025-08-10"},
         {name:"42 Market Way",kwh:98000,co2:24.4,intensity:78,complete:.84,actions:1,updated:"2025-08-07"},
@@ -1861,75 +1862,110 @@ const rollup = React.useMemo(() => {
           </div>
         </div>
 
-        {/* desktop table */}
-        <div className="hidden md:block overflow-x-auto rounded-2xl" style={{border:"1px solid var(--stroke)"}}> 
-          <table className="w-full text-sm min-w-[700px]">
-            <thead className="text-slate-300" style={{background:"var(--panel-2)"}}>
-              <tr>
-                {["Building","kWh","tCO₂e","Intensity","Completeness","Actions","Updated",""].map((h,i)=>(
-  <th key={i} className="text-left px-4 py-3" style={{borderBottom:"1px solid var(--stroke)"}}>{h}</th>
-))}
-              </tr>
-            </thead>
-            <tbody className="divide-y" style={{borderColor:"var(--stroke)"}}>
-  {rows.map((r,i)=>(
-    <tr key={i} className="hover:bg-[#10131a]">
-      <td className="px-4 py-3 text-slate-100">{r.name}</td>
-      <td className="px-4 py-3 text-slate-300">{r.kwh.toLocaleString()}</td>
-      <td className="px-4 py-3 text-slate-300">{Number(r.co2).toFixed(1)}</td>
-      <td className="px-4 py-3 text-slate-300">{r.intensity}</td>
-      <td className="px-4 py-3">
-        <div className="w-28 h-2 rounded bg-slate-800">
-          <div className="h-2 rounded bg-emerald-400" style={{width:(r.complete*100)+"%"}}/>
-        </div>
-        <div className="text-xs text-slate-400 mt-1">{Math.round(r.complete*100)}%</div>
-      </td>
-      <td className="px-4 py-3 text-slate-300">{r.actions}</td>
-      <td className="px-4 py-3 text-slate-400">{r.updated}</td>
-      <td className="px-4 py-3 text-right">
-        {buildings[i] && (
-          <button className="btn btn-ghost btn-sm" onClick={()=>openEdit(buildings[i])}>
-            Edit
-          </button>
-        )}
-      </td>
-    </tr>
-  ))}
-</tbody>
-          </table>
-        </div>
+      {/* desktop table */}
+<div className="hidden md:block overflow-x-auto rounded-2xl" style={{border:"1px solid var(--stroke)"}}>
+  <table className="w-full text-sm min-w-[860px]">
+    <thead className="text-slate-300" style={{background:"var(--panel-2)"}}>
+      <tr>
+        {["Building","kWh","tCO₂e","Intensity","Completeness","Actions","Updated",""]
+          .map((h,i)=>(
+            <th key={i} className="text-left px-4 py-3" style={{borderBottom:"1px solid var(--stroke)"}}>
+              {h}
+            </th>
+        ))}
+      </tr>
+    </thead>
 
-        {/* mobile list */}
-       <ul className="md:hidden space-y-3 pb-[calc(96px+max(env(safe-area-inset-bottom),16px))]">
-          {rows.map((r,i)=>(
-            <li key={i} className="rounded-2xl p-4" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
-              <div className="flex items-start justify-between gap-3">
-                <div className="text-slate-100 font-medium">{r.name}</div>
-                <div className="text-slate-400 text-xs">Updated {r.updated}</div>
-              </div>
-              <div className="mt-3 grid grid-cols-2 gap-3">
-                <div><div className="text-xs text-slate-400">kWh</div><div className="text-slate-200 font-semibold">{r.kwh.toLocaleString()}</div></div>
-                <div><div className="text-xs text-slate-400">tCO₂e</div><div className="text-slate-200 font-semibold">{Number(r.co2).toFixed(1)}</div></div>
-                <div><div className="text-xs text-slate-400">Intensity</div><div className="text-slate-200 font-semibold">{r.intensity}</div></div>
-                <div>
-                  <div className="text-xs text-slate-400">Completeness</div>
-                  <div className="mt-1 h-2 rounded bg-slate-800">
-                    <div className="h-2 rounded bg-emerald-400" style={{width:`${r.complete*100}%`}}/>
-                  </div>
-                  <div className="text-[11px] text-slate-400 mt-1">{Math.round(r.complete*100)}%</div>
-                </div>
-              </div>
-              <div className="mt-3 flex items-center justify-between">
-  <span className="text-xs text-slate-400">{r.actions} actions</span>
-  {buildings[i] ? (
-    <button className="btn btn-ghost" onClick={()=>openEdit(buildings[i])}>Edit</button>
-  ) : (
-    <span className="text-xs text-slate-500">Sample</span>
-  )}
+    <tbody className="divide-y" style={{borderColor:"var(--stroke)"}}>
+      {rows.map((r,i)=>(
+        <tr key={r.id || i} className="hover:bg-[#10131a]">
+          <td className="px-4 py-3 text-slate-100">{r.name}</td>
+          <td className="px-4 py-3 text-slate-300">{r.kwh.toLocaleString()}</td>
+          <td className="px-4 py-3 text-slate-300">{Number(r.co2).toFixed(1)}</td>
+          <td className="px-4 py-3 text-slate-300">{r.intensity}</td>
+          <td className="px-4 py-3">
+            <div className="w-28 h-2 rounded bg-slate-800">
+              <div className="h-2 rounded bg-emerald-400" style={{width:(r.complete*100)+"%"}}/>
+            </div>
+            <div className="text-xs text-slate-400 mt-1">{Math.round(r.complete*100)}%</div>
+          </td>
+          <td className="px-4 py-3 text-slate-300">{r.actions}</td>
+          <td className="px-4 py-3 text-slate-400">{r.updated}</td>
+
+          {/* Actions column (Edit + Open actions) */}
+          <td className="px-4 py-3">
+            <div className="flex gap-2 justify-end">
+              {!!openEdit && (
+                <button className="btn btn-ghost btn-sm" onClick={()=>openEdit(buildings[i])}>
+                  Edit
+                </button>
+              )}
+              <button
+                className="btn btn-ghost btn-sm"
+                onClick={()=>openActionsFor?.(r.id)}
+                title="Open actions for this building"
+              >
+                Open actions
+              </button>
+            </div>
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
 </div>
-            </li>
-          ))}
-        </ul>
+       {/* mobile list */}
+<ul className="md:hidden space-y-3 pb-[calc(96px+max(env(safe-area-inset-bottom),16px))]">
+  {rows.map((r, i) => (
+    <li key={r.id || i} className="rounded-2xl p-4" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="text-slate-100 font-medium">{r.name}</div>
+        <div className="text-slate-400 text-xs">Updated {r.updated}</div>
+      </div>
+
+      <div className="mt-3 grid grid-cols-2 gap-3">
+        <div>
+          <div className="text-xs text-slate-400">kWh</div>
+          <div className="text-slate-200 font-semibold">{r.kwh.toLocaleString()}</div>
+        </div>
+        <div>
+          <div className="text-xs text-slate-400">tCO₂e</div>
+          <div className="text-slate-200 font-semibold">{Number(r.co2).toFixed(1)}</div>
+        </div>
+        <div>
+          <div className="text-xs text-slate-400">Intensity</div>
+          <div className="text-slate-200 font-semibold">{r.intensity}</div>
+        </div>
+        <div>
+          <div className="text-xs text-slate-400">Completeness</div>
+          <div className="mt-1 h-2 rounded bg-slate-800">
+            <div className="h-2 rounded bg-emerald-400" style={{width:`${r.complete*100}%`}} />
+          </div>
+          <div className="text-[11px] text-slate-400 mt-1">{Math.round(r.complete*100)}%</div>
+        </div>
+      </div>
+
+      <div className="mt-3 flex items-center justify-between">
+        <span className="text-xs text-slate-400">{r.actions} actions</span>
+
+        {buildings[i] ? (
+          <div className="flex gap-2">
+            {!!openEdit && (
+              <button className="btn btn-ghost" onClick={() => openEdit(buildings[i])}>
+                Edit
+              </button>
+            )}
+            <button className="btn btn-ghost" onClick={() => openActionsFor?.(r.id)}>
+              Open actions
+            </button>
+          </div>
+        ) : (
+          <span className="text-xs text-slate-500">Sample</span>
+        )}
+      </div>
+    </li>
+  ))}
+</ul>
 
         {/* Mobile FAB */}
       <button
@@ -2361,9 +2397,12 @@ function Building(){
   );
 }
  // REPLACE your whole Actions() with this version
-function Actions({ buildings=[], actions=[], setActions, goLineage }) {
+function Actions({ buildings=[], actions=[], setActions, goLineage, defaultBId }) {
   const [scenario, setScenario] = React.useState("Today");
-  const [bId, setBId] = React.useState(buildings[0]?.id || null);
+ const [bId, setBId] = React.useState(defaultBId || buildings[0]?.id || null);
+React.useEffect(() => {
+  if (defaultBId) setBId(defaultBId);
+}, [defaultBId]);
   const active = buildings.find(b => b.id===bId) || buildings[0];
 
   const addToPlan = (tmpl) => {
@@ -3248,13 +3287,13 @@ const HOSHI_SAMPLE_BUILDINGS = [
 function App(){
   const [active,setActive]=useState("story");
  const [open,setOpen]=useState(false);
-const [lineageCtx, setLineageCtx] = useState(null);
+const [lineageCtx, setLineageCtx] = useState(null);  
   // === Hoshi MVP: buildings state ===
 const [buildings, setBuildings] = React.useState(hoshiLoadBuildings());
 React.useEffect(() => hoshiSaveBuildings(buildings), [buildings]);
   const [actions, setActions] = React.useState(hoshiLoadActions());
 React.useEffect(() => hoshiSaveActions(actions), [actions]);
-
+const [actionsBId, setActionsBId] = React.useState(null);
   // Seed demo buildings on first visit if none exist
 React.useEffect(() => {
   if (!Array.isArray(buildings) || buildings.length > 0) return;
@@ -3293,7 +3332,12 @@ const seedActions = ACTIONS_SEED(buildings);
 ) },
 
 { key: "portfolio", label: "Portfolio",
-  comp: <Portfolio buildings={buildings} setBuildings={setBuildings} /> },
+  comp: <Portfolio
+  buildings={buildings}
+  setBuildings={setBuildings}
+  openActionsFor={(id) => { setActionsBId(id); setActive("actions"); }}  // 👈 new
+  openEdit={(b) => {/* your edit modal opener if you have it */}}
+/> },
   { key: "compare", label: "Compare",
   comp: <CompareView buildings={buildings} setBuildings={setBuildings} /> },
 
@@ -3305,7 +3349,8 @@ const seedActions = ACTIONS_SEED(buildings);
           buildings={buildings}
           actions={actions}
           setActions={setActions}
-          goLineage={(payload) => { setLineageCtx(payload); setActive("lineage"); }}
+          defaultBId={actionsBId}   // ← new
+          goLineage={(payload)=>{ setLineageCtx(payload); setActive("lineage"); }}
         />
 },
     
