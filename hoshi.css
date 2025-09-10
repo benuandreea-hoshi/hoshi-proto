@@ -12,6 +12,24 @@
 /* Keep the page from panning sideways on iOS */
 #hoshi-root { overflow-x: hidden; }
 
+/* Hide mobile scrollbars for chip rows */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+
+/* Actions-specific tuning */
+.actions .chip.stat {
+  padding: 6px 10px;
+  border-radius: 9999px;
+}
+
+/* Make cards a bit tighter on small screens */
+@media (max-width: 640px) {
+  .actions .rounded-2xl { border-radius: 14px; }
+  .actions .btn-primary { height: 42px; }
+  /* keep last card clear of the Webflow badge */
+  .actions { padding-bottom: max(env(safe-area-inset-bottom), 84px); }
+}
+
 /* Images never exceed their container */
 #hoshi-root img { max-width: 100%; height: auto; }
 
