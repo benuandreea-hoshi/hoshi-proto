@@ -2597,6 +2597,13 @@ const inPlan = buildingActions.some(x => keyOf(x) === keyOf(tmpl));
             <option>2030</option>
             <option>2050</option>
           </select>
+          {/* 👇 Open the custom action modal */}
+  <button
+    className="btn btn-ghost w-full md:w-auto md:ml-auto mt-2 md:mt-0"
+    onClick={() => setCustomOpen(true)}
+  >
+    + Custom action
+  </button>
         </div>
 
             {/* Suggestions for the active building */}
