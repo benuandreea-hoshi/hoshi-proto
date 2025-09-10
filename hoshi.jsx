@@ -183,55 +183,48 @@ function computeNCMProxy(b, scenario){
   const pct = (inten / notional) * 100;
   return { band: ncmBandFromPct(pct), score: Math.round(pct), note:`Relative to notional ${notional} kWh/m²·yr` };
 }
+const isNatVent = (b) => String(b?.servicing || "").toLowerCase().includes("natur");
 
-// Financial risk (APT-flavoured) from scenario panel.
-// We compute costs across the 5 scenario points to get a β vs portfolio.
-function computeFinancialSignal(b, buildings){
-  // a cost for this building across the scenario vector
-  const costVec = HOSHI_SCENARIOS.map(s => {
-    const { elec, gas } = getEnergySplit(b);
-    return elec * s.elecP + gas * s.gasP;
-  });
+// Compute deltas produced by applying a template to building b
+function computeActionDelta(b, buildings, tmpl, scenarioLabel = "Today"){
+  const s = pickScenario(scenarioLabel) || pickScenario("Today");
 
-  // the “market” = average cost of all buildings under each scenario
-  const marketVec = HOSHI_SCENARIOS.map((s) => {
-    if (!Array.isArray(buildings) || buildings.length === 0) return 0;
-    const list = buildings.map(B => {
-      const { elec, gas } = getEnergySplit(B);
-      return elec * s.elecP + gas * s.gasP;
-    });
-    return list.reduce((a,c)=>a+c,0) / list.length;
-  });
+  // base
+  const baseK   = hoshiKPIs(b);
+  const baseFwd = s ? fwdAt(b, buildings, s) : 0;        // %
+  const baseSig = computeFinancialSignal(b, buildings) || {};
+  const baseB   = Number(baseSig.beta || 0);
 
-  const mean = a => a.reduce((x,y)=>x+y,0)/(a.length || 1);
-  const mB = mean(costVec), mM = mean(marketVec);
+  // overheating only for naturally ventilated buildings
+  const nat     = isNatVent(b);
+  const baseHot = nat ? natVentOverheatHours(b, { deltaC: warmingDelta(scenarioLabel) }) : null;
 
-  // β (slope) via simple OLS on the scenario vector
-  let num=0, den=0;
-  for (let i=0;i<costVec.length;i++){
-    num += (costVec[i]-mB) * (marketVec[i]-mM);
-    den += (marketVec[i]-mM) ** 2;
+  // after applying template
+  const after   = applyTemplate(b, tmpl);
+  const postK   = hoshiKPIs(after);
+  const postFwd = s ? fwdAt(after, buildings, s) : 0;    // %
+  const postSig = computeFinancialSignal(after, buildings) || {};
+  const postB   = Number(postSig.beta || 0);
+  const postHot = nat ? natVentOverheatHours(after, { deltaC: warmingDelta(scenarioLabel) }) : null;
+
+  // comfort: only meaningful when nat-vent
+  let overDelta = null; // null = N/A → UI will hide the tile
+  if (nat) {
+    let d = (postHot ?? 0) - (baseHot ?? 0);
+    if (tmpl.key === "shade_purge_fans") d = Math.round(d * (tmpl.comfortFactor ?? 0.5));
+    overDelta = Math.round(d);
   }
-  const beta  = den > 0 ? num/den : 0;
-  const alpha = mB - beta * mM;
-
-  // idiosyncratic error (RMSE) across scenarios
-  let se=0;
-  for (let i=0;i<costVec.length;i++){
-    const pred = alpha + beta * marketVec[i];
-    se += (costVec[i] - pred) ** 2;
-  }
-  const idio = Math.sqrt(se / (costVec.length || 1));
-
-  // forward deviation vs market (percent)
-  const fwdDev = ((alpha + beta * mM) - mM) / (mM || 1);
 
   return {
-    beta: +beta.toFixed(2),
-    idio: Math.round(idio),
-    fwd: +(fwdDev * 100).toFixed(1),
+    kwh:       Math.round(postK.kwh - baseK.kwh),
+    tco2e:     +(postK.tco2e - baseK.tco2e).toFixed(1),
+    intensity: Math.round((postK.intensity || 0) - (baseK.intensity || 0)),
+    fwd:       +(postFwd - baseFwd).toFixed(1),
+    beta:      +((postB - baseB).toFixed(2)),
+    overHours: overDelta, // null when not applicable
   };
 }
+
 
   
 // Overheating risk (adaptive-comfort proxy).
@@ -372,6 +365,37 @@ function warmingDelta(label){
 
 // Compute deltas produced by applying a template to building b
 function computeActionDelta(b, buildings, tmpl, scenarioLabel = "Today") {
+
+  // helper (put near your other small helpers)
+const isNatVent = (b) => String(b?.servicing || "").toLowerCase().includes("natur");
+
+// …inside computeActionDelta(b, buildings, tmpl, scenarioLabel="Today")
+const nat = isNatVent(b);
+
+// only compute overheating for nat-vent stock
+const baseHot = nat ? natVentOverheatHours(b, { deltaC: warmingDelta(scenarioLabel) }) : 0;
+const after   = applyTemplate(b, tmpl);
+const postHot = nat ? natVentOverheatHours(after, { deltaC: warmingDelta(scenarioLabel) }) : 0;
+
+// Comfort benefit: only meaningful when nat-vent (or the comfort template applies to nat-vent anyway)
+let overDelta = null; // ← default: not applicable
+if (nat) {
+  let d = postHot - baseHot;
+  if (tmpl.key === "shade_purge_fans") {
+    d = Math.round(d * (tmpl.comfortFactor ?? 0.5));
+  }
+  overDelta = Math.round(d);
+}
+
+return {
+  kwh: Math.round(postK.kwh - baseK.kwh),
+  tco2e: +(postK.tco2e - baseK.tco2e).toFixed(1),
+  intensity: Math.round((postK.intensity || 0) - (baseK.intensity || 0)),
+  fwd: +(postFwd - baseFwd).toFixed(1),
+  beta: +((postB - baseB).toFixed(2)),
+  overHours: overDelta, // ← null when N/A
+};
+
   const s = pickScenario(scenarioLabel) || pickScenario("Today");
 
   const baseK   = hoshiKPIs(b);
