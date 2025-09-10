@@ -1807,7 +1807,7 @@ const rollup = React.useMemo(() => {
   const Kpi = (p) => <Metric {...p} />;
 
   return (
-    <div className="grid gap-4 md:gap-6">
+     <div className="grid gap-4 md:gap-6 actions">
       <Section
         title="Portfolio summary"
         right={<button className="hidden md:inline-flex btn btn-ghost">Export Portfolio Pack</button>}
