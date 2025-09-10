@@ -22,6 +22,22 @@
   border-radius: 9999px;
 }
 
+/* Flash pulse used when an action is added to plan */
+@keyframes hoshi-flash {
+  0%   { box-shadow: 0 0 0 0 rgba(59,130,246,0.00); }
+  30%  { box-shadow: 0 0 0 6px rgba(59,130,246,0.35); }
+  100% { box-shadow: 0 0 0 0 rgba(59,130,246,0.00); }
+}
+
+/* Scope to the app root so it doesn't bleed elsewhere */
+#hoshi-root .flash-anim {
+  animation: hoshi-flash 1s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #hoshi-root .flash-anim { animation: none; }
+}
+
 /* Make cards a bit tighter on small screens */
 @media (max-width: 640px) {
   .actions .rounded-2xl { border-radius: 14px; }
