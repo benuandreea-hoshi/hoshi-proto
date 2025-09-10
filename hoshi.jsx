@@ -1764,24 +1764,26 @@ const openEdit = (b) => { setEditing(b); setEditOpen(true); };
   }, [buildings, actions]);
 
   // when you build table/list rows...
-  const rows = buildings.map(b => {
-    const { kwh, tco2e, intensity, completeness } = hoshiKPIs(b);
-    return {
-      id: b.id,
-      name: b.name,
-      kwh,
-      co2: tco2e,
-      intensity: Math.round(intensity),
-      complete: (completeness/100),
-      actions: actionCount[b.id] || 0,           // ← use live count
-      updated: b.updated || new Date().toISOString().slice(0,10)
-    };
-  });
-    : [
-        {name:"1 King Street",kwh:142000,co2:36.2,intensity:92,complete:.92,actions:3,updated:"2025-08-10"},
-        {name:"42 Market Way",kwh:98000,co2:24.4,intensity:78,complete:.84,actions:1,updated:"2025-08-07"},
-        {name:"Riverside 8",kwh:123500,co2:31.0,intensity:88,complete:.67,actions:2,updated:"2025-08-05"},
-      ];
+ // ✅ build rows with a fallback sample when no buildings yet
+const rows = buildings.length
+  ? buildings.map(b => {
+      const { kwh, tco2e, intensity, completeness } = hoshiKPIs(b);
+      return {
+        id: b.id,
+        name: b.name,
+        kwh,
+        co2: tco2e,
+        intensity: Math.round(intensity),
+        complete: (completeness / 100),
+        actions: actionCount[b.id] || 0,
+        updated: b.updated || new Date().toISOString().slice(0, 10),
+      };
+    })
+  : [
+      { name: "1 King Street", kwh: 142000, co2: 36.2, intensity: 92, complete: .92, actions: 3, updated: "2025-08-10" },
+      { name: "42 Market Way", kwh: 98000,  co2: 24.4, intensity: 78, complete: .84, actions: 1, updated: "2025-08-07" },
+      { name: "Riverside 8",  kwh: 123500, co2: 31.0, intensity: 88, complete: .67, actions: 2, updated: "2025-08-05" },
+    ];
 
 const rollup = React.useMemo(() => {
   if (buildings?.length) {
@@ -2404,6 +2406,11 @@ function Building(){
 function Actions({ buildings=[], actions=[], setActions, goLineage, selectedBId=null }) {
   const [scenario, setScenario] = React.useState("Today");
   const [bId, setBId] = React.useState(selectedBId || buildings[0]?.id || null);
+  const [customOpen, setCustomOpen] = React.useState(false);
+const [custom, setCustom] = React.useState({
+  title: "", tags: "", capex: "", opex: "", confidence: "",
+  tmplKey: "", dkwh: "", dtco2: "", dint: "", dfwd: "", dbeta: "", dover: ""
+});
 
    React.useEffect(() => {
     if (selectedBId) setBId(selectedBId);
