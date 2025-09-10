@@ -364,39 +364,6 @@ function warmingDelta(label){
   return 0.0; // "Today" / default
 }
 
-// Compute deltas produced by applying a template to building b
-function computeActionDelta(b, buildings, tmpl, scenarioLabel = "Today") {
-
-  // helper (put near your other small helpers)
-const isNatVent = (b) => String(b?.servicing || "").toLowerCase().includes("natur");
-
-// …inside computeActionDelta(b, buildings, tmpl, scenarioLabel="Today")
-const nat = isNatVent(b);
-
-// only compute overheating for nat-vent stock
-const baseHot = nat ? natVentOverheatHours(b, { deltaC: warmingDelta(scenarioLabel) }) : 0;
-const after   = applyTemplate(b, tmpl);
-const postHot = nat ? natVentOverheatHours(after, { deltaC: warmingDelta(scenarioLabel) }) : 0;
-
-// Comfort benefit: only meaningful when nat-vent (or the comfort template applies to nat-vent anyway)
-let overDelta = null; // ← default: not applicable
-if (nat) {
-  let d = postHot - baseHot;
-  if (tmpl.key === "shade_purge_fans") {
-    d = Math.round(d * (tmpl.comfortFactor ?? 0.5));
-  }
-  overDelta = Math.round(d);
-}
-
-return {
-  kwh: Math.round(postK.kwh - baseK.kwh),
-  tco2e: +(postK.tco2e - baseK.tco2e).toFixed(1),
-  intensity: Math.round((postK.intensity || 0) - (baseK.intensity || 0)),
-  fwd: +(postFwd - baseFwd).toFixed(1),
-  beta: +((postB - baseB).toFixed(2)),
-  overHours: overDelta, // ← null when N/A
-};
-
   const s = pickScenario(scenarioLabel) || pickScenario("Today");
 
   const baseK   = hoshiKPIs(b);
