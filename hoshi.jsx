@@ -2391,7 +2391,6 @@ function Actions({ buildings=[], actions=[], setActions, goLineage }) {
     const d = active ? computeActionDelta(active, buildings, tmpl, scenario) : null;
     return (
       <div className="rounded-2xl p-4 md:p-5 mb-4" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
-    // REPLACE the header block in Card with this:
 <div className="flex flex-wrap items-start gap-3">
   <div className="min-w-0 grow order-1 md:order-none">
     <div className="text-slate-50 font-semibold">{tmpl.title}</div>
