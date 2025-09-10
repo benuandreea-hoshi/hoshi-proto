@@ -3281,47 +3281,73 @@ const HOSHI_SAMPLE_BUILDINGS = [
 
 
 function App(){
-  const [active,setActive]=useState("story");
- const [open,setOpen]=useState(false);
-const [lineageCtx, setLineageCtx] = useState(null);  
-  // === Hoshi MVP: buildings state ===
-const [buildings, setBuildings] = React.useState(hoshiLoadBuildings());
-React.useEffect(() => hoshiSaveBuildings(buildings), [buildings]);
+  const [active, setActive] = React.useState("portfolio");   // "portfolio" | "actions" | "lineage"
+  const [buildings, setBuildings] = React.useState(hoshiLoadBuildings());
+  React.useEffect(() => hoshiSaveBuildings(buildings), [buildings]);
+
   const [actions, setActions] = React.useState(hoshiLoadActions());
-React.useEffect(() => hoshiSaveActions(actions), [actions]);
-   const [active, setActive] = React.useState("portfolio");
+  React.useEffect(() => hoshiSaveActions(actions), [actions]);
+
   const [actionsBId, setActionsBId] = React.useState(null);
+  const [lineageCtx, setLineageCtx]   = React.useState(null);
+
+  // seed sample buildings once
+  React.useEffect(() => {
+    if (buildings.length === 0 && !localStorage.getItem("hoshi.seeded")) {
+      setBuildings(HOSHI_SAMPLE_BUILDINGS);
+      localStorage.setItem("hoshi.seeded", "1");
+    }
+  }, [buildings.length]);
+
+  // seed sample actions once (after buildings exist)
+  React.useEffect(() => {
+    if (actions.length === 0 && buildings.length > 0 && !localStorage.getItem("hoshi.actionsSeeded")) {
+      setActions(ACTIONS_SEED(buildings));
+      localStorage.setItem("hoshi.actionsSeeded", "1");
+    }
+  }, [actions.length, buildings]);
 
   const openActionsFor = (id) => {
     setActionsBId(id);
     setActive("actions");
-    // optional nicety:
     window.scrollTo?.({ top: 0, behavior: "smooth" });
   };
+
+  const goLineage = (payload) => {
+    setLineageCtx(payload);
+    setActive("lineage");
+  };
+
   return (
     <>
-      {/* Portfolio tab */}
       {active === "portfolio" && (
         <Portfolio
           buildings={buildings}
           setBuildings={setBuildings}
-          openActionsFor={openActionsFor}   // ← pass it down
+          openActionsFor={openActionsFor}
         />
       )}
 
-      {/* Actions tab */}
       {active === "actions" && (
         <Actions
           buildings={buildings}
           actions={actions}
           setActions={setActions}
           goLineage={goLineage}
-          selectedBId={actionsBId}         // ← pre-select this building
+          selectedBId={actionsBId}   // ← prop name matches Actions()
+        />
+      )}
+
+      {active === "lineage" && (
+        <Lineage
+          fromAction={lineageCtx}
+          goActions={() => setActive("actions")}
         />
       )}
     </>
   );
 }
+
 React.useEffect(() => {
   if (!Array.isArray(buildings) || buildings.length > 0) return;
   if (localStorage.getItem("hoshi.seeded")) return;
