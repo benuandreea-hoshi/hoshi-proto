@@ -23,31 +23,31 @@ function hoshiSaveActions(list) {
 const hoshiUid = () => Math.random().toString(36).slice(2, 9);
 /** ---------------- SCENARIOS (lightweight) ---------------- **/
 // Simple actions starter linked to the first two buildings (if present)
-const ACTIONS_SEED = (buildings = []) => {
+const ACTIONS_SEED = (buildings=[]) => {
   const b1 = buildings[0]?.id ?? null;
   const b2 = buildings[1]?.id ?? null;
   return [
     {
       id: hoshiUid(),
-      title: "LED retrofit",
       buildingId: b1,
-      tags: ["Alarm: Overrun", "Electricity", "Last 12m", ">10% vs budget"],
-      status: "To review",
+      tmplKey: "led",                      // ← add
+      title: "LED retrofit",
+      tags: ["Electricity","Fabric/Lighting"],
       capex: 25000,
       annualSavings: 8500,
-      notes: "Lamp + driver swap in offices + common areas.",
-      kpi: { deltaIndex: -0.03, deltaCO2: -6.5 } // index is your “service index” proxy
+      kpi: { deltaIndex: -0.03, deltaCO2: -6.5 },
+      status: "To review"
     },
     {
       id: hoshiUid(),
-      title: "HVAC schedule",
       buildingId: b2,
-      tags: ["Alarm: Comfort risk", "Overheating", "Summer", "> threshold"],
-      status: "Approved",
+      tmplKey: "bms_tune",                 // ← use the Controls template
+      title: "Controls tune-up (set-points, purge, deadbands)",
+      tags: ["Controls"],
       capex: 1000,
       annualSavings: 4200,
-      notes: "Night purge + setpoint discipline.",
-      kpi: { deltaIndex: -0.018, deltaCO2: -2.3 }
+      kpi: { deltaIndex: -0.018, deltaCO2: -2.3 },
+      status: "Approved"
     }
   ];
 };
@@ -2473,9 +2473,9 @@ const addToPlan = (tmpl) => {
 
   const Card = ({ tmpl }) => {
   const d = active ? computeActionDelta(active, buildings, tmpl, scenario) : null;
-  const inPlan = buildingActions.some(
-    x => (x.tmplKey || x.title) === (tmpl.key || tmpl.title)
-  );
+  const keyOf = x => String((x?.tmplKey || x?.key || x?.title || "")).trim().toLowerCase();
+const inPlan = buildingActions.some(x => keyOf(x) === keyOf(tmpl));
+
 
   return (
     <div className="rounded-2xl p-4 md:p-5 mb-4" style={{background:"var(--panel-2)",border:"1px solid var(--stroke)"}}>
@@ -3354,6 +3354,28 @@ function App(){
 
   const [actions, setActions] = React.useState(hoshiLoadActions());
   React.useEffect(() => hoshiSaveActions(actions), [actions]);
+
+  React.useEffect(() => {
+  if (localStorage.getItem("hoshi.actionsNormalized")) return;
+
+  let changed = false;
+  const norm = actions.map(a => {
+    // Map legacy titles to tmplKey
+    if (!a.tmplKey) {
+      if ((a.title || "").toLowerCase().includes("led retrofit")) {
+        changed = true; return { ...a, tmplKey: "led" };
+      }
+      if ((a.title || "").toLowerCase().includes("hvac schedule")) {
+        changed = true; return { ...a, tmplKey: "bms_tune" };
+      }
+    }
+    return a;
+  });
+
+  if (changed) setActions(norm);
+  localStorage.setItem("hoshi.actionsNormalized", "1");
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, []);
 
   const [actionsBId, setActionsBId] = React.useState(null);
   const [lineageCtx, setLineageCtx] = React.useState(null);
