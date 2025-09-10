@@ -1729,7 +1729,7 @@ function Onboarding({ goAddBuilding }){
 }
 
 
-function Portfolio({ buildings = [], setBuildings }) {
+function Portfolio({ buildings = [], setBuildings, openActionsFor }) {
   const [addOpen, setAddOpen] = React.useState(false);
   const [editOpen, setEditOpen] = React.useState(false);
 const [editing,  setEditing]  = React.useState(null);
@@ -1944,25 +1944,19 @@ const rollup = React.useMemo(() => {
           <div className="text-[11px] text-slate-400 mt-1">{Math.round(r.complete*100)}%</div>
         </div>
       </div>
-
-      <div className="mt-3 flex items-center justify-between">
-        <span className="text-xs text-slate-400">{r.actions} actions</span>
-
-        {buildings[i] ? (
-          <div className="flex gap-2">
-            {!!openEdit && (
-              <button className="btn btn-ghost" onClick={() => openEdit(buildings[i])}>
-                Edit
-              </button>
-            )}
-            <button className="btn btn-ghost" onClick={() => openActionsFor?.(r.id)}>
-              Open actions
-            </button>
-          </div>
-        ) : (
-          <span className="text-xs text-slate-500">Sample</span>
-        )}
-      </div>
+     <div className="mt-3 flex items-center justify-between">
+  <span className="text-xs text-slate-400">{r.actions} actions</span>
+  {buildings[i] ? (
+    <div className="flex gap-2">
+      <button className="btn btn-ghost" onClick={() => openEdit(buildings[i])}>Edit</button>
+      <button className="btn btn-ghost" onClick={() => openActionsFor?.(buildings[i].id)}>
+        Open actions
+      </button>
+    </div>
+  ) : (
+    <span className="text-xs text-slate-500">Sample</span>
+  )}
+</div>
     </li>
   ))}
 </ul>
@@ -2397,13 +2391,15 @@ function Building(){
   );
 }
  // REPLACE your whole Actions() with this version
-function Actions({ buildings=[], actions=[], setActions, goLineage, defaultBId }) {
+function Actions({ buildings=[], actions=[], setActions, goLineage, selectedBId=null }) {
   const [scenario, setScenario] = React.useState("Today");
- const [bId, setBId] = React.useState(defaultBId || buildings[0]?.id || null);
-React.useEffect(() => {
-  if (defaultBId) setBId(defaultBId);
-}, [defaultBId]);
-  const active = buildings.find(b => b.id===bId) || buildings[0];
+  const [bId, setBId] = React.useState(selectedBId || buildings[0]?.id || null);
+
+   React.useEffect(() => {
+    if (selectedBId) setBId(selectedBId);
+  }, [selectedBId]);
+  
+ const active = buildings.find(b => b.id === bId) || buildings[0];
 
   const addToPlan = (tmpl) => {
     if (!active) return;
@@ -3293,8 +3289,39 @@ const [buildings, setBuildings] = React.useState(hoshiLoadBuildings());
 React.useEffect(() => hoshiSaveBuildings(buildings), [buildings]);
   const [actions, setActions] = React.useState(hoshiLoadActions());
 React.useEffect(() => hoshiSaveActions(actions), [actions]);
-const [actionsBId, setActionsBId] = React.useState(null);
-  // Seed demo buildings on first visit if none exist
+   const [active, setActive] = React.useState("portfolio");
+  const [actionsBId, setActionsBId] = React.useState(null);
+
+  const openActionsFor = (id) => {
+    setActionsBId(id);
+    setActive("actions");
+    // optional nicety:
+    window.scrollTo?.({ top: 0, behavior: "smooth" });
+  };
+  return (
+    <>
+      {/* Portfolio tab */}
+      {active === "portfolio" && (
+        <Portfolio
+          buildings={buildings}
+          setBuildings={setBuildings}
+          openActionsFor={openActionsFor}   // ← pass it down
+        />
+      )}
+
+      {/* Actions tab */}
+      {active === "actions" && (
+        <Actions
+          buildings={buildings}
+          actions={actions}
+          setActions={setActions}
+          goLineage={goLineage}
+          selectedBId={actionsBId}         // ← pre-select this building
+        />
+      )}
+    </>
+  );
+}
 React.useEffect(() => {
   if (!Array.isArray(buildings) || buildings.length > 0) return;
   if (localStorage.getItem("hoshi.seeded")) return;
