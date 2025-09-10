@@ -183,11 +183,13 @@ function computeNCMProxy(b, scenario){
   const pct = (inten / notional) * 100;
   return { band: ncmBandFromPct(pct), score: Math.round(pct), note:`Relative to notional ${notional} kWh/m²·yr` };
 }
-const isNatVent = (b) => String(b?.servicing || "").toLowerCase().includes("natur");
+
 
 // Compute deltas produced by applying a template to building b
 function computeActionDelta(b, buildings, tmpl, scenarioLabel = "Today"){
   const s = pickScenario(scenarioLabel) || pickScenario("Today");
+
+  const isNatVent = (b) => String(b?.servicing || "").toLowerCase().includes("natur");
 
   // base
   const baseK   = hoshiKPIs(b);
@@ -221,10 +223,9 @@ function computeActionDelta(b, buildings, tmpl, scenarioLabel = "Today"){
     intensity: Math.round((postK.intensity || 0) - (baseK.intensity || 0)),
     fwd:       +(postFwd - baseFwd).toFixed(1),
     beta:      +((postB - baseB).toFixed(2)),
-    overHours: overDelta,
+    overHours: overDelta, // null when not nat-vent → chip stays hidden
   };
 }
-
 
   
 // Overheating risk (adaptive-comfort proxy).
