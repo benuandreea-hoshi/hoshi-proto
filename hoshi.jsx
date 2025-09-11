@@ -349,11 +349,14 @@ function fwdDiff(b, buildings, fromLabel="Today", toLabel="2050"){
 /* ====== Tiny TRY/DSY overheating estimate (city-level) ====== */
 /* Warm season (May–Sep) modeled as a daily sine wave around a seasonal mean.
    Count fraction of hours above an adaptive threshold (~23 °C for offices). */
+const HOSHI_SUMMER = { days: 153, hours: 153*24, amp: 5 }; // ±5 °C daily swing
 
-const HOSHI_SUMMER = { days: 153, hours: 153*24, amp: 5 }; // ±5°C daily swing
 const HOSHI_CITY_WEATHER = {
-  London:  { TRY: 19.0, DSY: 22.0 },
-  Bristol: { TRY: 18.5, DSY: 21.5 },
+  London:     { TRY: 19.0, DSY: 22.0 },
+  Bristol:    { TRY: 18.5, DSY: 21.5 },
+  Manchester: { TRY: 17.8, DSY: 20.8 },
+  Birmingham: { TRY: 18.2, DSY: 21.2 },
+  Glasgow:    { TRY: 16.5, DSY: 19.0 },
 };
 
 function summerOverheatHours(city="London", mode="TRY", threshold=23){
@@ -364,25 +367,59 @@ function summerOverheatHours(city="London", mode="TRY", threshold=23){
   return Math.round(frac * hours);
 }
 
-/** New main entry point used by Actions 2.0 */
-function estimateOverheatingHours(b, scenarioLabel="Today"){
-  // crude city pick; tweak to your schema if you store city differently
-  const city = String(b.city || "London").includes("Bristol") ? "Bristol" : "London";
-  const mode = /2050|2030/i.test(scenarioLabel) ? "DSY" : "TRY";   // hotter year for future
-  const isNat = String(b.servicing||"").toLowerCase().includes("natur");
-  if (!isNat) return null; // ← return null so UI can hide the metric when N/A
+// Map a building to a city key (very simple; extend if you store lat/lng)
+function cityKey(b){
+  const c = String(b.city || "").toLowerCase();
+  if (c.includes("bristol")) return "Bristol";
+  if (c.includes("manchester")) return "Manchester";
+  if (c.includes("birmingham")) return "Birmingham";
+  if (c.includes("glasgow")) return "Glasgow";
+  return "London";
+}
 
-  const base = summerOverheatHours(city, mode, 23);
-  const older = (+b.yearBuilt || 3000) < 1995 ? 20 : 0;            // small bias for older stock
+function adaptiveUpperThreshold(Trm){               // EN-15251-ish
+  const Tc = 0.33 * Trm + 18.8;                     // neutral
+  return Tc + 2;                                    // upper limit (tightish)
+}
+
+function summerOverheatHours(city="London", mode="TRY", threshold=23){
+  const mean = (HOSHI_CITY_WEATHER[city]?.[mode]) ?? 19.0;
+  const { hours, amp } = HOSHI_SUMMER;
+  const x = (threshold - mean) / amp;               // normalized threshold
+  const frac = x >= 1 ? 0 : x <= -1 ? 1 : 0.5 - Math.asin(x)/Math.PI;
+  return Math.round(frac * hours);
+}
+
+function summerOverheatHoursAdaptive(city="London", mode="TRY"){
+  const Trm = (HOSHI_CITY_WEATHER[city]?.[mode]) ?? 19.0; // proxy for running mean
+  const thr = adaptiveUpperThreshold(Trm);
+  return summerOverheatHours(city, mode, thr);
+}
+
+/* Replace natVentOverheatHours/estimateOverheatingHours usage with this wrapper.
+   Backward compatible with your label: "Today"->TRY, future->DSY.
+   Pass opts.adaptive = true to use adaptive threshold. */
+function estimateOverheatingHours(b, label="Today", opts={}){
+  const isNat = String(b.servicing||"").toLowerCase().includes("natur");
+  if (!isNat) return 0;
+
+  const city = cityKey(b);
+  const mode = label.includes("2050") || label.includes("2030") ? "DSY" : "TRY";
+
+  const base = opts.adaptive
+    ? summerOverheatHoursAdaptive(city, mode)
+    : summerOverheatHours(city, mode, 23);         // fixed 23 °C
+
+  const older = (+b.yearBuilt || 3000) < 1995 ? 20 : 0; // gentle bias for old stock
   return Math.max(0, Math.min(800, base + older));
 }
 
-/** Backwards-compatibility: keep old name alive so nothing else crashes */
-function natVentOverheatHours(b, opts={}) {
-  const deltaC = +opts.deltaC || 0;
+/* Keep this tiny shim so existing calls still work */
+function natVentOverheatHours(b, { deltaC=0, adaptive=false } = {}){
   const label = deltaC >= 2 ? "2050" : deltaC >= 1 ? "2030" : "Today";
-  return estimateOverheatingHours(b, label);
+  return estimateOverheatingHours(b, label, { adaptive });
 }
+
 
 
 /* -------- apply + delta calculators for templates -------- */
@@ -2066,7 +2103,7 @@ function compositeIndex(m, w) {
   return ws ? s/ws : 0;
 }
 
-function Services(){
+function Services({ buildings = [] }) {
   const [city,setCity]       = React.useState("London");
   const [preset,setPreset]   = React.useState("Balanced");
   const [mapZoom,setMapZoom] = React.useState(11);
@@ -2076,21 +2113,42 @@ function Services(){
 
   const weights = PRESETS[preset];
 
+  // ✅ 1) declare these first
+  const [yearType, setYearType] = React.useState("TRY");      // "TRY" | "DSY"
+  const [thrMode, setThrMode]   = React.useState("Adaptive"); // "Adaptive" | "Fixed"
+
+  const ohByName = React.useMemo(() => {
+    const label = yearType === "DSY" ? "2050" : "Today";
+    const adaptive = thrMode === "Adaptive";
+    const map = Object.create(null);
+    buildings.forEach(b => {
+      map[b.name] = estimateOverheatingHours(b, label, { adaptive });
+    });
+    return map;
+  }, [buildings, yearType, thrMode]);
+
+  const points = React.useMemo(() => {
+    const label = yearType === "DSY" ? "2050" : "Today";
+    return buildings.map(b => ({
+      ...b,
+      _oh: estimateOverheatingHours(b, label, { adaptive: thrMode === "Adaptive" })
+    }));
+  }, [buildings, yearType, thrMode]);
+
   const enriched = React.useMemo(()=>{
     const minS = Math.min(...PLACES.map(p=>p.spend));
     const maxS = Math.max(...PLACES.map(p=>p.spend));
-    const scaleR = v => 10 + 8 * ((v - minS)/Math.max(1,(maxS-minS))); // smaller: 10–18 px radius
+    const scaleR = v => 10 + 8 * ((v - minS)/Math.max(1,(maxS-minS)));
     return PLACES.map(p=>{
-      const idx = compositeIndex(p.m, weights);     // raw 0.03–0.07
-      const disp = (idx*10);                        // scaled for display 0.30–0.70
+      const idx = compositeIndex(p.m, weights);
+      const disp = (idx*10);
       return { ...p, idx, disp, color: colorForIndex(idx), r: Math.round(scaleR(p.spend)) };
     });
   },[weights]);
 
-  const avgRaw   = React.useMemo(()=> (enriched.length ? enriched.reduce((s,p)=>s+p.idx,0)/enriched.length : 0), [enriched]);
-  const avgDisp  = (avgRaw*10); // 0.30–0.70
+  const avgRaw  = React.useMemo(()=> (enriched.length ? enriched.reduce((s,p)=>s+p.idx,0)/enriched.length : 0), [enriched]);
+  const avgDisp = (avgRaw*10);
 
-  /* init Leaflet once */
   React.useEffect(()=>{
     if (!mapDivRef.current || mapRef.current || !window.L) return;
     const L = window.L;
@@ -2104,13 +2162,18 @@ function Services(){
     layerRef.current = L.layerGroup().addTo(map);
   },[]);
 
-  /* draw markers */
+  // ✅ 2) include ohByName so popups refresh when TRY/DSY/threshold changes
   React.useEffect(()=>{
     if (!mapRef.current || !layerRef.current || !window.L) return;
     const L = window.L;
     layerRef.current.clearLayers();
 
     enriched.forEach(p=>{
+      const oh = ohByName[p.name];
+      const ohRow = (Number.isFinite(oh))
+        ? `<div style="font-size:12px;color:#334155;margin-top:6px">Overheating (hrs/yr): <b>${oh}</b></div>`
+        : "";
+
       const html = `
         <div style="
           width:${p.r*2}px;height:${p.r*2}px;border-radius:9999px;border:2px solid #fff;
@@ -2135,6 +2198,7 @@ function Services(){
           </div>
           <div style="font-size:12px;color:#334155;margin:6px 0 4px">Breakdown (weighted by <b>${preset}</b>, ×10)</div>
           <table style="font-size:12px;color:#334155;width:100%;border-collapse:collapse">${breakdown}</table>
+          ${ohRow}
           <div style="font-size:11px;color:#64748b;margin-top:8px">Annual spend (approx): £${(p.spend/1000).toFixed(0)}k • size ∝ spend</div>
         </div>
       `;
@@ -2146,16 +2210,15 @@ function Services(){
       const b = window.L.latLngBounds(enriched.map(p=>[p.lat,p.lng])).pad(0.2);
       mapRef.current.fitBounds(b, { maxZoom: 13 });
     }
-  },[enriched]);
+  },[enriched, ohByName]); // ← added ohByName
 
-  const selectStyle={
+  const selectStyle = {
     padding:"8px 12px", borderRadius:10,
     background:"var(--panel-2)", border:"1px solid var(--stroke)", color:"var(--text)"
   };
 
-  /* Gauge: arc = “goodness” (maxBand - avgRaw), number = scaled avg */
   const maxBandRaw = 0.0700;
-  const goodness = Math.max(0, maxBandRaw - avgRaw);      // 0–0.07
+  const goodness = Math.max(0, maxBandRaw - avgRaw);
   const goodnessMax = maxBandRaw;
 
   return (
@@ -2174,9 +2237,24 @@ function Services(){
           <select style={selectStyle} value={city} onChange={e=>setCity(e.target.value)}>
             <option>London</option>
           </select>
+
           <label className="text-sm text-slate-300 ml-2">Weights</label>
           <select style={selectStyle} value={preset} onChange={e=>setPreset(e.target.value)}>
             {Object.keys(PRESETS).map(k=><option key={k}>{k}</option>)}
+          </select>
+
+          <label className="text-slate-300 text-sm">Year type</label>
+          <select className="px-3 py-2 rounded-lg" style={{background:"var(--panel-2)", border:"1px solid var(--stroke)", color:"var(--text)"}}
+                  value={yearType} onChange={e=>setYearType(e.target.value)}>
+            <option>TRY</option>
+            <option>DSY</option>
+          </select>
+
+          <label className="text-slate-300 text-sm">Threshold</label>
+          <select className="px-3 py-2 rounded-lg" style={{background:"var(--panel-2)", border:"1px solid var(--stroke)", color:"var(--text)"}}
+                  value={thrMode} onChange={e=>setThrMode(e.target.value)}>
+            <option>Adaptive</option>
+            <option>Fixed</option>
           </select>
 
           <div className="ml-auto flex items-center gap-2 text-xs text-slate-400">
@@ -2218,6 +2296,7 @@ function Services(){
     </div>
   );
 }
+
    // === Building (bars without external CSS) — MOBILE-CARD-BARS ===
 function Building(){
   // Data compressed as [label, actual, budget]
@@ -3579,7 +3658,7 @@ function App(){
     { key: "lineage", label: "Lineage & Governance",
       comp: <Lineage fromAction={lineageCtx} goActions={() => setActive("actions")} />
     },
-    { key: "services", label: "Services", comp: <Services /> },
+    { key: "services", label: "Services", comp: <Services buildings={buildings} /> },
     { key: "public", label: "Public BPS",
       comp: <PublicBPS goLineage={() => setActive("lineage")} goActions={() => setActive("actions")} />
     },
