@@ -184,6 +184,29 @@ function computeNCMProxy(b, scenario){
   return { band: ncmBandFromPct(pct), score: Math.round(pct), note:`Relative to notional ${notional} kWh/m²·yr` };
 }
 
+// ---- compatibility shim: computeFinancialSignal ----
+// Uses your existing fwdAt + a simple beta proxy so the UI keeps working.
+function computeFinancialSignal(b, buildings){
+  const s = pickScenario("Today") || null;
+  const fwd = s ? fwdAt(b, buildings, s) : 0;
+
+  // Beta proxy = relative cost sensitivity to a small gas vs elec move
+  try {
+    const { elec, gas } = getEnergySplit(b);          // you already use this elsewhere
+    const eP = s?.elecP ?? 1, gP = s?.gasP ?? 1;
+    const base = elec*eP + gas*gP;
+    if (!base) return { fwd, beta: 0 };
+
+    const elecUp = (elec*1.10)*eP + gas*gP;           // +10% elec
+    const gasUp  = elec*eP + (gas*1.10)*gP;           // +10% gas
+    const dElec = (elecUp - base)/base;
+    const dGas  = (gasUp  - base)/base;
+
+    return { fwd, beta: +((dGas - dElec).toFixed(2)) };
+  } catch {
+    return { fwd, beta: 0 };
+  }
+}
 
 // Compute deltas produced by applying a template to building b
 function computeActionDelta(b, buildings, tmpl, scenarioLabel = "Today"){
