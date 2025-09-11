@@ -343,9 +343,38 @@ function fwdDiff(b, buildings, fromLabel="Today", toLabel="2050"){
    - + 20 h if yearBuilt < 1995
    - + 40 h per +1°C warming you pass in (deltaC)
    - clamp 0–800 */
-function natVentOverheatHours(b, opts={}){
-  const svc = String(b.servicing || "").toLowerCase();
-  if (!svc.includes("natur")) return 0;
+
+/* ====== Tiny TRY/DSY overheating estimate (city-level) ====== */
+const HOSHI_SUMMER = { days: 153, hours: 153*24, amp: 5 };
+const HOSHI_CITY_WEATHER = {
+  London:  { TRY: 19.0, DSY: 22.0 },
+  Bristol: { TRY: 18.5, DSY: 21.5 },
+};
+
+function summerOverheatHours(city="London", mode="TRY", threshold=23){
+  const mean = (HOSHI_CITY_WEATHER[city]?.[mode]) ?? 19.0;
+  const { hours, amp } = HOSHI_SUMMER;
+  const x = (threshold - mean) / amp;
+  const frac = x >= 1 ? 0 : x <= -1 ? 1 : 0.5 - Math.asin(x)/Math.PI;
+  return Math.round(frac * hours);
+}
+
+function estimateOverheatingHours(b, label="Today"){
+  const city = (b.city || "London").includes("Bristol") ? "Bristol" : "London";
+  const mode = label.includes("2050") ? "DSY" : label.includes("2030") ? "DSY" : "TRY";
+  const isNat = String(b.servicing||"").toLowerCase().includes("natur");
+  if (!isNat) return 0;
+  const base = summerOverheatHours(city, mode, 23);
+  const older = (+b.yearBuilt || 3000) < 1995 ? 20 : 0;
+  return Math.max(0, Math.min(800, base + older));
+}
+// Back-compat wrapper → route to TRY/DSY estimator
+function natVentOverheatHours(b, opts = {}) {
+  // computeActionDelta passes {deltaC: …}; map that to a label
+  const dC = +opts.deltaC || 0;
+  const label = dC >= 1.5 ? "2050" : dC >= 0.5 ? "2030" : "Today";
+  return estimateOverheatingHours(b, label);
+}
 
   const intensity = (() => {
     const area = +b.area || 0;
