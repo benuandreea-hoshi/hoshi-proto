@@ -359,14 +359,6 @@ const HOSHI_CITY_WEATHER = {
   Glasgow:    { TRY: 16.5, DSY: 19.0 },
 };
 
-function summerOverheatHours(city="London", mode="TRY", threshold=23){
-  const mean = (HOSHI_CITY_WEATHER[city]?.[mode]) ?? 19.0;
-  const { hours, amp } = HOSHI_SUMMER;
-  const x = (threshold - mean) / amp;                 // normalized threshold
-  const frac = x >= 1 ? 0 : x <= -1 ? 1 : 0.5 - Math.asin(x)/Math.PI;
-  return Math.round(frac * hours);
-}
-
 // Map a building to a city key (very simple; extend if you store lat/lng)
 function cityKey(b){
   const c = String(b.city || "").toLowerCase();
