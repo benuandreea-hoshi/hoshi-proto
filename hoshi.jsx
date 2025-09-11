@@ -253,8 +253,7 @@ function computeActionDelta(b, buildings, tmpl, scenarioLabel = "Today"){
   };
 }
 
-  
-// Overheating risk (adaptive-comfort proxy).
+
 // Only meaningful for naturally ventilated / mixed-mode.
 function computeOverheat(b, scenario){
   const city = (b.city||"London").toLowerCase();
@@ -385,19 +384,6 @@ function natVentOverheatHours(b, opts={}) {
   return estimateOverheatingHours(b, label);
 }
 
-
-  const intensity = (() => {
-    const area = +b.area || 0;
-    const { elec, gas } = getEnergySplit(b);
-    return area ? (elec+gas)/area : 0;
-  })();
-
-  const deltaC = +opts.deltaC || 0;
-  const older  = (+b.yearBuilt || 9999) < 1995 ? 20 : 0;
-  const above  = Math.max(0, intensity - 90)/2;
-  const base   = 40 + older + above + (40*deltaC);
-  return Math.max(0, Math.min(800, base));
-}
 
 /* -------- apply + delta calculators for templates -------- */
 
