@@ -212,41 +212,44 @@ function computeFinancialSignal(b, buildings){
 function computeActionDelta(b, buildings, tmpl, scenarioLabel = "Today"){
   const s = pickScenario(scenarioLabel) || pickScenario("Today");
 
-  const isNatVent = (b) => String(b?.servicing || "").toLowerCase().includes("natur");
-
-  // base
+  // --- baseline
   const baseK   = hoshiKPIs(b);
   const baseFwd = s ? fwdAt(b, buildings, s) : 0;
-  const baseSig = computeFinancialSignal(b, buildings) || {};
+  const baseSig = (typeof computeFinancialSignal === "function")
+    ? (computeFinancialSignal(b, buildings) || {})
+    : {};
   const baseB   = Number(baseSig.beta || 0);
 
-  // overheating only for nat-vent
-  const nat     = isNatVent(b);
-  const baseHot = nat ? natVentOverheatHours(b, { deltaC: warmingDelta(scenarioLabel) }) : null;
+  // overheating only meaningful for naturally ventilated stock
+  const baseHot = estimateOverheatingHours(b, scenarioLabel);   // may be null
 
-  // after applying template
+  // --- after applying the template
   const after   = applyTemplate(b, tmpl);
   const postK   = hoshiKPIs(after);
   const postFwd = s ? fwdAt(after, buildings, s) : 0;
-  const postSig = computeFinancialSignal(after, buildings) || {};
+  const postSig = (typeof computeFinancialSignal === "function")
+    ? (computeFinancialSignal(after, buildings) || {})
+    : {};
   const postB   = Number(postSig.beta || 0);
-  const postHot = nat ? natVentOverheatHours(after, { deltaC: warmingDelta(scenarioLabel) }) : null;
+  const postHot = estimateOverheatingHours(after, scenarioLabel); // may be null
 
-  // comfort delta (null = N/A so UI can hide)
+  // --- comfort delta (null = N/A so UI can hide)
   let overDelta = null;
-  if (nat) {
-    let d = (postHot ?? 0) - (baseHot ?? 0);
-    if (tmpl.key === "shade_purge_fans") d = Math.round(d * (tmpl.comfortFactor ?? 0.5));
+  if (baseHot != null && postHot != null) {
+    let d = postHot - baseHot;
+    if (tmpl.key === "shade_purge_fans") {
+      d = Math.round(d * (tmpl.comfortFactor ?? 0.5)); // expected negative (benefit)
+    }
     overDelta = Math.round(d);
   }
 
   return {
     kwh:       Math.round(postK.kwh - baseK.kwh),
-    tco2e:     +(postK.tco2e - baseK.tco2e).toFixed(1),
+    tco2e:     +((postK.tco2e - baseK.tco2e).toFixed(1)),
     intensity: Math.round((postK.intensity || 0) - (baseK.intensity || 0)),
-    fwd:       +(postFwd - baseFwd).toFixed(1),
+    fwd:       +((postFwd - baseFwd).toFixed(1)),
     beta:      +((postB - baseB).toFixed(2)),
-    overHours: overDelta, // null when not nat-vent → chip stays hidden
+    overHours: overDelta, // null when N/A
   };
 }
 
@@ -345,7 +348,10 @@ function fwdDiff(b, buildings, fromLabel="Today", toLabel="2050"){
    - clamp 0–800 */
 
 /* ====== Tiny TRY/DSY overheating estimate (city-level) ====== */
-const HOSHI_SUMMER = { days: 153, hours: 153*24, amp: 5 };
+/* Warm season (May–Sep) modeled as a daily sine wave around a seasonal mean.
+   Count fraction of hours above an adaptive threshold (~23 °C for offices). */
+
+const HOSHI_SUMMER = { days: 153, hours: 153*24, amp: 5 }; // ±5°C daily swing
 const HOSHI_CITY_WEATHER = {
   London:  { TRY: 19.0, DSY: 22.0 },
   Bristol: { TRY: 18.5, DSY: 21.5 },
@@ -354,27 +360,31 @@ const HOSHI_CITY_WEATHER = {
 function summerOverheatHours(city="London", mode="TRY", threshold=23){
   const mean = (HOSHI_CITY_WEATHER[city]?.[mode]) ?? 19.0;
   const { hours, amp } = HOSHI_SUMMER;
-  const x = (threshold - mean) / amp;
+  const x = (threshold - mean) / amp;                 // normalized threshold
   const frac = x >= 1 ? 0 : x <= -1 ? 1 : 0.5 - Math.asin(x)/Math.PI;
   return Math.round(frac * hours);
 }
 
-function estimateOverheatingHours(b, label="Today"){
-  const city = (b.city || "London").includes("Bristol") ? "Bristol" : "London";
-  const mode = label.includes("2050") ? "DSY" : label.includes("2030") ? "DSY" : "TRY";
+/** New main entry point used by Actions 2.0 */
+function estimateOverheatingHours(b, scenarioLabel="Today"){
+  // crude city pick; tweak to your schema if you store city differently
+  const city = String(b.city || "London").includes("Bristol") ? "Bristol" : "London";
+  const mode = /2050|2030/i.test(scenarioLabel) ? "DSY" : "TRY";   // hotter year for future
   const isNat = String(b.servicing||"").toLowerCase().includes("natur");
-  if (!isNat) return 0;
+  if (!isNat) return null; // ← return null so UI can hide the metric when N/A
+
   const base = summerOverheatHours(city, mode, 23);
-  const older = (+b.yearBuilt || 3000) < 1995 ? 20 : 0;
+  const older = (+b.yearBuilt || 3000) < 1995 ? 20 : 0;            // small bias for older stock
   return Math.max(0, Math.min(800, base + older));
 }
-// Back-compat wrapper → route to TRY/DSY estimator
-function natVentOverheatHours(b, opts = {}) {
-  // computeActionDelta passes {deltaC: …}; map that to a label
-  const dC = +opts.deltaC || 0;
-  const label = dC >= 1.5 ? "2050" : dC >= 0.5 ? "2030" : "Today";
+
+/** Backwards-compatibility: keep old name alive so nothing else crashes */
+function natVentOverheatHours(b, opts={}) {
+  const deltaC = +opts.deltaC || 0;
+  const label = deltaC >= 2 ? "2050" : deltaC >= 1 ? "2030" : "Today";
   return estimateOverheatingHours(b, label);
 }
+
 
   const intensity = (() => {
     const area = +b.area || 0;
