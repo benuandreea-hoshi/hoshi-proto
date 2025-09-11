@@ -364,39 +364,6 @@ function warmingDelta(label){
   return 0.0; // "Today" / default
 }
 
-  const s = pickScenario(scenarioLabel) || pickScenario("Today");
-
-  const baseK   = hoshiKPIs(b);
-  const baseFwd = s ? fwdAt(b, buildings, s) : 0;                     // %
-  const baseSig = computeFinancialSignal(b, buildings) || {};
-  const baseB   = Number(baseSig.beta || 0);
-  const baseHot = natVentOverheatHours(b, { deltaC: warmingDelta(scenarioLabel) });
-
-  const after   = applyTemplate(b, tmpl);
-  const postK   = hoshiKPIs(after);
-  const postFwd = s ? fwdAt(after, buildings, s) : 0;                 // %
-  const postSig = computeFinancialSignal(after, buildings) || {};
-  const postB   = Number(postSig.beta || 0);
-  const postHot = natVentOverheatHours(after, { deltaC: warmingDelta(scenarioLabel) });
-
-  // comfort benefit for nat-vent comfort template
-  let comfortDelta = postHot - baseHot;
-  if (tmpl.key === "shade_purge_fans" && String(b.servicing || "").toLowerCase().includes("natur")) {
-    comfortDelta = Math.round(comfortDelta * (tmpl.comfortFactor ?? 0.5)); // negative saves hours
-  }
-
-  return {
-    kwh: Math.round(postK.kwh - baseK.kwh),
-    tco2e: Number((postK.tco2e - baseK.tco2e).toFixed(1)),
-    intensity: Math.round((postK.intensity || 0) - (baseK.intensity || 0)),
-    fwd: Number((postFwd - baseFwd).toFixed(1)),        // percentage points
-    beta: Number((postB - baseB).toFixed(2)),
-    overHours: Math.round(comfortDelta)
-  };
-}
-
-
-
 /* ===== Hoshi helpers (currency + finance) ===== */
 function getCurrency() {
   if (typeof window === "undefined") return "GBP";
