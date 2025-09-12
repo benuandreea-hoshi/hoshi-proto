@@ -1,73 +1,70 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Hoshi — the philosophical framework</title>
-
-  <!-- Preload hero -->
-  <link rel="preload" as="image"
-        href="https://cdn.prod.website-files.com/68a8baf20ad5978747d9d44d/68ba19a4160886b0a71ae9c4_embracing-world-peace-poster-freedom-happiness-global-harmony_1020495-8806.jpg"/>
-
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root{
-      --bg:#0F1115; --panel:#151922; --panel-2:#1B2030; --stroke:#2A3142; --text:#e2e8f0; --muted:#94a3b8;
-      --accent1:#38bdf8; --accent2:#34d399;
+      --bg:#0b1220;
+      --panel:#121a2a;
+      --panel-2:#172036;
+      --text:#e6edf7;
+      --muted:#9fb1c7;
+      --stroke:#22304a;
+      --chip:#1f2b46;
+      --accent1:#38bdf8; /* sky-400 */
+      --accent2:#34d399; /* emerald-400 */
     }
     *{box-sizing:border-box}
-    body{
-      margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
-      background: radial-gradient(1100px 520px at 15% -10%, rgba(59,130,246,.10), transparent),
-                  radial-gradient(900px 500px at 100% 10%, rgba(16,185,129,.08), transparent),
-                  var(--bg);
-      color:var(--text); line-height:1.65;
+    html,body{margin:0;padding:0;background:radial-gradient(1200px 800px at 0% 0%,#0d1730,transparent),var(--bg);color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+    .wrap{max-width:980px;margin:40px auto;padding:0 20px}
+    .card{background:var(--panel-2);border:1px solid var(--stroke);border-radius:20px}
+    .hero{padding:28px 28px 0}
+    h1{font-size: clamp(28px, 4vw, 44px); line-height:1.1; margin:0 0 8px 0; font-weight:800;}
+    .lead{color:var(--muted);font-size:clamp(14px, 2.2vw, 18px);margin:8px 0 18px}
+    .gradient{background:linear-gradient(90deg,var(--accent1),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+    .chip{display:inline-block;padding:6px 10px;border-radius:999px;background:var(--chip);color:#c7d5e9;font-size:12px;margin-right:6px}
+    .hero-img{width:100%;border-radius:16px;border:1px solid var(--stroke);display:block;margin:16px 0 4px}
+    .body{padding:16px 28px 28px}
+    .body p{color:#d5e2f1;font-size:17px;line-height:1.7;margin:14px 0}
+    @media (min-width: 960px){
+      .hero{padding:32px 36px 0}
+      .body{padding:18px 36px 36px}
     }
-    .wrap{max-width:900px;margin:40px auto;padding:0 20px;}
-    .panel{
-      background:var(--panel-2);
-      border:1px solid var(--stroke);
-      border-radius:16px;
-      padding:28px;
-      box-shadow:0 6px 28px rgba(0,0,0,.35);
-    }
-    h1{font-size:clamp(28px,4vw,40px);line-height:1.1;margin:0 0 10px;font-weight:800;letter-spacing:-.02em}
-    .subtitle{color:var(--muted);margin-bottom:22px}
-    p{margin:14px 0}
-    .lede{font-size:1.05rem;color:#cbd5e1}
-    .rule{height:1px;background:linear-gradient(90deg, transparent, rgba(148,163,184,.3), transparent);margin:20px 0}
-    .gradient{
-      background:linear-gradient(90deg, var(--accent1), var(--accent2));
-      -webkit-background-clip:text; background-clip:text; color:transparent;
-      text-shadow:0 0 12px rgba(56,189,248,.25);
-      font-weight:700;
-    }
-    .foot{margin-top:20px;color:#9fb0c6;font-size:.92rem}
-    a{color:#9cc4ff;text-decoration:none}
-    a:hover{text-decoration:underline}
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <article class="panel">
-      <header>
+  <main class="wrap">
+    <article class="card">
+      <header class="hero">
         <h1>Hoshi — the philosophical framework</h1>
-        <div class="subtitle">Why a practical, fair contract for ecological governance matters now.</div>
+        <p class="lead">Why a practical, fair contract for ecological governance matters now.</p>
+        <div class="tags">
+          <span class="chip">Governance</span>
+          <span class="chip">Ethics</span>
+          <span class="chip">Global Commons</span>
+          <span class="chip">6 min read</span>
+        </div>
+        <img class="hero-img" alt="Commonwealth concept" src="https://cdn.prod.website-files.com/68a8baf20ad5978747d9d44d/68ba19a4160886b0a71ae9c4_embracing-world-peace-poster-freedom-happiness-global-harmony_1020495-8806.jpg" />
       </header>
+      <section class="body">
+        <p>We live in an age where global crises such as climate change, biodiversity loss, and geopolitical instability overlap and compete for attention. Yet our tools for cooperation are often inadequate. Such unrest raises a deeper question: how can societies coordinate fairly when nation‑states alone cannot manage the global commons?</p>
 
-      <p class="lede">We live in an age where global crises such as climate change, biodiversity loss, and geopolitical instability overlap and compete for attention. Yet our tools for cooperation are often inadequate. Such unrest raises a deeper question: how can societies coordinate fairly when nation-states alone cannot manage the global commons?</p>
+        <p>For centuries, thinkers from Hobbes to Rawls have debated how communities balance self‑interest with duty to the wider world. Their ideas provide language for rethinking today’s ecological governance. John Rawls, for example, argued in <em>The Law of Peoples</em> that “Peoples have a duty to assist other Peoples living under unfavourable conditions that prevent their having a just or decent political and social regime.” But in truth, everyone today lives under some form of unfavourable conditions. That means all of us share a duty to protect the systems that make life possible: clean air, stable climates, and secure societies. Is it realistic to imagine an ideal society untouched by the imperfect realities of nation‑states?</p>
 
-      <p>For centuries, thinkers from Hobbes to Rawls have debated how communities balance self-interest with duty to the wider world. Their ideas provide language for rethinking today’s ecological governance. John Rawls, for example, argued in <em>The Law of Peoples</em> that “Peoples have a duty to assist other Peoples living under unfavourable conditions that prevent their having a just or decent political and social regime.” But in truth, everyone today lives under some form of unfavourable conditions. That means all of us share a duty to protect the systems that make life possible: clean air, stable climates, and secure societies. Is it realistic to imagine an ideal society untouched by the imperfect realities of nation-states?</p>
+        <p>Philosophers describe the “State of Nature” as life without shared rules: sometimes pictured as cooperative, other times as chaotic and conflict‑ridden. If our global order resembles such a state, what responsibilities do we still owe each other? Should they fall mainly to states, to individuals, or to a wider global community? And on a practical level, what can a reasonable person do to serve the common good, and how might such efforts be organised into a fairer society? Neither the ideal society Rawls envisions nor the sovereign authority Hobbes demands seems wholly adequate for today’s ecological and political realities. We live in systems too imperfect for utopias and too plural for absolute authority.</p>
 
-      <p>Philosophers describe the “State of Nature” as life without shared rules: sometimes pictured as cooperative, other times as chaotic and conflict-ridden. If our global order resembles such a state, what responsibilities do we still owe each other? Should they fall mainly to states, to individuals, or to a wider global community? And on a practical level, what can a reasonable person do to serve the common good, and how might such efforts be organised into a fairer society? Neither the ideal society Rawls envisions nor the sovereign authority Hobbes demands seems wholly adequate for today’s ecological and political realities. We live in systems too imperfect for utopias and too plural for absolute authority.</p>
+        <p>This tension suggests that ordinary people and institutions alike share a responsibility, one not grounded in perfection, but in doing the “best we can do.” Our argument is that this “best we can do society” provides the more complete form of contract that Rawls anticipated but did not fully realise.</p>
 
-      <div class="rule"></div>
+        <p>As a result, this paper argues for what we call a <span class="gradient">Commonwealth of Peoples</span>: not a utopian “ideal society,” but a practical “best we can do society.” Where Rawls imagines a perfectly just world of cooperating peoples, we propose instead a framework that accepts imperfection, yet equips us to act responsibly toward the global commons. Such a framework enables actors to take meaningful action for the shared ecological commons, without being constrained by the Realpolitik of nation‑states.</p>
 
-      <p>This tension suggests that ordinary people and institutions alike share a responsibility, one not grounded in perfection, but in doing the “best we can do.” Our argument is that this “best we can do society” provides the more complete form of contract that Rawls anticipated but did not fully realise. As a result, this paper argues for what we call a <span class="gradient">Commonwealth of Peoples</span>: not a utopian “ideal society,” but a practical “best we can do society.” Where Rawls imagines a perfectly just world of cooperating peoples, we propose instead a framework that accepts imperfection, yet equips us to act responsibly toward the global commons.</p>
-
-      <p>Such a framework enables actors to take meaningful action for the shared ecological commons, without being constrained by the Realpolitik of nation-states. The <span class="gradient">Commonwealth of Peoples</span> is a more workable contract: one in which imperfect actors can still coordinate fairly, balancing duties to one another and to the ecosystems that sustain us. It focuses on demand-side assurance and investment guidance for private entities, while holding a global perspective. Over time, it could scale universally across all end-use services.</p>
-
-      <p class="foot">© Hoshi. You may reference or link to this page. For more context on the operating model, see “Alarm → Action → Plan → M&amp;V.”</p>
+        <p>The <span class="gradient">Commonwealth of Peoples</span> is a more workable contract: one in which imperfect actors can still coordinate fairly, balancing duties to one another and to the ecosystems that sustain us. It focuses on demand‑side assurance and investment guidance for private entities, while holding a global perspective. Over time, it could scale universally across all end‑use services.</p>
+      </section>
     </article>
-  </div>
+  </main>
 </body>
 </html>
