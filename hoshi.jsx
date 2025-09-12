@@ -3308,21 +3308,6 @@ function HeroImage({ src, alt = "" }) {
     </figure>
   );
 }
-
-
-
-
-
-/* --------------------- BLOG TAB --------------------- */
-function Blog({ openPortfolio, openBuilding }) {
-  // Keep the small overflow fix
-  React.useEffect(() => {
-    const s = document.createElement("style");
-    s.textContent = `#hoshi-root .card { overflow: visible !important; }`;
-    document.head.appendChild(s);
-    return () => s.remove();
-  }, []);
-
   // ---- GitHub Pages base for static articles ----
   const PAGES_BASE = "https://benuandreea-hoshi.github.io/hoshi-proto";
 
@@ -3392,6 +3377,20 @@ const BLOG = [
     url: `${PAGES_BASE}/article-governance-loop.html`,
   },
 ];
+
+
+
+
+/* --------------------- BLOG TAB --------------------- */
+function Blog({ openPortfolio, openBuilding }) {
+  // Keep the small overflow fix
+  React.useEffect(() => {
+    const s = document.createElement("style");
+    s.textContent = `#hoshi-root .card { overflow: visible !important; }`;
+    document.head.appendChild(s);
+    return () => s.remove();
+  }, []);
+
 
   const [view, setView] = React.useState("home"); // 'home' | 'article' (fallback route)
   const [active, setActive] = React.useState(BLOG[0].slug);
