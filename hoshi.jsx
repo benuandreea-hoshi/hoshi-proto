@@ -3308,82 +3308,11 @@ function HeroImage({ src, alt = "" }) {
     </figure>
   );
 }
-  // ---- GitHub Pages base for static articles ----
-  const PAGES_BASE = "https://benuandreea-hoshi.github.io/hoshi-proto";
-
-  // simple registry (two articles)
-const BLOG = [
-  {
-    slug: "hoshi-in-5-minutes",
-    label: "Getting started",
-    title: "Hoshi in 5 minutes",
-    summary:
-      "From utility bills to decision-grade signals (NPV, β, systematic vs idiosyncratic).",
-    img: LOGO_SRC,
-    hero: LOGO_SRC,
-    readingMins: 5,
-    tags: ["Investors", "Operators", "Signals"],
-    url: `${PAGES_BASE}/article-hoshi.html`,
-  },
-  {
-    slug: "commonwealth-of-people",
-    label: "Governance",
-    title: "Commonwealth of People",
-    summary:
-      "A practical governance frame: public ecological floor, shared carbon price, and enforceable actions with an audit trail.",
-    img: PEOPLE_SRC,
-    hero: PEOPLE_SRC,
-    readingMins: 7,
-    tags: ["Governance","CCC","Ledger","Alarms"],
-    url: `${PAGES_BASE}/article-commonwealth.html`,
-  },
- {
-  slug: "compare-buildings",
-  label: "Feature",
-  title: "Compare Buildings",
-  summary:
-    "Side-by-side decisions: photos, servicing, age, energy, carbon, intensity, and spend—on one screen.",
-  img: "https://cdn.prod.website-files.com/68a8baf20ad5978747d9d44d/68ba19a4160886b0a71ae9c4_embracing-world-peace-poster-freedom-happiness-global-harmony_1020495-8806.jpg", // ← card thumbnail
-  hero: "https://cdn.prod.website-files.com/68a8baf20ad5978747d9d44d/68ba19a4160886b0a71ae9c4_embracing-world-peace-poster-freedom-happiness-global-harmony_1020495-8806.jpg", // ← optional
-  readingMins: 5,
-  tags: ["Tenants","Owners","Investors"],
-  url: `${PAGES_BASE}/article-compare.html`,
-},
-  // NEW — FEP article
-  {
-    slug: "forward-energy-premium",
-    label: "Signals",
-    title: "Forward Energy Premium (FEP)",
-    summary:
-      "A forward ROI signal that blends price/policy/climate exposure with asset specifics.",
-    img: LOGO_SRC,      // swap to a FEP hero if you have one
-    hero: LOGO_SRC,
-    readingMins: 5,
-    tags: ["Investors","Operators","Signals"],
-    url: `${PAGES_BASE}/article-fep.html`,
-  },
-
-  // NEW — Governance loop article
-  {
-    slug: "alarm-action-plan-mv",
-    label: "Governance",
-    title: "Alarm → Action → Plan → M&V",
-    summary:
-      "The operating rhythm that turns data into enforceable decisions—with proof.",
-    img: PEOPLE_SRC,    // swap to a governance image if you have one
-    hero: PEOPLE_SRC,
-    readingMins: 6,
-    tags: ["Governance","Operations","Evidence"],
-    url: `${PAGES_BASE}/article-governance-loop.html`,
-  },
-];
-
-
 
 
 /* --------------------- BLOG TAB --------------------- */
-function Blog({ openPortfolio, openBuilding }) {
-  // Keep the small overflow fix
+function Blog({ openPortfolio = () => {}, openBuilding = () => {} }) {
+  // small overflow fix stays
   React.useEffect(() => {
     const s = document.createElement("style");
     s.textContent = `#hoshi-root .card { overflow: visible !important; }`;
@@ -3391,14 +3320,73 @@ function Blog({ openPortfolio, openBuilding }) {
     return () => s.remove();
   }, []);
 
+  // 1) Base + registry FIRST
+  const PAGES_BASE = "https://benuandreea-hoshi.github.io/hoshi-proto";
+  const BLOG = [
+    {
+      slug: "hoshi-in-5-minutes",
+      label: "Getting started",
+      title: "Hoshi in 5 minutes",
+      summary: "From utility bills to decision-grade signals (NPV, β, systematic vs idiosyncratic).",
+      img: LOGO_SRC,
+      hero: LOGO_SRC,
+      readingMins: 5,
+      tags: ["Investors","Operators","Signals"],
+      url: `${PAGES_BASE}/article-hoshi.html`,
+    },
+    {
+      slug: "commonwealth-of-people",
+      label: "Governance",
+      title: "Commonwealth of People",
+      summary: "A practical governance frame: public ecological floor, shared carbon price, and enforceable actions with an audit trail.",
+      img: PEOPLE_SRC,
+      hero: PEOPLE_SRC,
+      readingMins: 7,
+      tags: ["Governance","CCC","Ledger","Alarms"],
+      url: `${PAGES_BASE}/article-commonwealth.html`,
+    },
+    {
+      slug: "compare-buildings",
+      label: "Feature",
+      title: "Compare Buildings",
+      summary: "Side-by-side decisions: photos, servicing, age, energy, carbon, intensity, and spend—on one screen.",
+      img: "https://cdn.prod.website-files.com/68a8baf20ad5978747d9d44d/68ba19a4160886b0a71ae9c4_embracing-world-peace-poster-freedom-happiness-global-harmony_1020495-8806.jpg",
+      hero:"https://cdn.prod.website-files.com/68a8baf20ad5978747d9d44d/68ba19a4160886b0a71ae9c4_embracing-world-peace-poster-freedom-happiness-global-harmony_1020495-8806.jpg",
+      readingMins: 5,
+      tags: ["Tenants","Owners","Investors"],
+      url: `${PAGES_BASE}/article-compare.html`,
+    },
+    {
+      slug: "forward-energy-premium",
+      label: "Signals",
+      title: "Forward Energy Premium (FEP)",
+      summary: "A forward ROI signal that blends price/policy/climate exposure with asset specifics.",
+      img: LOGO_SRC,
+      hero: LOGO_SRC,
+      readingMins: 5,
+      tags: ["Investors","Operators","Signals"],
+      url: `${PAGES_BASE}/article-fep.html`,
+    },
+    {
+      slug: "alarm-action-plan-mv",
+      label: "Governance",
+      title: "Alarm → Action → Plan → M&V",
+      summary: "The operating rhythm that turns data into enforceable decisions—with proof.",
+      img: PEOPLE_SRC,
+      hero: PEOPLE_SRC,
+      readingMins: 6,
+      tags: ["Governance","Operations","Evidence"],
+      url: `${PAGES_BASE}/article-governance-loop.html`,
+    },
+  ];
 
-  const [view, setView] = React.useState("home"); // 'home' | 'article' (fallback route)
-  const [active, setActive] = React.useState(BLOG[0].slug);
-  const article = BLOG.find((b) => b.slug === active) ?? BLOG[0];
+// 2) States that *read* BLOG come AFTER the registry
+  const [view, setView] = React.useState("home"); // 'home' | 'article'
+  const [active, setActive] = React.useState(BLOG[0]?.slug);
+  const article = BLOG.find(b => b.slug === active) ?? BLOG[0];
 
-  const TagPill = ({ children }) => (
-    <span className="chip whitespace-nowrap">{children}</span>
-  );
+ // 3) Rest of your component stays the same
+  const TagPill = ({ children }) => <span className="chip whitespace-nowrap">{children}</span>;
 
   // tiny animated orbit (CSS-only, lightweight)
   const Orbit = () => (
