@@ -2096,62 +2096,76 @@ function compositeIndex(m, w) {
 }
 
 function Services({ buildings = [] }) {
-  const [city, setCity]         = React.useState("London");
-  const [preset, setPreset]     = React.useState("Balanced");
-  const [mapZoom, setMapZoom]   = React.useState(11);
+  const [city, setCity]       = React.useState("London");
+  const [preset, setPreset]   = React.useState("Balanced");
+  const [mapZoom, setMapZoom] = React.useState(11);
   const mapDivRef = React.useRef(null);
   const mapRef    = React.useRef(null);
   const layerRef  = React.useRef(null);
 
-  // Controls
-  const [yearType, setYearType] = React.useState("TRY");      // "TRY" | "DSY"
-  const [thrMode,  setThrMode]  = React.useState("Adaptive"); // "Adaptive" | "Fixed"
+  // Controls (reactive)
+  const [yearType, setYearType] = React.useState("TRY");      // TRY | DSY
+  const [thrMode,  setThrMode]  = React.useState("Adaptive"); // Adaptive | Fixed
 
-  // Styling for selects
+  const weights = PRESETS[preset];
+
+  // UI select style
   const selectStyle = {
-    padding: "8px 12px", borderRadius: 10,
-    background: "var(--panel-2)", border: "1px solid var(--stroke)", color: "var(--text)"
+    padding:"8px 12px", borderRadius:10,
+    background:"var(--panel-2)", border:"1px solid var(--stroke)", color:"var(--text)"
   };
 
-  // Optional multi-city recenter (data still London-only for now)
-  const CITY_VIEW = {
+  // Optional multi-city re-center (markers still PLACES)
+  const CITY_VIEW = React.useMemo(()=>({
     London:     { center:[51.5074,-0.1278], zoom:11 },
     Manchester: { center:[53.4808,-2.2426], zoom:11 },
     Birmingham: { center:[52.4862,-1.8904], zoom:11 },
     Glasgow:    { center:[55.8642,-4.2518], zoom:11 },
-  };
+  }), []);
 
-  const weights = PRESETS[preset];
-
-  // Overheating lookup keyed by building name; recompute when mode changes
+  // Overheating lookup by building name; recompute with mode
   const ohByName = React.useMemo(() => {
     const label    = yearType === "DSY" ? "2050" : "Today";
-    const adaptive = thrMode === "Adaptive";
+    const adaptive = (thrMode === "Adaptive");
     const map = Object.create(null);
-    buildings.forEach(b => { map[b.name] = estimateOverheatingHours(b, label, { adaptive }); });
+    // tolerate missing/empty buildings
+    (buildings || []).forEach(b => {
+      const key = String(b?.name || "");
+      if (!key) return;
+      map[key] = estimateOverheatingHours(b, label, { adaptive });
+    });
     return map;
   }, [buildings, yearType, thrMode]);
 
-  // Marker data for the service index (still using PLACES)
+  // Map markers dataset (service index): still PLACES
   const enriched = React.useMemo(() => {
+    if (!Array.isArray(PLACES) || PLACES.length === 0) return [];
     const minS = Math.min(...PLACES.map(p => p.spend));
     const maxS = Math.max(...PLACES.map(p => p.spend));
-    const scaleR = v => 10 + 8 * ((v - minS) / Math.max(1, (maxS - minS))); // 10–18 px
+    const span = Math.max(1, maxS - minS);
+    const scaleR = v => 10 + 8 * ((v - minS) / span); // 10–18 px
+
     return PLACES.map(p => {
-      const idx  = compositeIndex(p.m, weights);   // raw ~0.03–0.07
-      const disp = idx * 10;                       // display 0.30–0.70
+      const idx  = compositeIndex(p.m, weights); // raw ~0.03–0.07
+      const disp = idx * 10;                     // display 0.30–0.70
       return { ...p, idx, disp, color: colorForIndex(idx), r: Math.round(scaleR(p.spend)) };
     });
   }, [weights]);
 
-  const avgRaw  = React.useMemo(() => (enriched.length ? enriched.reduce((s,p)=>s+p.idx,0)/enriched.length : 0), [enriched]);
+  const avgRaw  = React.useMemo(
+    () => (enriched.length ? enriched.reduce((s,p)=>s+p.idx,0)/enriched.length : 0),
+    [enriched]
+  );
   const avgDisp = avgRaw * 10;
 
   // Init Leaflet once
   React.useEffect(() => {
-    if (!mapDivRef.current || mapRef.current || !window.L) return;
+    if (!mapDivRef.current || mapRef.current) return;
     const L = window.L;
-    const map = L.map(mapDivRef.current, { center: CITY_VIEW.London.center, zoom: mapZoom, scrollWheelZoom: true });
+    if (!L) return; // Leaflet not loaded—silently skip to avoid “Script error”
+
+    const cfg = (CITY_VIEW["London"] || { center:[51.5074,-0.1278], zoom:11 });
+    const map = L.map(mapDivRef.current, { center: cfg.center, zoom: mapZoom, scrollWheelZoom: true });
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,
       attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -2159,29 +2173,33 @@ function Services({ buildings = [] }) {
     map.on("zoomend", () => setMapZoom(map.getZoom()));
     mapRef.current = map;
     layerRef.current = L.layerGroup().addTo(map);
-  }, []);
+  }, [CITY_VIEW, mapZoom]);
 
-  // Recenter when city changes (points remain London-only for now)
+  // Re-center when city changes
   React.useEffect(() => {
-    if (!mapRef.current) return;
+    const L = window.L;
+    if (!L || !mapRef.current) return;
     const cfg = CITY_VIEW[city];
     if (cfg) mapRef.current.setView(cfg.center, cfg.zoom);
-  }, [city]);
+  }, [CITY_VIEW, city]);
 
-  // Draw / redraw markers (react to index weights + overheating mode)
+  // Draw / re-draw markers (weights & overheating mode react)
   React.useEffect(() => {
-    if (!mapRef.current || !layerRef.current || !window.L) return;
     const L = window.L;
-    layerRef.current.clearLayers();
+    if (!L || !mapRef.current || !layerRef.current) return;
+
+    const layer = layerRef.current;
+    layer.clearLayers();
 
     enriched.forEach(p => {
+      // Optional Overheating value by “place name” = building name match
       const oh = ohByName[p.name];
       const ohRow = Number.isFinite(oh)
         ? `<div style="font-size:12px;color:#334155;margin-top:6px">
              Overheating (hrs/yr): <b>${oh}</b> &nbsp;•&nbsp; <i>${yearType}/${thrMode}</i>
-           </div>`
-        : "";
+           </div>` : "";
 
+      // Bubble
       const html = `
         <div style="
           width:${p.r*2}px;height:${p.r*2}px;border-radius:9999px;border:2px solid #fff;
@@ -2189,8 +2207,11 @@ function Services({ buildings = [] }) {
           color:#fff;font-weight:800;font-size:${Math.max(10, Math.min(14, p.r-2))}px;
           box-shadow:0 6px 16px rgba(0,0,0,.25);
         ">${p.disp.toFixed(2)}</div>`;
-      const icon = L.divIcon({ html, className:"", iconSize:[p.r*2,p.r*2], iconAnchor:[p.r,p.r], popupAnchor:[0,-p.r] });
+      const icon = L.divIcon({
+        html, className:"", iconSize:[p.r*2,p.r*2], iconAnchor:[p.r,p.r], popupAnchor:[0,-p.r]
+      });
 
+      // Popup
       const breakdown = CAT_KEYS.map(k =>
         `<tr><td style="padding:2px 8px">${k}</td><td style="padding:2px 0;text-align:right">${(p.m[k]*10).toFixed(2)}</td></tr>`
       ).join("");
@@ -2209,9 +2230,11 @@ function Services({ buildings = [] }) {
           ${ohRow}
           <div style="font-size:11px;color:#64748b;margin-top:8px">Annual spend (approx): £${(p.spend/1000).toFixed(0)}k • size ∝ spend</div>
         </div>`;
-      layerRef.current.addLayer(L.marker([p.lat, p.lng], { icon }).bindPopup(popupHtml));
+
+      layer.addLayer(L.marker([p.lat, p.lng], { icon }).bindPopup(popupHtml));
     });
 
+    // Fit bounds (keeps behavior you had)
     if (enriched.length) {
       const b = window.L.latLngBounds(enriched.map(p => [p.lat, p.lng])).pad(0.2);
       mapRef.current.fitBounds(b, { maxZoom: 13 });
