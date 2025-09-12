@@ -2178,7 +2178,8 @@ const CITY_VIEW = {
 
 
   // ✅ 2) include ohByName so popups refresh when TRY/DSY/threshold changes
-  React.useEffect(() => {
+ 
+ React.useEffect(() => {
   if (!mapRef.current || !layerRef.current || !window.L) return;
   const L = window.L;
   layerRef.current.clearLayers();
@@ -2191,46 +2192,51 @@ const CITY_VIEW = {
            &nbsp;•&nbsp; <i>${yearType}/${thrMode} in ${city}</i>
          </div>`
       : "";
-  });
 
-      const html = `
-        <div style="
-          width:${p.r*2}px;height:${p.r*2}px;border-radius:9999px;border:2px solid #fff;
-          background:${p.color};display:flex;align-items:center;justify-content:center;
-          color:#fff;font-weight:800;font-size:${Math.max(10, Math.min(14, p.r-2))}px;
-          box-shadow:0 6px 16px rgba(0,0,0,.25);
-        ">${p.disp.toFixed(2)}</div>`;
-      const icon = L.divIcon({ html, className:"", iconSize:[p.r*2,p.r*2], iconAnchor:[p.r,p.r], popupAnchor:[0,-p.r] });
-
-      const breakdown = CAT_KEYS.map(k=>(
-        `<tr><td style="padding:2px 8px">${k}</td><td style="padding:2px 0;text-align:right">${(p.m[k]*10).toFixed(2)}</td></tr>`
-      )).join("");
-
-      const popupHtml = `
-        <div style="font-family:inherit;min-width:220px">
-          <div style="font-weight:700;margin-bottom:4px">${p.name}</div>
-          <div style="font-size:12px;color:#475569;margin-bottom:6px">Composite index (×10 shown)</div>
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-            <span style="display:inline-block;width:10px;height:10px;border-radius:9999px;background:${p.color}"></span>
-            <span style="font-weight:800">${p.disp.toFixed(2)}</span>
-            <span style="font-size:12px;color:#64748b">(lower is better)</span>
-          </div>
-          <div style="font-size:12px;color:#334155;margin:6px 0 4px">Breakdown (weighted by <b>${preset}</b>, ×10)</div>
-          <table style="font-size:12px;color:#334155;width:100%;border-collapse:collapse">${breakdown}</table>
-          ${ohRow}
-          <div style="font-size:11px;color:#64748b;margin-top:8px">Annual spend (approx): £${(p.spend/1000).toFixed(0)}k • size ∝ spend</div>
-        </div>
-      `;
-      const m = L.marker([p.lat,p.lng], {icon}).bindPopup(popupHtml);
-      layerRef.current.addLayer(m);
+    const html = `
+      <div style="
+        width:${p.r*2}px;height:${p.r*2}px;border-radius:9999px;border:2px solid #fff;
+        background:${p.color};display:flex;align-items:center;justify-content:center;
+        color:#fff;font-weight:800;font-size:${Math.max(10, Math.min(14, p.r-2))}px;
+        box-shadow:0 6px 16px rgba(0,0,0,.25);
+      ">${p.disp.toFixed(2)}</div>`;
+    const icon = L.divIcon({
+      html, className:"", iconSize:[p.r*2,p.r*2], iconAnchor:[p.r,p.r], popupAnchor:[0,-p.r]
     });
 
-   // ⤵️ Only auto-fit to London points; let other cities stay where you set them
+    const breakdown = CAT_KEYS.map(k =>
+      `<tr><td style="padding:2px 8px">${k}</td><td style="padding:2px 0;text-align:right">${(p.m[k]*10).toFixed(2)}</td></tr>`
+    ).join("");
+
+    const popupHtml = `
+      <div style="font-family:inherit;min-width:220px">
+        <div style="font-weight:700;margin-bottom:4px">${p.name}</div>
+        <div style="font-size:12px;color:#475569;margin-bottom:6px">Composite index (×10 shown)</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <span style="display:inline-block;width:10px;height:10px;border-radius:9999px;background:${p.color}"></span>
+          <span style="font-weight:800">${p.disp.toFixed(2)}</span>
+          <span style="font-size:12px;color:#64748b">(lower is better)</span>
+        </div>
+        <div style="font-size:12px;color:#334155;margin:6px 0 4px">Breakdown (weighted by <b>${preset}</b>, ×10)</div>
+        <table style="font-size:12px;color:#334155;width:100%;border-collapse:collapse">${breakdown}</table>
+        ${ohRow}
+        <div style="font-size:11px;color:#64748b;margin-top:8px">
+          Annual spend (approx): £${(p.spend/1000).toFixed(0)}k • size ∝ spend
+        </div>
+      </div>
+    `;
+
+    const m = L.marker([p.lat, p.lng], { icon }).bindPopup(popupHtml);
+    layerRef.current.addLayer(m);
+  });
+
+  // Only auto-fit London points; for other cities we keep the chosen view
   if (enriched.length && city === "London") {
-    const b = window.L.latLngBounds(enriched.map(p => [p.lat, p.lng])).pad(0.2);
+    const b = L.latLngBounds(enriched.map(p => [p.lat, p.lng])).pad(0.2);
     mapRef.current.fitBounds(b, { maxZoom: 13 });
   }
-}, [enriched, ohByName, yearType, thrMode, city]);
+}, [enriched, ohByName, yearType, thrMode, city, preset]);
+
 
   const selectStyle = {
     padding:"8px 12px", borderRadius:10,
@@ -2308,9 +2314,9 @@ const CITY_VIEW = {
           <div className="text-xs text-slate-400">
   Markers show index ×10 • color by raw band • size ∝ spend
   <span className="chip ml-2">Overheating: {yearType}/{thrMode} in {city}</span>
-</div>
-
-        <div className="md:hidden flex items-center gap-2 mt-3">
+</div> 
+        </div> 
+       <div className="md:hidden flex items-center gap-2 mt-3">
           <div className="bg-white rounded-full p-2 shadow-md">
             <DonutGauge value={goodness} max={goodnessMax} size={90} stroke={12} display={avgDisp.toFixed(2)} label="Good"/>
           </div>
