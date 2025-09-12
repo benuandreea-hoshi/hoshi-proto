@@ -2096,110 +2096,76 @@ function compositeIndex(m, w) {
 }
 
 function Services({ buildings = [] }) {
-  const [city, setCity]       = React.useState("London");
-  const [preset, setPreset]   = React.useState("Balanced");
-  const [mapZoom, setMapZoom] = React.useState(11);
+  const [city,setCity]       = React.useState("London");
+  const [preset,setPreset]   = React.useState("Balanced");
+  const [mapZoom,setMapZoom] = React.useState(11);
   const mapDivRef = React.useRef(null);
   const mapRef    = React.useRef(null);
   const layerRef  = React.useRef(null);
 
-  // Controls (reactive)
-  const [yearType, setYearType] = React.useState("TRY");      // TRY | DSY
-  const [thrMode,  setThrMode]  = React.useState("Adaptive"); // Adaptive | Fixed
-
   const weights = PRESETS[preset];
 
-  // UI select style
-  const selectStyle = {
-    padding:"8px 12px", borderRadius:10,
-    background:"var(--panel-2)", border:"1px solid var(--stroke)", color:"var(--text)"
-  };
+  // ✅ 1) declare these first
+  const [yearType, setYearType] = React.useState("TRY");      // "TRY" | "DSY"
+  const [thrMode, setThrMode]   = React.useState("Adaptive"); // "Adaptive" | "Fixed"
 
-  // Optional multi-city re-center (markers still PLACES)
-  const CITY_VIEW = React.useMemo(()=>({
-    London:     { center:[51.5074,-0.1278], zoom:11 },
-    Manchester: { center:[53.4808,-2.2426], zoom:11 },
-    Birmingham: { center:[52.4862,-1.8904], zoom:11 },
-    Glasgow:    { center:[55.8642,-4.2518], zoom:11 },
-  }), []);
-
-  // Overheating lookup by building name; recompute with mode
   const ohByName = React.useMemo(() => {
-    const label    = yearType === "DSY" ? "2050" : "Today";
-    const adaptive = (thrMode === "Adaptive");
+    const label = yearType === "DSY" ? "2050" : "Today";
+    const adaptive = thrMode === "Adaptive";
     const map = Object.create(null);
-    // tolerate missing/empty buildings
-    (buildings || []).forEach(b => {
-      const key = String(b?.name || "");
-      if (!key) return;
-      map[key] = estimateOverheatingHours(b, label, { adaptive });
+    buildings.forEach(b => {
+      map[b.name] = estimateOverheatingHours(b, label, { adaptive });
     });
     return map;
   }, [buildings, yearType, thrMode]);
 
-  // Map markers dataset (service index): still PLACES
-  const enriched = React.useMemo(() => {
-    if (!Array.isArray(PLACES) || PLACES.length === 0) return [];
-    const minS = Math.min(...PLACES.map(p => p.spend));
-    const maxS = Math.max(...PLACES.map(p => p.spend));
-    const span = Math.max(1, maxS - minS);
-    const scaleR = v => 10 + 8 * ((v - minS) / span); // 10–18 px
+  const points = React.useMemo(() => {
+    const label = yearType === "DSY" ? "2050" : "Today";
+    return buildings.map(b => ({
+      ...b,
+      _oh: estimateOverheatingHours(b, label, { adaptive: thrMode === "Adaptive" })
+    }));
+  }, [buildings, yearType, thrMode]);
 
-    return PLACES.map(p => {
-      const idx  = compositeIndex(p.m, weights); // raw ~0.03–0.07
-      const disp = idx * 10;                     // display 0.30–0.70
+  const enriched = React.useMemo(()=>{
+    const minS = Math.min(...PLACES.map(p=>p.spend));
+    const maxS = Math.max(...PLACES.map(p=>p.spend));
+    const scaleR = v => 10 + 8 * ((v - minS)/Math.max(1,(maxS-minS)));
+    return PLACES.map(p=>{
+      const idx = compositeIndex(p.m, weights);
+      const disp = (idx*10);
       return { ...p, idx, disp, color: colorForIndex(idx), r: Math.round(scaleR(p.spend)) };
     });
-  }, [weights]);
+  },[weights]);
 
-  const avgRaw  = React.useMemo(
-    () => (enriched.length ? enriched.reduce((s,p)=>s+p.idx,0)/enriched.length : 0),
-    [enriched]
-  );
-  const avgDisp = avgRaw * 10;
+  const avgRaw  = React.useMemo(()=> (enriched.length ? enriched.reduce((s,p)=>s+p.idx,0)/enriched.length : 0), [enriched]);
+  const avgDisp = (avgRaw*10);
 
-  // Init Leaflet once
-  React.useEffect(() => {
-    if (!mapDivRef.current || mapRef.current) return;
+  React.useEffect(()=>{
+    if (!mapDivRef.current || mapRef.current || !window.L) return;
     const L = window.L;
-    if (!L) return; // Leaflet not loaded—silently skip to avoid “Script error”
-
-    const cfg = (CITY_VIEW["London"] || { center:[51.5074,-0.1278], zoom:11 });
-    const map = L.map(mapDivRef.current, { center: cfg.center, zoom: mapZoom, scrollWheelZoom: true });
+    const map = L.map(mapDivRef.current, { center:[51.5074,-0.1278], zoom:mapZoom, scrollWheelZoom:true });
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,
       attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
-    map.on("zoomend", () => setMapZoom(map.getZoom()));
+    map.on("zoomend",()=> setMapZoom(map.getZoom()));
     mapRef.current = map;
     layerRef.current = L.layerGroup().addTo(map);
-  }, [CITY_VIEW, mapZoom]);
+  },[]);
 
-  // Re-center when city changes
-  React.useEffect(() => {
+  // ✅ 2) include ohByName so popups refresh when TRY/DSY/threshold changes
+  React.useEffect(()=>{
+    if (!mapRef.current || !layerRef.current || !window.L) return;
     const L = window.L;
-    if (!L || !mapRef.current) return;
-    const cfg = CITY_VIEW[city];
-    if (cfg) mapRef.current.setView(cfg.center, cfg.zoom);
-  }, [CITY_VIEW, city]);
+    layerRef.current.clearLayers();
 
-  // Draw / re-draw markers (weights & overheating mode react)
-  React.useEffect(() => {
-    const L = window.L;
-    if (!L || !mapRef.current || !layerRef.current) return;
-
-    const layer = layerRef.current;
-    layer.clearLayers();
-
-    enriched.forEach(p => {
-      // Optional Overheating value by “place name” = building name match
+    enriched.forEach(p=>{
       const oh = ohByName[p.name];
-      const ohRow = Number.isFinite(oh)
-        ? `<div style="font-size:12px;color:#334155;margin-top:6px">
-             Overheating (hrs/yr): <b>${oh}</b> &nbsp;•&nbsp; <i>${yearType}/${thrMode}</i>
-           </div>` : "";
+      const ohRow = (Number.isFinite(oh))
+        ? `<div style="font-size:12px;color:#334155;margin-top:6px">Overheating (hrs/yr): <b>${oh}</b></div>`
+        : "";
 
-      // Bubble
       const html = `
         <div style="
           width:${p.r*2}px;height:${p.r*2}px;border-radius:9999px;border:2px solid #fff;
@@ -2207,14 +2173,11 @@ function Services({ buildings = [] }) {
           color:#fff;font-weight:800;font-size:${Math.max(10, Math.min(14, p.r-2))}px;
           box-shadow:0 6px 16px rgba(0,0,0,.25);
         ">${p.disp.toFixed(2)}</div>`;
-      const icon = L.divIcon({
-        html, className:"", iconSize:[p.r*2,p.r*2], iconAnchor:[p.r,p.r], popupAnchor:[0,-p.r]
-      });
+      const icon = L.divIcon({ html, className:"", iconSize:[p.r*2,p.r*2], iconAnchor:[p.r,p.r], popupAnchor:[0,-p.r] });
 
-      // Popup
-      const breakdown = CAT_KEYS.map(k =>
+      const breakdown = CAT_KEYS.map(k=>(
         `<tr><td style="padding:2px 8px">${k}</td><td style="padding:2px 0;text-align:right">${(p.m[k]*10).toFixed(2)}</td></tr>`
-      ).join("");
+      )).join("");
 
       const popupHtml = `
         <div style="font-family:inherit;min-width:220px">
@@ -2229,21 +2192,26 @@ function Services({ buildings = [] }) {
           <table style="font-size:12px;color:#334155;width:100%;border-collapse:collapse">${breakdown}</table>
           ${ohRow}
           <div style="font-size:11px;color:#64748b;margin-top:8px">Annual spend (approx): £${(p.spend/1000).toFixed(0)}k • size ∝ spend</div>
-        </div>`;
-
-      layer.addLayer(L.marker([p.lat, p.lng], { icon }).bindPopup(popupHtml));
+        </div>
+      `;
+      const m = L.marker([p.lat,p.lng], {icon}).bindPopup(popupHtml);
+      layerRef.current.addLayer(m);
     });
 
-    // Fit bounds (keeps behavior you had)
-    if (enriched.length) {
-      const b = window.L.latLngBounds(enriched.map(p => [p.lat, p.lng])).pad(0.2);
+    if (enriched.length){
+      const b = window.L.latLngBounds(enriched.map(p=>[p.lat,p.lng])).pad(0.2);
       mapRef.current.fitBounds(b, { maxZoom: 13 });
     }
-  }, [enriched, ohByName, yearType, thrMode, preset]);
+  },[enriched, ohByName]); // ← added ohByName
 
-  // Gauge
+  const selectStyle = {
+    padding:"8px 12px", borderRadius:10,
+    background:"var(--panel-2)", border:"1px solid var(--stroke)", color:"var(--text)"
+  };
+
   const maxBandRaw = 0.0700;
-  const goodness   = Math.max(0, maxBandRaw - avgRaw);
+  const goodness = Math.max(0, maxBandRaw - avgRaw);
+  const goodnessMax = maxBandRaw;
 
   return (
     <div className="grid gap-4 md:gap-6">
@@ -2251,7 +2219,7 @@ function Services({ buildings = [] }) {
         <div className="hidden md:flex items-center gap-3">
           <div className="text-slate-300 text-xs">Avg. index</div>
           <div className="bg-white rounded-full p-2 shadow-md">
-            <DonutGauge value={goodness} max={maxBandRaw} display={avgDisp.toFixed(2)} label="Good" />
+            <DonutGauge value={goodness} max={goodnessMax} display={avgDisp.toFixed(2)} label="Good" />
           </div>
           <div className="text-slate-300 text-xs ml-1">({avgRaw.toFixed(4)})</div>
         </div>
@@ -2259,22 +2227,24 @@ function Services({ buildings = [] }) {
         <div className="flex flex-wrap items-center gap-3 mb-3">
           <label className="text-sm text-slate-300">View in</label>
           <select style={selectStyle} value={city} onChange={e=>setCity(e.target.value)}>
-            {Object.keys(CITY_VIEW).map(k => <option key={k}>{k}</option>)}
+            <option>London</option>
           </select>
 
           <label className="text-sm text-slate-300 ml-2">Weights</label>
           <select style={selectStyle} value={preset} onChange={e=>setPreset(e.target.value)}>
-            {Object.keys(PRESETS).map(k => <option key={k}>{k}</option>)}
+            {Object.keys(PRESETS).map(k=><option key={k}>{k}</option>)}
           </select>
 
           <label className="text-slate-300 text-sm">Year type</label>
-          <select style={selectStyle} value={yearType} onChange={e=>setYearType(e.target.value)}>
+          <select className="px-3 py-2 rounded-lg" style={{background:"var(--panel-2)", border:"1px solid var(--stroke)", color:"var(--text)"}}
+                  value={yearType} onChange={e=>setYearType(e.target.value)}>
             <option>TRY</option>
             <option>DSY</option>
           </select>
 
           <label className="text-slate-300 text-sm">Threshold</label>
-          <select style={selectStyle} value={thrMode} onChange={e=>setThrMode(e.target.value)}>
+          <select className="px-3 py-2 rounded-lg" style={{background:"var(--panel-2)", border:"1px solid var(--stroke)", color:"var(--text)"}}
+                  value={thrMode} onChange={e=>setThrMode(e.target.value)}>
             <option>Adaptive</option>
             <option>Fixed</option>
           </select>
@@ -2290,7 +2260,7 @@ function Services({ buildings = [] }) {
         </div>
 
         <div className="rounded-2xl overflow-hidden border relative z-0" style={{borderColor:"var(--stroke)"}}>
-          <div ref={mapDivRef} style={{height:420,width:"100%"}} />
+          <div ref={mapDivRef} style={{height:420,width:"100%"}}></div>
         </div>
 
         <div className="flex flex-wrap items-start gap-4 mt-4">
@@ -2299,21 +2269,18 @@ function Services({ buildings = [] }) {
             <div className="grid grid-cols-1 gap-1">
               {INDEX_BINS.map((b,i)=>(
                 <div key={i} className="flex items-center gap-2 text-sm">
-                  <span className="w-3.5 h-3.5 rounded-sm" style={{background:b.color}} />
+                  <span className="w-3.5 h-3.5 rounded-sm" style={{background:b.color}}></span>
                   <span className="text-slate-100">{b.label}</span>
                 </div>
               ))}
             </div>
           </div>
-          <div className="text-xs text-slate-400">
-            Markers show index ×10 • color by raw band • size ∝ spend
-            <span className="chip ml-2">Overheating: {yearType}/{thrMode}</span>
-          </div>
+          <div className="text-xs text-slate-400">Markers show index ×10 • color by raw band • size ∝ spend</div>
         </div>
 
         <div className="md:hidden flex items-center gap-2 mt-3">
           <div className="bg-white rounded-full p-2 shadow-md">
-            <DonutGauge value={goodness} max={maxBandRaw} size={90} stroke={12} display={avgDisp.toFixed(2)} label="Good" />
+            <DonutGauge value={goodness} max={goodnessMax} size={90} stroke={12} display={avgDisp.toFixed(2)} label="Good"/>
           </div>
           <div className="text-sm text-slate-300">Avg. raw {avgRaw.toFixed(4)}</div>
         </div>
@@ -3332,78 +3299,12 @@ function HeroImage({ src, alt = "" }) {
   );
 }
 
+
+
+
+
 /* --------------------- BLOG TAB --------------------- */
-function Blog({ openPortfolio = () => {}, openBuilding = () => {} }) {
-  // 1) Base + registry FIRST (so we can use it in state initializers)
-  const PAGES_BASE = "https://benuandreea-hoshi.github.io/hoshi-proto";
-
-  const BLOG = [
-    {
-      slug: "hoshi-in-5-minutes",
-      label: "Getting started",
-      title: "Hoshi in 5 minutes",
-      summary:
-        "From utility bills to decision-grade signals (NPV, β, systematic vs idiosyncratic).",
-      img: LOGO_SRC,
-      hero: LOGO_SRC,
-      readingMins: 5,
-      tags: ["Investors", "Operators", "Signals"],
-      url: `${PAGES_BASE}/article-hoshi.html`,
-    },
-    {
-      slug: "commonwealth-of-people",
-      label: "Governance",
-      title: "Commonwealth of People",
-      summary:
-        "A practical governance frame: public ecological floor, shared carbon price, and enforceable actions with an audit trail.",
-      img: PEOPLE_SRC,
-      hero: PEOPLE_SRC,
-      readingMins: 7,
-      tags: ["Governance","CCC","Ledger","Alarms"],
-      url: `${PAGES_BASE}/article-commonwealth.html`,
-    },
-    {
-      slug: "compare-buildings",
-      label: "Feature",
-      title: "Compare Buildings",
-      summary:
-        "Side-by-side decisions: photos, servicing, age, energy, carbon, intensity, and spend—on one screen.",
-      img: "https://cdn.prod.website-files.com/68a8baf20ad5978747d9d44d/68ba19a4160886b0a71ae9c4_embracing-world-peace-poster-freedom-happiness-global-harmony_1020495-8806.jpg",
-      hero: "https://cdn.prod.website-files.com/68a8baf20ad5978747d9d44d/68ba19a4160886b0a71ae9c4_embracing-world-peace-poster-freedom-happiness-global-harmony_1020495-8806.jpg",
-      readingMins: 5,
-      tags: ["Tenants","Owners","Investors"],
-      url: `${PAGES_BASE}/article-compare.html`,
-    },
-    {
-      slug: "forward-energy-premium",
-      label: "Signals",
-      title: "Forward Energy Premium (FEP)",
-      summary:
-        "A forward ROI signal that blends price/policy/climate exposure with asset specifics.",
-      img: LOGO_SRC,
-      hero: LOGO_SRC,
-      readingMins: 5,
-      tags: ["Investors","Operators","Signals"],
-      url: `${PAGES_BASE}/article-fep.html`,
-    },
-    {
-      slug: "alarm-action-plan-mv",
-      label: "Governance",
-      title: "Alarm → Action → Plan → M&V",
-      summary:
-        "The operating rhythm that turns data into enforceable decisions—with proof.",
-      img: PEOPLE_SRC,
-      hero: PEOPLE_SRC,
-      readingMins: 6,
-      tags: ["Governance","Operations","Evidence"],
-      url: `${PAGES_BASE}/article-governance-loop.html`,
-    },
-  ];
-
-  // 2) Now it’s safe to use BLOG in initial state
-  const [view, setView]     = React.useState("home");             // 'home' | 'article'
-  const [active, setActive] = React.useState(BLOG[0]?.slug || ""); // current article
-
+function Blog({ openPortfolio, openBuilding }) {
   // Keep the small overflow fix
   React.useEffect(() => {
     const s = document.createElement("style");
@@ -3412,8 +3313,83 @@ function Blog({ openPortfolio = () => {}, openBuilding = () => {} }) {
     return () => s.remove();
   }, []);
 
-  const article = BLOG.find(b => b.slug === active) ?? BLOG[0];
-  const TagPill = ({ children }) => <span className="chip whitespace-nowrap">{children}</span>;
+  // ---- GitHub Pages base for static articles ----
+  const PAGES_BASE = "https://benuandreea-hoshi.github.io/hoshi-proto";
+
+  // simple registry (two articles)
+const BLOG = [
+  {
+    slug: "hoshi-in-5-minutes",
+    label: "Getting started",
+    title: "Hoshi in 5 minutes",
+    summary:
+      "From utility bills to decision-grade signals (NPV, β, systematic vs idiosyncratic).",
+    img: LOGO_SRC,
+    hero: LOGO_SRC,
+    readingMins: 5,
+    tags: ["Investors", "Operators", "Signals"],
+    url: `${PAGES_BASE}/article-hoshi.html`,
+  },
+  {
+    slug: "commonwealth-of-people",
+    label: "Governance",
+    title: "Commonwealth of People",
+    summary:
+      "A practical governance frame: public ecological floor, shared carbon price, and enforceable actions with an audit trail.",
+    img: PEOPLE_SRC,
+    hero: PEOPLE_SRC,
+    readingMins: 7,
+    tags: ["Governance","CCC","Ledger","Alarms"],
+    url: `${PAGES_BASE}/article-commonwealth.html`,
+  },
+ {
+  slug: "compare-buildings",
+  label: "Feature",
+  title: "Compare Buildings",
+  summary:
+    "Side-by-side decisions: photos, servicing, age, energy, carbon, intensity, and spend—on one screen.",
+  img: "https://cdn.prod.website-files.com/68a8baf20ad5978747d9d44d/68ba19a4160886b0a71ae9c4_embracing-world-peace-poster-freedom-happiness-global-harmony_1020495-8806.jpg", // ← card thumbnail
+  hero: "https://cdn.prod.website-files.com/68a8baf20ad5978747d9d44d/68ba19a4160886b0a71ae9c4_embracing-world-peace-poster-freedom-happiness-global-harmony_1020495-8806.jpg", // ← optional
+  readingMins: 5,
+  tags: ["Tenants","Owners","Investors"],
+  url: `${PAGES_BASE}/article-compare.html`,
+},
+  // NEW — FEP article
+  {
+    slug: "forward-energy-premium",
+    label: "Signals",
+    title: "Forward Energy Premium (FEP)",
+    summary:
+      "A forward ROI signal that blends price/policy/climate exposure with asset specifics.",
+    img: LOGO_SRC,      // swap to a FEP hero if you have one
+    hero: LOGO_SRC,
+    readingMins: 5,
+    tags: ["Investors","Operators","Signals"],
+    url: `${PAGES_BASE}/article-fep.html`,
+  },
+
+  // NEW — Governance loop article
+  {
+    slug: "alarm-action-plan-mv",
+    label: "Governance",
+    title: "Alarm → Action → Plan → M&V",
+    summary:
+      "The operating rhythm that turns data into enforceable decisions—with proof.",
+    img: PEOPLE_SRC,    // swap to a governance image if you have one
+    hero: PEOPLE_SRC,
+    readingMins: 6,
+    tags: ["Governance","Operations","Evidence"],
+    url: `${PAGES_BASE}/article-governance-loop.html`,
+  },
+];
+
+  const [view, setView] = React.useState("home"); // 'home' | 'article' (fallback route)
+  const [active, setActive] = React.useState(BLOG[0].slug);
+  const article = BLOG.find((b) => b.slug === active) ?? BLOG[0];
+
+  const TagPill = ({ children }) => (
+    <span className="chip whitespace-nowrap">{children}</span>
+  );
 
   // tiny animated orbit (CSS-only, lightweight)
   const Orbit = () => (
@@ -3429,7 +3405,7 @@ function Blog({ openPortfolio = () => {}, openBuilding = () => {} }) {
     </div>
   );
 
-  // ---------- HOME ----------
+  // ---------- HOME (landing) ----------
   const Home = () => (
     <Section title="Hoshi Blog">
       {/* Hero */}
@@ -3464,7 +3440,10 @@ function Blog({ openPortfolio = () => {}, openBuilding = () => {} }) {
         {BLOG.map((a) => (
           <button
             key={a.slug}
-            onClick={() => { setActive(a.slug); setView("article"); }}
+         onClick={() => {
+  setActive(a.slug);
+  setView("article");   // always show Article view
+}}
             className="text-left rounded-2xl overflow-hidden hover:shadow-lg transition-shadow"
             style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}
           >
@@ -3488,41 +3467,43 @@ function Blog({ openPortfolio = () => {}, openBuilding = () => {} }) {
     </Section>
   );
 
-  // ---------- ARTICLE (iframe to static page; fallback shows ArticleBody) ----------
-  const Article = () => {
-    // If the article is an external HTML, don’t pass title/desc to Section header
-    const headerProps = article.url ? {} : { title: article.title, desc: article.summary };
-    return (
-      <Section {...headerProps}>
-        <div
-          className="rounded-2xl p-0 box-border w-full"
-          style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}
-        >
-          {article.url ? (
-            <iframe
-              key={article.url}
-              title={article.title}
-              src={article.url}
-              className="w-full rounded-2xl block"
-              style={{ height: "75svh", border: 0 }}
-              loading="lazy"
-              sandbox="allow-forms allow-popups allow-scripts allow-same-origin"
-            />
-          ) : (
-            <div className="p-4 md:p-5">
-              <ArticleBody />
-            </div>
-          )}
+ // ---------- ARTICLE (fallback route if an item has no URL) ----------
+const Article = () => {
+  // if the article is an external HTML, don't pass title/desc to Section
+  const headerProps = article.url ? {} : { title: article.title, desc: article.summary };
 
+  return (
+    <Section {...headerProps}>
+      <div
+        className="rounded-2xl p-0 box-border w-full"
+        style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}
+      >
+        {article.url ? (
+          <iframe
+            key={article.url}
+            title={article.title}
+            src={article.url}
+            className="w-full rounded-2xl block"
+            style={{ height: "75svh", border: 0 }}
+            loading="lazy"
+            sandbox="allow-forms allow-popups allow-scripts allow-same-origin"
+          />
+        ) : (
           <div className="p-4 md:p-5">
-            <button className="btn btn-ghost" onClick={() => setView("home")}>
-              ← Back to Blog
-            </button>
+            <ArticleBody />
           </div>
+        )}
+
+        {/* Single Back button */}
+        <div className="p-4 md:p-5">
+          <button className="btn btn-ghost" onClick={() => setView("home")}>
+            ← Back to Blog
+          </button>
         </div>
-      </Section>
-    );
-  };
+      </div>
+    </Section>
+  );
+};
 
   // render
   return (
@@ -3530,7 +3511,7 @@ function Blog({ openPortfolio = () => {}, openBuilding = () => {} }) {
       {view === "home" ? <Home /> : <Article />}
     </div>
   );
-}
+};
 
 // Demo pair shown on first load (if user has no buildings)
 const HOSHI_SAMPLE_BUILDINGS = [
@@ -3669,7 +3650,7 @@ function App(){
     { key: "lineage", label: "Lineage & Governance",
       comp: <Lineage fromAction={lineageCtx} goActions={() => setActive("actions")} />
     },
-{ key: "services", label: "Services", comp: <Services buildings={buildings} /> }
+    { key: "services", label: "Services", comp: <Services buildings={buildings} /> },
     { key: "public", label: "Public BPS",
       comp: <PublicBPS goLineage={() => setActive("lineage")} goActions={() => setActive("actions")} />
     },
