@@ -2096,74 +2096,90 @@ function compositeIndex(m, w) {
 }
 
 function Services({ buildings = [] }) {
-  const [city,setCity]       = React.useState("London");
-  const [preset,setPreset]   = React.useState("Balanced");
-  const [mapZoom,setMapZoom] = React.useState(11);
+  const [city, setCity]         = React.useState("London");
+  const [preset, setPreset]     = React.useState("Balanced");
+  const [mapZoom, setMapZoom]   = React.useState(11);
   const mapDivRef = React.useRef(null);
   const mapRef    = React.useRef(null);
   const layerRef  = React.useRef(null);
 
+  // Controls
+  const [yearType, setYearType] = React.useState("TRY");      // "TRY" | "DSY"
+  const [thrMode,  setThrMode]  = React.useState("Adaptive"); // "Adaptive" | "Fixed"
+
+  // Styling for selects
+  const selectStyle = {
+    padding: "8px 12px", borderRadius: 10,
+    background: "var(--panel-2)", border: "1px solid var(--stroke)", color: "var(--text)"
+  };
+
+  // Optional multi-city recenter (data still London-only for now)
+  const CITY_VIEW = {
+    London:     { center:[51.5074,-0.1278], zoom:11 },
+    Manchester: { center:[53.4808,-2.2426], zoom:11 },
+    Birmingham: { center:[52.4862,-1.8904], zoom:11 },
+    Glasgow:    { center:[55.8642,-4.2518], zoom:11 },
+  };
+
   const weights = PRESETS[preset];
 
-  // ✅ 1) declare these first
-  const [yearType, setYearType] = React.useState("TRY");      // "TRY" | "DSY"
-  const [thrMode, setThrMode]   = React.useState("Adaptive"); // "Adaptive" | "Fixed"
-
+  // Overheating lookup keyed by building name; recompute when mode changes
   const ohByName = React.useMemo(() => {
-    const label = yearType === "DSY" ? "2050" : "Today";
+    const label    = yearType === "DSY" ? "2050" : "Today";
     const adaptive = thrMode === "Adaptive";
     const map = Object.create(null);
-    buildings.forEach(b => {
-      map[b.name] = estimateOverheatingHours(b, label, { adaptive });
-    });
+    buildings.forEach(b => { map[b.name] = estimateOverheatingHours(b, label, { adaptive }); });
     return map;
   }, [buildings, yearType, thrMode]);
 
-  const points = React.useMemo(() => {
-    const label = yearType === "DSY" ? "2050" : "Today";
-    return buildings.map(b => ({
-      ...b,
-      _oh: estimateOverheatingHours(b, label, { adaptive: thrMode === "Adaptive" })
-    }));
-  }, [buildings, yearType, thrMode]);
-
-  const enriched = React.useMemo(()=>{
-    const minS = Math.min(...PLACES.map(p=>p.spend));
-    const maxS = Math.max(...PLACES.map(p=>p.spend));
-    const scaleR = v => 10 + 8 * ((v - minS)/Math.max(1,(maxS-minS)));
-    return PLACES.map(p=>{
-      const idx = compositeIndex(p.m, weights);
-      const disp = (idx*10);
+  // Marker data for the service index (still using PLACES)
+  const enriched = React.useMemo(() => {
+    const minS = Math.min(...PLACES.map(p => p.spend));
+    const maxS = Math.max(...PLACES.map(p => p.spend));
+    const scaleR = v => 10 + 8 * ((v - minS) / Math.max(1, (maxS - minS))); // 10–18 px
+    return PLACES.map(p => {
+      const idx  = compositeIndex(p.m, weights);   // raw ~0.03–0.07
+      const disp = idx * 10;                       // display 0.30–0.70
       return { ...p, idx, disp, color: colorForIndex(idx), r: Math.round(scaleR(p.spend)) };
     });
-  },[weights]);
+  }, [weights]);
 
-  const avgRaw  = React.useMemo(()=> (enriched.length ? enriched.reduce((s,p)=>s+p.idx,0)/enriched.length : 0), [enriched]);
-  const avgDisp = (avgRaw*10);
+  const avgRaw  = React.useMemo(() => (enriched.length ? enriched.reduce((s,p)=>s+p.idx,0)/enriched.length : 0), [enriched]);
+  const avgDisp = avgRaw * 10;
 
-  React.useEffect(()=>{
+  // Init Leaflet once
+  React.useEffect(() => {
     if (!mapDivRef.current || mapRef.current || !window.L) return;
     const L = window.L;
-    const map = L.map(mapDivRef.current, { center:[51.5074,-0.1278], zoom:mapZoom, scrollWheelZoom:true });
+    const map = L.map(mapDivRef.current, { center: CITY_VIEW.London.center, zoom: mapZoom, scrollWheelZoom: true });
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,
       attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
-    map.on("zoomend",()=> setMapZoom(map.getZoom()));
+    map.on("zoomend", () => setMapZoom(map.getZoom()));
     mapRef.current = map;
     layerRef.current = L.layerGroup().addTo(map);
-  },[]);
+  }, []);
 
-  // ✅ 2) include ohByName so popups refresh when TRY/DSY/threshold changes
-  React.useEffect(()=>{
+  // Recenter when city changes (points remain London-only for now)
+  React.useEffect(() => {
+    if (!mapRef.current) return;
+    const cfg = CITY_VIEW[city];
+    if (cfg) mapRef.current.setView(cfg.center, cfg.zoom);
+  }, [city]);
+
+  // Draw / redraw markers (react to index weights + overheating mode)
+  React.useEffect(() => {
     if (!mapRef.current || !layerRef.current || !window.L) return;
     const L = window.L;
     layerRef.current.clearLayers();
 
-    enriched.forEach(p=>{
+    enriched.forEach(p => {
       const oh = ohByName[p.name];
-      const ohRow = (Number.isFinite(oh))
-        ? `<div style="font-size:12px;color:#334155;margin-top:6px">Overheating (hrs/yr): <b>${oh}</b></div>`
+      const ohRow = Number.isFinite(oh)
+        ? `<div style="font-size:12px;color:#334155;margin-top:6px">
+             Overheating (hrs/yr): <b>${oh}</b> &nbsp;•&nbsp; <i>${yearType}/${thrMode}</i>
+           </div>`
         : "";
 
       const html = `
@@ -2175,9 +2191,9 @@ function Services({ buildings = [] }) {
         ">${p.disp.toFixed(2)}</div>`;
       const icon = L.divIcon({ html, className:"", iconSize:[p.r*2,p.r*2], iconAnchor:[p.r,p.r], popupAnchor:[0,-p.r] });
 
-      const breakdown = CAT_KEYS.map(k=>(
+      const breakdown = CAT_KEYS.map(k =>
         `<tr><td style="padding:2px 8px">${k}</td><td style="padding:2px 0;text-align:right">${(p.m[k]*10).toFixed(2)}</td></tr>`
-      )).join("");
+      ).join("");
 
       const popupHtml = `
         <div style="font-family:inherit;min-width:220px">
@@ -2192,26 +2208,19 @@ function Services({ buildings = [] }) {
           <table style="font-size:12px;color:#334155;width:100%;border-collapse:collapse">${breakdown}</table>
           ${ohRow}
           <div style="font-size:11px;color:#64748b;margin-top:8px">Annual spend (approx): £${(p.spend/1000).toFixed(0)}k • size ∝ spend</div>
-        </div>
-      `;
-      const m = L.marker([p.lat,p.lng], {icon}).bindPopup(popupHtml);
-      layerRef.current.addLayer(m);
+        </div>`;
+      layerRef.current.addLayer(L.marker([p.lat, p.lng], { icon }).bindPopup(popupHtml));
     });
 
-    if (enriched.length){
-      const b = window.L.latLngBounds(enriched.map(p=>[p.lat,p.lng])).pad(0.2);
+    if (enriched.length) {
+      const b = window.L.latLngBounds(enriched.map(p => [p.lat, p.lng])).pad(0.2);
       mapRef.current.fitBounds(b, { maxZoom: 13 });
     }
-  },[enriched, ohByName]); // ← added ohByName
+  }, [enriched, ohByName, yearType, thrMode, preset]);
 
-  const selectStyle = {
-    padding:"8px 12px", borderRadius:10,
-    background:"var(--panel-2)", border:"1px solid var(--stroke)", color:"var(--text)"
-  };
-
+  // Gauge
   const maxBandRaw = 0.0700;
-  const goodness = Math.max(0, maxBandRaw - avgRaw);
-  const goodnessMax = maxBandRaw;
+  const goodness   = Math.max(0, maxBandRaw - avgRaw);
 
   return (
     <div className="grid gap-4 md:gap-6">
@@ -2219,7 +2228,7 @@ function Services({ buildings = [] }) {
         <div className="hidden md:flex items-center gap-3">
           <div className="text-slate-300 text-xs">Avg. index</div>
           <div className="bg-white rounded-full p-2 shadow-md">
-            <DonutGauge value={goodness} max={goodnessMax} display={avgDisp.toFixed(2)} label="Good" />
+            <DonutGauge value={goodness} max={maxBandRaw} display={avgDisp.toFixed(2)} label="Good" />
           </div>
           <div className="text-slate-300 text-xs ml-1">({avgRaw.toFixed(4)})</div>
         </div>
@@ -2227,24 +2236,22 @@ function Services({ buildings = [] }) {
         <div className="flex flex-wrap items-center gap-3 mb-3">
           <label className="text-sm text-slate-300">View in</label>
           <select style={selectStyle} value={city} onChange={e=>setCity(e.target.value)}>
-            <option>London</option>
+            {Object.keys(CITY_VIEW).map(k => <option key={k}>{k}</option>)}
           </select>
 
           <label className="text-sm text-slate-300 ml-2">Weights</label>
           <select style={selectStyle} value={preset} onChange={e=>setPreset(e.target.value)}>
-            {Object.keys(PRESETS).map(k=><option key={k}>{k}</option>)}
+            {Object.keys(PRESETS).map(k => <option key={k}>{k}</option>)}
           </select>
 
           <label className="text-slate-300 text-sm">Year type</label>
-          <select className="px-3 py-2 rounded-lg" style={{background:"var(--panel-2)", border:"1px solid var(--stroke)", color:"var(--text)"}}
-                  value={yearType} onChange={e=>setYearType(e.target.value)}>
+          <select style={selectStyle} value={yearType} onChange={e=>setYearType(e.target.value)}>
             <option>TRY</option>
             <option>DSY</option>
           </select>
 
           <label className="text-slate-300 text-sm">Threshold</label>
-          <select className="px-3 py-2 rounded-lg" style={{background:"var(--panel-2)", border:"1px solid var(--stroke)", color:"var(--text)"}}
-                  value={thrMode} onChange={e=>setThrMode(e.target.value)}>
+          <select style={selectStyle} value={thrMode} onChange={e=>setThrMode(e.target.value)}>
             <option>Adaptive</option>
             <option>Fixed</option>
           </select>
@@ -2260,7 +2267,7 @@ function Services({ buildings = [] }) {
         </div>
 
         <div className="rounded-2xl overflow-hidden border relative z-0" style={{borderColor:"var(--stroke)"}}>
-          <div ref={mapDivRef} style={{height:420,width:"100%"}}></div>
+          <div ref={mapDivRef} style={{height:420,width:"100%"}} />
         </div>
 
         <div className="flex flex-wrap items-start gap-4 mt-4">
@@ -2269,18 +2276,21 @@ function Services({ buildings = [] }) {
             <div className="grid grid-cols-1 gap-1">
               {INDEX_BINS.map((b,i)=>(
                 <div key={i} className="flex items-center gap-2 text-sm">
-                  <span className="w-3.5 h-3.5 rounded-sm" style={{background:b.color}}></span>
+                  <span className="w-3.5 h-3.5 rounded-sm" style={{background:b.color}} />
                   <span className="text-slate-100">{b.label}</span>
                 </div>
               ))}
             </div>
           </div>
-          <div className="text-xs text-slate-400">Markers show index ×10 • color by raw band • size ∝ spend</div>
+          <div className="text-xs text-slate-400">
+            Markers show index ×10 • color by raw band • size ∝ spend
+            <span className="chip ml-2">Overheating: {yearType}/{thrMode}</span>
+          </div>
         </div>
 
         <div className="md:hidden flex items-center gap-2 mt-3">
           <div className="bg-white rounded-full p-2 shadow-md">
-            <DonutGauge value={goodness} max={goodnessMax} size={90} stroke={12} display={avgDisp.toFixed(2)} label="Good"/>
+            <DonutGauge value={goodness} max={maxBandRaw} size={90} stroke={12} display={avgDisp.toFixed(2)} label="Good" />
           </div>
           <div className="text-sm text-slate-300">Avg. raw {avgRaw.toFixed(4)}</div>
         </div>
@@ -3650,7 +3660,7 @@ function App(){
     { key: "lineage", label: "Lineage & Governance",
       comp: <Lineage fromAction={lineageCtx} goActions={() => setActive("actions")} />
     },
-    { key: "services", label: "Services", comp: <Services buildings={buildings} /> },
+{ key: "services", label: "Services", comp: <Services buildings={buildings} /> }
     { key: "public", label: "Public BPS",
       comp: <PublicBPS goLineage={() => setActive("lineage")} goActions={() => setActive("actions")} />
     },
