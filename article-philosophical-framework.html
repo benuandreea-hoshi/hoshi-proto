@@ -4,9 +4,15 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Hoshi — the philosophical framework</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+ <!-- Hide the in-article Back link when embedded in your app -->
+  <script>
+    try { if (window.self !== window.top) document.documentElement.classList.add('embedded'); } catch(e){}
+  </script>
+
+   <!-- Preload hero for faster paint -->
+  <link rel="preload" as="image"
+        href="https://cdn.prod.website-files.com/68a8baf20ad5978747d9d44d/68ba19a4160886b0a71ae9c4_embracing-world-peace-poster-freedom-happiness-global-harmony_1020495-8806.jpg">
+
   <style>
     :root{
       --bg:#0b1220;
@@ -49,7 +55,14 @@
           <span class="chip">Global Commons</span>
           <span class="chip">6 min read</span>
         </div>
-        <img class="hero-img" alt="Commonwealth concept" src="https://cdn.prod.website-files.com/68a8baf20ad5978747d9d44d/68ba19a4160886b0a71ae9c4_embracing-world-peace-poster-freedom-happiness-global-harmony_1020495-8806.jpg" />
+         <figure>
+      <img
+        alt="Commonwealth concept"
+        src="https://cdn.prod.website-files.com/68a8baf20ad5978747d9d44d/68ba19a4160886b0a71ae9c4_embracing-world-peace-poster-freedom-happiness-global-harmony_1020495-8806.jpg"
+        width="1600" height="900" fetchpriority="high" decoding="async">
+    </figure>
+        
+
       </header>
       <section class="body">
         <p>We live in an age where global crises such as climate change, biodiversity loss, and geopolitical instability overlap and compete for attention. Yet our tools for cooperation are often inadequate. Such unrest raises a deeper question: how can societies coordinate fairly when nation‑states alone cannot manage the global commons?</p>
