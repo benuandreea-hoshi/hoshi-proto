@@ -2103,6 +2103,15 @@ function Services({ buildings = [] }) {
   const mapRef    = React.useRef(null);
   const layerRef  = React.useRef(null);
 
+  // Optional multi-city recenter (data still London-only for now)
+const CITY_VIEW = {
+  London:     { center:[51.5074,-0.1278], zoom:11 },
+  Manchester: { center:[53.4808,-2.2426], zoom:11 },
+  Birmingham: { center:[52.4862,-1.8904], zoom:11 },
+  Glasgow:    { center:[55.8642,-4.2518], zoom:11 },
+};
+
+
   const weights = PRESETS[preset];
 
   // ✅ 1) declare these first
@@ -2110,14 +2119,17 @@ function Services({ buildings = [] }) {
   const [thrMode, setThrMode]   = React.useState("Adaptive"); // "Adaptive" | "Fixed"
 
   const ohByName = React.useMemo(() => {
-    const label = yearType === "DSY" ? "2050" : "Today";
-    const adaptive = thrMode === "Adaptive";
-    const map = Object.create(null);
-    buildings.forEach(b => {
-      map[b.name] = estimateOverheatingHours(b, label, { adaptive });
-    });
-    return map;
-  }, [buildings, yearType, thrMode]);
+  const label    = yearType === "DSY" ? "2050" : "Today";
+  const adaptive = (thrMode === "Adaptive");
+  const map = Object.create(null);
+
+  buildings.forEach(b => {
+    // pretend the building sits in the currently selected city
+    map[b.name] = estimateOverheatingHours({ ...b, city }, label, { adaptive });
+  });
+
+  return map;
+}, [buildings, yearType, thrMode, city]);
 
   const points = React.useMemo(() => {
     const label = yearType === "DSY" ? "2050" : "Today";
@@ -2144,7 +2156,11 @@ function Services({ buildings = [] }) {
   React.useEffect(()=>{
     if (!mapDivRef.current || mapRef.current || !window.L) return;
     const L = window.L;
-    const map = L.map(mapDivRef.current, { center:[51.5074,-0.1278], zoom:mapZoom, scrollWheelZoom:true });
+    const map = L.map(mapDivRef.current, {
+  center: CITY_VIEW.London.center,  // was hard-coded coords
+  zoom:   CITY_VIEW.London.zoom,
+  scrollWheelZoom: true
+});
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,
       attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -2154,17 +2170,28 @@ function Services({ buildings = [] }) {
     layerRef.current = L.layerGroup().addTo(map);
   },[]);
 
-  // ✅ 2) include ohByName so popups refresh when TRY/DSY/threshold changes
-  React.useEffect(()=>{
-    if (!mapRef.current || !layerRef.current || !window.L) return;
-    const L = window.L;
-    layerRef.current.clearLayers();
+  React.useEffect(() => {
+  if (!mapRef.current) return;
+  const cfg = CITY_VIEW[city];
+  if (cfg) mapRef.current.setView(cfg.center, cfg.zoom);
+}, [city]);
 
-    enriched.forEach(p=>{
-      const oh = ohByName[p.name];
-      const ohRow = (Number.isFinite(oh))
-        ? `<div style="font-size:12px;color:#334155;margin-top:6px">Overheating (hrs/yr): <b>${oh}</b></div>`
-        : "";
+
+  // ✅ 2) include ohByName so popups refresh when TRY/DSY/threshold changes
+  React.useEffect(() => {
+  if (!mapRef.current || !layerRef.current || !window.L) return;
+  const L = window.L;
+  layerRef.current.clearLayers();
+
+  enriched.forEach(p => {
+    const oh = ohByName[p.name];
+    const ohRow = Number.isFinite(oh)
+      ? `<div style="font-size:12px;color:#334155;margin-top:6px">
+           Overheating (hrs/yr): <b>${oh}</b>
+           &nbsp;•&nbsp; <i>${yearType}/${thrMode} in ${city}</i>
+         </div>`
+      : "";
+  });
 
       const html = `
         <div style="
@@ -2198,11 +2225,12 @@ function Services({ buildings = [] }) {
       layerRef.current.addLayer(m);
     });
 
-    if (enriched.length){
-      const b = window.L.latLngBounds(enriched.map(p=>[p.lat,p.lng])).pad(0.2);
-      mapRef.current.fitBounds(b, { maxZoom: 13 });
-    }
-  },[enriched, ohByName]); // ← added ohByName
+   // ⤵️ Only auto-fit to London points; let other cities stay where you set them
+  if (enriched.length && city === "London") {
+    const b = window.L.latLngBounds(enriched.map(p => [p.lat, p.lng])).pad(0.2);
+    mapRef.current.fitBounds(b, { maxZoom: 13 });
+  }
+}, [enriched, ohByName, yearType, thrMode, city]);
 
   const selectStyle = {
     padding:"8px 12px", borderRadius:10,
@@ -2224,11 +2252,13 @@ function Services({ buildings = [] }) {
           <div className="text-slate-300 text-xs ml-1">({avgRaw.toFixed(4)})</div>
         </div>
       }>
+
+        
         <div className="flex flex-wrap items-center gap-3 mb-3">
           <label className="text-sm text-slate-300">View in</label>
-          <select style={selectStyle} value={city} onChange={e=>setCity(e.target.value)}>
-            <option>London</option>
-          </select>
+<select style={selectStyle} value={city} onChange={e=>setCity(e.target.value)}>
+  {Object.keys(CITY_VIEW).map(k => <option key={k}>{k}</option>)}
+</select>
 
           <label className="text-sm text-slate-300 ml-2">Weights</label>
           <select style={selectStyle} value={preset} onChange={e=>setPreset(e.target.value)}>
@@ -2275,8 +2305,10 @@ function Services({ buildings = [] }) {
               ))}
             </div>
           </div>
-          <div className="text-xs text-slate-400">Markers show index ×10 • color by raw band • size ∝ spend</div>
-        </div>
+          <div className="text-xs text-slate-400">
+  Markers show index ×10 • color by raw band • size ∝ spend
+  <span className="chip ml-2">Overheating: {yearType}/{thrMode} in {city}</span>
+</div>
 
         <div className="md:hidden flex items-center gap-2 mt-3">
           <div className="bg-white rounded-full p-2 shadow-md">
