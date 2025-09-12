@@ -3309,36 +3309,30 @@ function HeroImage({ src, alt = "" }) {
   );
 }
 
-
 /* --------------------- BLOG TAB --------------------- */
 function Blog({ openPortfolio = () => {}, openBuilding = () => {} }) {
-  // small overflow fix stays
-  React.useEffect(() => {
-    const s = document.createElement("style");
-    s.textContent = `#hoshi-root .card { overflow: visible !important; }`;
-    document.head.appendChild(s);
-    return () => s.remove();
-  }, []);
-
-  // 1) Base + registry FIRST
+  // 1) Base + registry FIRST (so we can use it in state initializers)
   const PAGES_BASE = "https://benuandreea-hoshi.github.io/hoshi-proto";
+
   const BLOG = [
     {
       slug: "hoshi-in-5-minutes",
       label: "Getting started",
       title: "Hoshi in 5 minutes",
-      summary: "From utility bills to decision-grade signals (NPV, β, systematic vs idiosyncratic).",
+      summary:
+        "From utility bills to decision-grade signals (NPV, β, systematic vs idiosyncratic).",
       img: LOGO_SRC,
       hero: LOGO_SRC,
       readingMins: 5,
-      tags: ["Investors","Operators","Signals"],
+      tags: ["Investors", "Operators", "Signals"],
       url: `${PAGES_BASE}/article-hoshi.html`,
     },
     {
       slug: "commonwealth-of-people",
       label: "Governance",
       title: "Commonwealth of People",
-      summary: "A practical governance frame: public ecological floor, shared carbon price, and enforceable actions with an audit trail.",
+      summary:
+        "A practical governance frame: public ecological floor, shared carbon price, and enforceable actions with an audit trail.",
       img: PEOPLE_SRC,
       hero: PEOPLE_SRC,
       readingMins: 7,
@@ -3349,9 +3343,10 @@ function Blog({ openPortfolio = () => {}, openBuilding = () => {} }) {
       slug: "compare-buildings",
       label: "Feature",
       title: "Compare Buildings",
-      summary: "Side-by-side decisions: photos, servicing, age, energy, carbon, intensity, and spend—on one screen.",
+      summary:
+        "Side-by-side decisions: photos, servicing, age, energy, carbon, intensity, and spend—on one screen.",
       img: "https://cdn.prod.website-files.com/68a8baf20ad5978747d9d44d/68ba19a4160886b0a71ae9c4_embracing-world-peace-poster-freedom-happiness-global-harmony_1020495-8806.jpg",
-      hero:"https://cdn.prod.website-files.com/68a8baf20ad5978747d9d44d/68ba19a4160886b0a71ae9c4_embracing-world-peace-poster-freedom-happiness-global-harmony_1020495-8806.jpg",
+      hero: "https://cdn.prod.website-files.com/68a8baf20ad5978747d9d44d/68ba19a4160886b0a71ae9c4_embracing-world-peace-poster-freedom-happiness-global-harmony_1020495-8806.jpg",
       readingMins: 5,
       tags: ["Tenants","Owners","Investors"],
       url: `${PAGES_BASE}/article-compare.html`,
@@ -3360,7 +3355,8 @@ function Blog({ openPortfolio = () => {}, openBuilding = () => {} }) {
       slug: "forward-energy-premium",
       label: "Signals",
       title: "Forward Energy Premium (FEP)",
-      summary: "A forward ROI signal that blends price/policy/climate exposure with asset specifics.",
+      summary:
+        "A forward ROI signal that blends price/policy/climate exposure with asset specifics.",
       img: LOGO_SRC,
       hero: LOGO_SRC,
       readingMins: 5,
@@ -3371,7 +3367,8 @@ function Blog({ openPortfolio = () => {}, openBuilding = () => {} }) {
       slug: "alarm-action-plan-mv",
       label: "Governance",
       title: "Alarm → Action → Plan → M&V",
-      summary: "The operating rhythm that turns data into enforceable decisions—with proof.",
+      summary:
+        "The operating rhythm that turns data into enforceable decisions—with proof.",
       img: PEOPLE_SRC,
       hero: PEOPLE_SRC,
       readingMins: 6,
@@ -3380,12 +3377,19 @@ function Blog({ openPortfolio = () => {}, openBuilding = () => {} }) {
     },
   ];
 
-// 2) States that *read* BLOG come AFTER the registry
-  const [view, setView] = React.useState("home"); // 'home' | 'article'
-  const [active, setActive] = React.useState(BLOG[0]?.slug);
-  const article = BLOG.find(b => b.slug === active) ?? BLOG[0];
+  // 2) Now it’s safe to use BLOG in initial state
+  const [view, setView]     = React.useState("home");             // 'home' | 'article'
+  const [active, setActive] = React.useState(BLOG[0]?.slug || ""); // current article
 
- // 3) Rest of your component stays the same
+  // Keep the small overflow fix
+  React.useEffect(() => {
+    const s = document.createElement("style");
+    s.textContent = `#hoshi-root .card { overflow: visible !important; }`;
+    document.head.appendChild(s);
+    return () => s.remove();
+  }, []);
+
+  const article = BLOG.find(b => b.slug === active) ?? BLOG[0];
   const TagPill = ({ children }) => <span className="chip whitespace-nowrap">{children}</span>;
 
   // tiny animated orbit (CSS-only, lightweight)
@@ -3402,7 +3406,7 @@ function Blog({ openPortfolio = () => {}, openBuilding = () => {} }) {
     </div>
   );
 
-  // ---------- HOME (landing) ----------
+  // ---------- HOME ----------
   const Home = () => (
     <Section title="Hoshi Blog">
       {/* Hero */}
@@ -3437,10 +3441,7 @@ function Blog({ openPortfolio = () => {}, openBuilding = () => {} }) {
         {BLOG.map((a) => (
           <button
             key={a.slug}
-         onClick={() => {
-  setActive(a.slug);
-  setView("article");   // always show Article view
-}}
+            onClick={() => { setActive(a.slug); setView("article"); }}
             className="text-left rounded-2xl overflow-hidden hover:shadow-lg transition-shadow"
             style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}
           >
@@ -3464,43 +3465,41 @@ function Blog({ openPortfolio = () => {}, openBuilding = () => {} }) {
     </Section>
   );
 
- // ---------- ARTICLE (fallback route if an item has no URL) ----------
-const Article = () => {
-  // if the article is an external HTML, don't pass title/desc to Section
-  const headerProps = article.url ? {} : { title: article.title, desc: article.summary };
+  // ---------- ARTICLE (iframe to static page; fallback shows ArticleBody) ----------
+  const Article = () => {
+    // If the article is an external HTML, don’t pass title/desc to Section header
+    const headerProps = article.url ? {} : { title: article.title, desc: article.summary };
+    return (
+      <Section {...headerProps}>
+        <div
+          className="rounded-2xl p-0 box-border w-full"
+          style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}
+        >
+          {article.url ? (
+            <iframe
+              key={article.url}
+              title={article.title}
+              src={article.url}
+              className="w-full rounded-2xl block"
+              style={{ height: "75svh", border: 0 }}
+              loading="lazy"
+              sandbox="allow-forms allow-popups allow-scripts allow-same-origin"
+            />
+          ) : (
+            <div className="p-4 md:p-5">
+              <ArticleBody />
+            </div>
+          )}
 
-  return (
-    <Section {...headerProps}>
-      <div
-        className="rounded-2xl p-0 box-border w-full"
-        style={{ background: "var(--panel-2)", border: "1px solid var(--stroke)" }}
-      >
-        {article.url ? (
-          <iframe
-            key={article.url}
-            title={article.title}
-            src={article.url}
-            className="w-full rounded-2xl block"
-            style={{ height: "75svh", border: 0 }}
-            loading="lazy"
-            sandbox="allow-forms allow-popups allow-scripts allow-same-origin"
-          />
-        ) : (
           <div className="p-4 md:p-5">
-            <ArticleBody />
+            <button className="btn btn-ghost" onClick={() => setView("home")}>
+              ← Back to Blog
+            </button>
           </div>
-        )}
-
-        {/* Single Back button */}
-        <div className="p-4 md:p-5">
-          <button className="btn btn-ghost" onClick={() => setView("home")}>
-            ← Back to Blog
-          </button>
         </div>
-      </div>
-    </Section>
-  );
-};
+      </Section>
+    );
+  };
 
   // render
   return (
@@ -3508,7 +3507,7 @@ const Article = () => {
       {view === "home" ? <Home /> : <Article />}
     </div>
   );
-};
+}
 
 // Demo pair shown on first load (if user has no buildings)
 const HOSHI_SAMPLE_BUILDINGS = [
