@@ -3419,6 +3419,17 @@ const BLOG = [
     tags: ["Governance","Operations","Evidence"],
     url: `${PAGES_BASE}/article-governance-loop.html`,
   },
+  {
+  slug: "philosophical-framework",
+  label: "Governance",
+  title: "Hoshi — the philosophical framework",
+  summary: "Why a practical, fair contract for ecological governance matters now.",
+  img: "https://cdn.prod.website-files.com/68a8baf20ad5978747d9d44d/68ba19a4160886b0a71ae9c4_embracing-world-peace-poster-freedom-happiness-global-harmony_1020495-8806.jpg",      // or another hero image
+  hero: "https://cdn.prod.website-files.com/68a8baf20ad5978747d9d44d/68ba19a4160886b0a71ae9c4_embracing-world-peace-poster-freedom-happiness-global-harmony_1020495-8806.jpg",
+  readingMins: 6,
+  tags: ["Governance","Philosophy","Commons"],
+  url: `${PAGES_BASE}/article-philosophical-framework.html'
+}
 ];
 
   const [view, setView] = React.useState("home"); // 'home' | 'article' (fallback route)
