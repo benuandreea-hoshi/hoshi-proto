@@ -27,6 +27,32 @@
     .sub{color:var(--muted);margin:0 0 8px}
     .chips{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 0}
     .chip{font-size:12px;color:#e2e8f0;padding:.35rem .6rem;border-radius:999px;border:1px solid var(--chip-bd);background:var(--chip-bg);white-space:nowrap}
+/* Hero image – consistent crop on all screens */
+figure.hero{
+  margin:14px 0 0;
+  border-radius:16px;
+  overflow:hidden;
+  border:1px solid var(--stroke);
+  background:#0c1220;
+  /* reserve aspect ratio so there’s no layout shift */
+  aspect-ratio: 16 / 9;
+}
+figure.hero img{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:cover;        /* fill the frame without letterboxing */
+}
+
+/* Slightly taller crop on small phones */
+@media (max-width: 480px){
+  figure.hero{ aspect-ratio: 4 / 3; }
+}
+
+/* (Optional) tighten article padding a bit on mobile */
+@media (max-width:760px){
+  article.body{ padding:18px; }
+}
 
     figure{margin:14px 0 0;border-radius:16px;overflow:hidden;border:1px solid var(--stroke);background:#0c1220}
     figure img{display:block;width:100%;height:auto;object-fit:cover;max-height:56svh}
@@ -62,12 +88,12 @@
       <span class="chip">Global Commons</span>
     </div>
 
-    <figure>
-      <img
-        alt="Commonwealth of Peoples — philosophical framework"
-        src="https://cdn.prod.website-files.com/68a8baf20ad5978747d9d44d/68ba19a4160886b0a71ae9c4_embracing-world-peace-poster-freedom-happiness-global-harmony_1020495-8806.jpg"
-        width="1600" height="900" fetchpriority="high" decoding="async">
-    </figure>
+    <figure class="hero">
+  <img
+    alt="Hoshi — the philosophical framework"
+    src="https://cdn.prod.website-files.com/68a8baf20ad5978747d9d44d/68ba19a4160886b0a71ae9c4_embracing-world-peace-poster-freedom-happiness-global-harmony_1020495-8806.jpg"
+    width="1600" height="900" fetchpriority="high" decoding="async">
+</figure>
 
     <article class="body">
       <p>We live in an age where global crises such as climate change, biodiversity loss, and geopolitical instability overlap and compete for attention. Yet our tools for cooperation are often inadequate. Such unrest raises a deeper question: how can societies coordinate fairly when nation-states alone cannot manage the global commons?</p>
