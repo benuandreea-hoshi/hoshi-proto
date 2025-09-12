@@ -25,6 +25,25 @@
       --accent1:#38bdf8; /* sky-400 */
       --accent2:#34d399; /* emerald-400 */
     }
+
+    /* Card frame like your other posts */
+figure{
+  margin:12px 0 0;
+  padding:18px;
+  border-radius:16px;
+  overflow:hidden;
+  border:1px solid var(--stroke);
+  background:#0c1220;
+}
+
+/* Image: natural aspect, centered, never stretched */
+figure img{
+  display:block;
+  width:auto;               /* don't stretch */
+  height:auto;              /* keep aspect ratio */
+  margin:0 auto;            /* center the image */
+  max-width:min(720px, 92%);/* same visual size as other articles */
+}
     *{box-sizing:border-box}
     html,body{margin:0;padding:0;background:radial-gradient(1200px 800px at 0% 0%,#0d1730,transparent),var(--bg);color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
     .wrap{max-width:980px;margin:40px auto;padding:0 20px}
