@@ -27,32 +27,36 @@
     .sub{color:var(--muted);margin:0 0 8px}
     .chips{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 0}
     .chip{font-size:12px;color:#e2e8f0;padding:.35rem .6rem;border-radius:999px;border:1px solid var(--chip-bd);background:var(--chip-bg);white-space:nowrap}
-/* ---- HERO (this page) ---- */
+
+/* ---- HERO (this page only) ---- */
 figure.hero{
   margin:14px 0 0;
   border-radius:16px;
   overflow:hidden;
   border:1px solid var(--stroke);
   background:#0c1220;
-  aspect-ratio:16/9;          /* stable layout, no shift */
+  /* no fixed aspect on desktop */
 }
 figure.hero img{
   display:block;
   width:100%;
-  height:100%;
-  object-fit:cover;           /* mobile: immersive crop */
+  height:auto;          /* full image, no crop */
+  max-height:none;
+  object-fit:unset;     /* don't letterbox on desktop */
   object-position:center;
 }
 
-/* Desktop: show the whole image (letterbox is fine) */
-@media (min-width: 900px){
+/* phones: immersive crop */
+@media (max-width: 560px){
+  figure.hero{ aspect-ratio: 4 / 3; }
   figure.hero img{
-    object-fit:contain;       /* no cropping on desktop */
-    background:#0c1220;       /* fills any bars */
+    width:100%;
+    height:100%;
+    object-fit:cover;   /* nice edge-to-edge crop on mobile */
   }
 }
 
-/* ---- GENERIC FIGURES (do NOT touch the hero) ---- */
+/* ---- GENERIC FIGURES (won’t affect the hero) ---- */
 figure:not(.hero){
   margin:14px 0 0;
   border-radius:16px;
@@ -67,6 +71,7 @@ figure:not(.hero) img{
   object-fit:cover;
   max-height:56svh;
 }
+
 
 
     figure{margin:14px 0 0;border-radius:16px;overflow:hidden;border:1px solid var(--stroke);background:#0c1220}
