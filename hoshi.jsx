@@ -3311,84 +3311,52 @@ function PublicBPS({ goLineage = ()=>{}, goActions = ()=>{} }) {
   const [addOpen, setAddOpen] = React.useState(false);
   React.useEffect(() => { hoshiSaveBuildings(buildings); }, [buildings]);
 
-  // --- simple, safe helpers (no external deps) ---
-  const signals = { beta: 0.55, idio: 1.8, total: 2.6 };
-  const topActions = ACTIONS.slice(0,2);
-  const fmtGBP = n => "£ " + (+n || 0).toLocaleString();
-  const fmtPct = n => (n>=0?"+":"") + (+n).toFixed(1) + "%";
+ // --- simple, safe helpers (no external deps) ---
+const signals = { beta: 0.55, idio: 1.8, total: 2.6 };
+const topActions = ACTIONS.slice(0, 2);
+const fmtGBP = n => "£ " + (+n || 0).toLocaleString();
+const fmtPct = n => (n >= 0 ? "+" : "") + (+n).toFixed(1) + "%";
 
-  const pickNum = (obj, keys=[]) => {
-    for (const k of keys) { const v = obj?.[k]; if (v != null && !isNaN(+v)) return +v; }
-    return null;
-  };
-  const sumBy = (arr, pick) => (arr || []).reduce((a,b)=> a + (+pick(b) || 0), 0);
+// helpers (ONE copy only)
+const pickNum = (obj, keys = []) => {
+  for (const k of keys) {
+    const v = obj?.[k];
+    if (v != null && !isNaN(+v)) return +v;
+  }
+  return null;
+};
+const sumBy = (arr, pick) => (arr || []).reduce((a, b) => a + (+pick(b) || 0), 0);
 
-  // Common keys users might send
-  const AREA_KEYS   = ["area","area_m2","gia","nla"];
-  const ENERGY_KEYS = ["energy","energy_kwh","annualEnergy","kwh","kwh_total"];
-  const EMISS_KEYS  = ["emissions","co2","tco2e","emissions_tco2e"];
-  const SPEND_KEYS  = ["spend","spend_total","opex_spend"];
-
-  const totalArea   = sumBy(buildings, b => pickNum(b, AREA_KEYS)   ?? 0);
-  const totalEnergy = sumBy(buildings, b => pickNum(b, ENERGY_KEYS) ?? 0);
-  const totalCO2e   = sumBy(buildings, b => pickNum(b, EMISS_KEYS)  ?? 0);
-  const totalSpend  = sumBy(buildings, b => pickNum(b, SPEND_KEYS)  ?? 0);
-  const intensity   = (totalArea>0 && totalEnergy>0) ? (totalEnergy/totalArea) : null;
-
-  const todayStr = new Date().toLocaleDateString("en-GB", { day:"2-digit", month:"short", year:"numeric" });
-
-  const MiniStackBar = ({sys,idio})=>{
-    const total = Math.max(0.0001, Math.abs(sys) + Math.abs(idio));
-    const sysPct = Math.round(Math.abs(sys)/total*100);
-    const idioPct = 100 - sysPct;
-    return (
-      <div className="h-2 w-full rounded-full bg-slate-700/40 overflow-hidden">
-        <div className="h-full inline-block" style={{width:`${sysPct}%`, background:"#38bdf8"}}/>
-        <div className="h-full inline-block" style={{width:`${idioPct}%`, background:"#34d399"}}/>
-      </div>
-    );
-  };
-
-  const Chip = ({children,onClick})=>(
-    <button onClick={onClick}
-      className="px-2.5 py-1 rounded-full text-xs bg-slate-300/20 text-slate-100 hover:bg-slate-300/30 transition">
-      {children}
-    </button>
-  );
-  // --- scenario & helpers for estimation ---
-const BASE_SCENARIO = (typeof HOSHI_SCENARIOS !== "undefined" && HOSHI_SCENARIOS[0])
-  || { elecP: 0.28, gasP: 0.07 }; // safe defaults if not present
-
-const pickNum = (obj, keys=[]) => { for (const k of keys) { const v = obj?.[k]; if (v!=null && !isNaN(+v)) return +v; } return null; };
-const sumBy   = (arr, pick)       => (arr || []).reduce((a,b)=> a + (+pick(b) || 0), 0);
-
-// Common keys we see in uploads
+// Common keys users might send
 const AREA_KEYS   = ["area","area_m2","gia","nla"];
 const ENERGY_KEYS = ["energy","energy_kwh","annualEnergy","kwh","kwh_total"];
 const EMISS_KEYS  = ["emissions","co2","tco2e","emissions_tco2e"];
 const SPEND_KEYS  = ["spend","spend_total","opex_spend"];
 
-// Portfolio area is straightforward
-const totalArea = sumBy(buildings, b => pickNum(b, AREA_KEYS) ?? 0);
+// Portfolio aggregates
+const totalArea   = sumBy(buildings, b => pickNum(b, AREA_KEYS)   ?? 0);
+let   totalEnergy = sumBy(buildings, b => pickNum(b, ENERGY_KEYS) ?? 0);
+const totalCO2e   = sumBy(buildings, b => pickNum(b, EMISS_KEYS)  ?? 0);
+const totalSpend  = sumBy(buildings, b => pickNum(b, SPEND_KEYS)  ?? 0);
 
-// 1) Use *actual* kWh where present
-let totalEnergy = sumBy(buildings, b => pickNum(b, ENERGY_KEYS) ?? 0);
+// Scenario prices (fallbacks if HOSHI_SCENARIOS is missing)
+const BASE_SCENARIO =
+  (typeof HOSHI_SCENARIOS !== "undefined" && HOSHI_SCENARIOS[0]) ||
+  { elecP: 0.28, gasP: 0.07 };
 
-// 2) If some buildings have no kWh but do have Spend, estimate kWh = Spend / blendedPrice
-//    blendedPrice uses the building's elec/gas split (if known), else 60/40 as a sane fallback.
+// Estimate kWh from Spend where kWh is missing: kWh = Spend / blendedPrice
 let usedEnergyEstimate = false;
-
 if (buildings?.length) {
   buildings.forEach(b => {
     const kwh = pickNum(b, ENERGY_KEYS);
-    if (kwh != null) return; // already counted in step (1)
+    if (kwh != null) return;                           // we already counted actual kWh
 
     const spend = pickNum(b, SPEND_KEYS);
     if (spend == null) return;
 
     const split = (typeof getEnergySplit === "function" && (getEnergySplit(b) || {})) || {};
     const e = +split.elec || 0, g = +split.gas || 0;
-    let wElec = 0.6, wGas = 0.4;
+    let wElec = 0.6, wGas = 0.4;                        // default split if unknown
     if (e + g > 0) { wElec = e / (e + g); wGas = g / (e + g); }
 
     const pElec = +BASE_SCENARIO.elecP || 0.25;
@@ -3401,6 +3369,36 @@ if (buildings?.length) {
     }
   });
 }
+
+// Intensity after estimation (if any)
+const intensity = (totalArea > 0 && totalEnergy > 0) ? (totalEnergy / totalArea) : null;
+
+// UI helpers you already had
+const MiniStackBar = ({ sys, idio }) => {
+  const total = Math.max(0.0001, Math.abs(sys) + Math.abs(idio));
+  const sysPct = Math.round(Math.abs(sys) / total * 100);
+  const idioPct = 100 - sysPct;
+  return (
+    <div className="h-2 w-full rounded-full bg-slate-700/40 overflow-hidden">
+      <div className="h-full inline-block" style={{ width: `${sysPct}%`, background: "#38bdf8" }} />
+      <div className="h-full inline-block" style={{ width: `${idioPct}%`, background: "#34d399" }} />
+    </div>
+  );
+};
+
+const Chip = ({ children, onClick }) => (
+  <button
+    onClick={onClick}
+    className="px-2.5 py-1 rounded-full text-xs bg-slate-300/20 text-slate-100 hover:bg-slate-300/30 transition"
+  >
+    {children}
+  </button>
+);
+
+const todayStr = new Date().toLocaleDateString("en-GB", {
+  day: "2-digit", month: "short", year: "numeric",
+});
+
 
 // Intensity from (Energy / Area), if possible. Falls back to "—" if neither is available.
 const intensity = (totalArea > 0 && totalEnergy > 0) ? (totalEnergy / totalArea) : null;
