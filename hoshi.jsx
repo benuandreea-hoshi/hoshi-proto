@@ -3288,74 +3288,43 @@ function Lineage({ fromAction, goActions }) {
 }
 
 function PublicBPS({ goLineage = ()=>{}, goActions = ()=>{} }) {
-  // Persisted buildings (same store the rest of the app uses)
+  // Persisted buildings (same store)
   const [buildings, setBuildings] = React.useState(() => hoshiLoadBuildings());
   const [addOpen, setAddOpen] = React.useState(false);
   React.useEffect(() => { hoshiSaveBuildings(buildings); }, [buildings]);
 
-// ===== Portfolio helpers (robust) =====
-const CURRENCY_SYMBOLS = { GBP:"£", EUR:"€", USD:"$", AUD:"A$", CAD:"C$", NOK:"kr", SEK:"kr" };
-const currency = (typeof window!=="undefined" ? (localStorage.getItem("hoshi.currency")||"GBP") : "GBP");
-const sym = CURRENCY_SYMBOLS[currency] || "";
-
-const sumBy = (arr, pick) => (arr || []).reduce((a,b)=> a + (+pick(b) || 0), 0);
-const pickNum = (obj, keys=[]) => {
-  for (const k of keys) {
-    const v = obj?.[k];
-    if (v != null && !isNaN(+v)) return +v;
-  }
-  return null;
-};
-
-// Try multiple shapes users might send
-const ENERGY_KEYS    = ["energy","energy_kwh","annualEnergy","kwh","kwh_total"];
-const EMISS_KEYS     = ["emissions","co2","tco2e","emissions_tco2e"];
-const AREA_KEYS      = ["area","area_m2","gia","nla"];
-const SPEND_KEYS     = ["spend","spend_total","opex_spend"];
-
-// Aggregate portfolio
-const totalArea   = sumBy(buildings, b => pickNum(b, AREA_KEYS)  ?? 0);
-const totalEnergy = sumBy(buildings, b => pickNum(b, ENERGY_KEYS)?? 0);
-const totalCO2e   = sumBy(buildings, b => pickNum(b, EMISS_KEYS) ?? 0);
-const totalSpend  = sumBy(buildings, b => pickNum(b, SPEND_KEYS) ?? 0);
-
-// Intensity: prefer weighted energy/area; otherwise average KPI intensity
-let intensity = null;
-if (totalArea > 0 && totalEnergy > 0) {
-  intensity = totalEnergy / totalArea; // kWh/m²
-} else {
-  // fallback: average per-building intensity if your hoshiKPIs provides it
-  const intens = buildings
-    .map(b => hoshiKPIs(b)?.intensity)
-    .filter(v => v != null && !isNaN(+v));
-  if (intens.length) intensity = intens.reduce((a,b)=>a+b,0)/intens.length;
-}
-
-// Formatters
-const fmtNum = n => (n==null ? "—" : n.toLocaleString());
-const fmtMoney = n => (n==null ? "—" : `${sym} ${(+n).toLocaleString()}`);
-const todayStr = new Date().toLocaleDateString("en-GB", { day:"2-digit", month:"short", year:"numeric" });
-
-const portfolio = {
-  count: buildings?.length ?? 0,
-  area:  totalArea,
-  spend: totalSpend,
-  updated: todayStr,
-};
-
-
-  // --- existing demo signals / helpers (unchanged) ---
+  // --- simple, safe helpers (no external deps) ---
   const signals = { beta: 0.55, idio: 1.8, total: 2.6 };
   const topActions = ACTIONS.slice(0,2);
-  const fmtGBP = n => "£ " + n.toLocaleString();
-  const fmtPct = n => (n>=0?"+":"") + n.toFixed(1) + "%";
+  const fmtGBP = n => "£ " + (+n || 0).toLocaleString();
+  const fmtPct = n => (n>=0?"+":"") + (+n).toFixed(1) + "%";
+
+  const pickNum = (obj, keys=[]) => {
+    for (const k of keys) { const v = obj?.[k]; if (v != null && !isNaN(+v)) return +v; }
+    return null;
+  };
+  const sumBy = (arr, pick) => (arr || []).reduce((a,b)=> a + (+pick(b) || 0), 0);
+
+  // Common keys users might send
+  const AREA_KEYS   = ["area","area_m2","gia","nla"];
+  const ENERGY_KEYS = ["energy","energy_kwh","annualEnergy","kwh","kwh_total"];
+  const EMISS_KEYS  = ["emissions","co2","tco2e","emissions_tco2e"];
+  const SPEND_KEYS  = ["spend","spend_total","opex_spend"];
+
+  const totalArea   = sumBy(buildings, b => pickNum(b, AREA_KEYS)   ?? 0);
+  const totalEnergy = sumBy(buildings, b => pickNum(b, ENERGY_KEYS) ?? 0);
+  const totalCO2e   = sumBy(buildings, b => pickNum(b, EMISS_KEYS)  ?? 0);
+  const totalSpend  = sumBy(buildings, b => pickNum(b, SPEND_KEYS)  ?? 0);
+  const intensity   = (totalArea>0 && totalEnergy>0) ? (totalEnergy/totalArea) : null;
+
+  const todayStr = new Date().toLocaleDateString("en-GB", { day:"2-digit", month:"short", year:"numeric" });
 
   const MiniStackBar = ({sys,idio})=>{
     const total = Math.max(0.0001, Math.abs(sys) + Math.abs(idio));
     const sysPct = Math.round(Math.abs(sys)/total*100);
     const idioPct = 100 - sysPct;
     return (
-      <div className="h-2 w-full rounded-full bg-slate-200 overflow-hidden">
+      <div className="h-2 w-full rounded-full bg-slate-700/40 overflow-hidden">
         <div className="h-full inline-block" style={{width:`${sysPct}%`, background:"#38bdf8"}}/>
         <div className="h-full inline-block" style={{width:`${idioPct}%`, background:"#34d399"}}/>
       </div>
@@ -3364,167 +3333,140 @@ const portfolio = {
 
   const Chip = ({children,onClick})=>(
     <button onClick={onClick}
-      className="px-2.5 py-1 rounded-full text-xs bg-slate-200/70 text-slate-700 hover:bg-slate-200 transition">
+      className="px-2.5 py-1 rounded-full text-xs bg-slate-300/20 text-slate-100 hover:bg-slate-300/30 transition">
       {children}
     </button>
   );
 
   return (
-    <div className="max-w-4xl mx-auto rounded-2xl overflow-hidden shadow-2xl"
+    <div className="max-w-5xl mx-auto rounded-2xl overflow-hidden shadow-2xl"
          style={{ background:"var(--panel-1)", color:"var(--text-1)" }}>
-    {/* Header (portfolio) */}
-<div className="bg-slate-900 text-white p-6">
-  <div className="flex items-center justify-between gap-3">
-    <h2 className="text-lg md:text-2xl font-semibold">Portfolio Performance Sheet</h2>
-    <div className="hidden sm:flex items-center gap-2">
-      <Chip>{portfolio.count} buildings</Chip>
-      {portfolio.area > 0 && <Chip>{fmtNum(portfolio.area)} m²</Chip>}
-      {portfolio.spend > 0 && <Chip>Spend {fmtGBP(portfolio.spend)}</Chip>}
-      <Chip>Updated {portfolio.updated}</Chip>
-      <Chip onClick={goLineage}>View lineage →</Chip>
-    </div>
-  </div>
-
-  {/* Mobile chips */}
-  <div className="sm:hidden flex flex-wrap gap-2 mt-3">
-    <Chip>{portfolio.count} buildings</Chip>
-    {portfolio.area > 0 && <Chip>{fmtNum(portfolio.area)} m²</Chip>}
-    <Chip onClick={goLineage}>Lineage →</Chip>
-  </div>
-</div>
-
-{/* Top KPI tiles (portfolio) */}
-<div className="p-6 grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-  <div className="rounded-xl p-4 border" style={{background:"var(--panel-2)", borderColor:"var(--stroke)"}}>
-    <div className="text-xs text-slate-300">Energy</div>
-    <div className="text-xl font-semibold text-slate-100">
-      {totalEnergy ? `${fmtNum(totalEnergy)} kWh` : "—"}
-    </div>
-  </div>
-  <div className="rounded-xl p-4 border" style={{background:"var(--panel-2)", borderColor:"var(--stroke)"}}>
-    <div className="text-xs text-slate-300">Emissions</div>
-    <div className="text-xl font-semibold text-slate-100">
-      {totalCO2e ? `${fmtNum(totalCO2e)} tCO₂e` : "—"}
-    </div>
-  </div>
-  <div className="rounded-xl p-4 border" style={{background:"var(--panel-2)", borderColor:"var(--stroke)"}}>
-    <div className="text-xs text-slate-300">Spend</div>
-    <div className="text-xl font-semibold text-slate-100">{fmtMoney(totalSpend)}</div>
-  </div>
-  <div className="rounded-xl p-4 border" style={{background:"var(--panel-2)", borderColor:"var(--stroke)"}}>
-    <div className="text-xs text-slate-300">Intensity</div>
-    <div className="text-xl font-semibold text-slate-100">
-      {intensity ? `${Math.round(intensity)} kWh/m²` : "—"}
-    </div>
-  </div>
-</div>
-
-      {/* Financial signals (β / idio / total FEP) */}
-      <div className="px-6">
-       <div className="rounded-xl border p-4"
-     style={{ background:"var(--panel-2)", borderColor:"var(--stroke)" }}>
-  <div className="flex items-center justify-between">
-    <div className="text-sm font-medium text-slate-100">Financial signals (Forward ROI)</div>
-    <span className="text-xs text-slate-400">β + Idiosyncratic → FEP</span>
-  </div>
-
-          <div className="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-3">
-    {/* β tile */}
-    <div className="rounded-lg p-3 border"
-         style={{ background:"rgba(148,163,184,.06)", borderColor:"var(--stroke)" }}>
-      <div className="text-xs text-slate-300">β (systematic sensitivity)</div>
-      <div className="text-lg font-semibold text-slate-100">{signals.beta.toFixed(2)}</div>
-      <div className="text-[12px] text-slate-400 mt-1">Higher → more exposed to prices/policy/climate</div>
-    </div>
-            
-          {/* Idiosyncratic tile */}
-    <div className="rounded-lg p-3 border"
-         style={{ background:"rgba(148,163,184,.06)", borderColor:"var(--stroke)" }}>
-      <div className="text-xs text-slate-300">Idiosyncratic premium</div>
-      <div className="text-lg font-semibold text-slate-100">+{signals.idio.toFixed(1)}%</div>
-      <div className="text-[12px] text-slate-400 mt-1">Asset-specific performance & variance</div>
-    </div>
-            {/* FEP tile */}
-    <div className="rounded-lg p-3 border"
-         style={{ background:"rgba(148,163,184,.06)", borderColor:"var(--stroke)" }}>
-      <div className="text-xs text-slate-300">Total FEP</div>
-      <div className="text-lg font-semibold text-slate-100">+{signals.total.toFixed(1)}%</div>
-      <div className="mt-2">
-        <div className="h-2 w-full rounded-full bg-slate-600/30 overflow-hidden">
-          <div className="h-full inline-block" style={{width:`${((signals.total - signals.idio)/signals.total)*100}%`, background:"#38bdf8"}}/>
-          <div className="h-full inline-block" style={{width:`${(signals.idio/signals.total)*100}%`, background:"#34d399"}}/>
+      {/* Header (portfolio) */}
+      <div className="bg-slate-900 text-white p-6">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-2xl font-semibold">Portfolio Performance Sheet</h2>
+          <div className="hidden sm:flex items-center gap-2">
+            <Chip>{(buildings?.length||0)} buildings</Chip>
+            {totalArea>0   && <Chip>{totalArea.toLocaleString()} m²</Chip>}
+            {totalSpend>0  && <Chip>Spend {fmtGBP(totalSpend)}</Chip>}
+            <Chip>Updated {todayStr}</Chip>
+            <Chip onClick={goLineage}>View lineage →</Chip>
+          </div>
+        </div>
+        {/* Mobile */}
+        <div className="sm:hidden flex flex-wrap gap-2 mt-3">
+          <Chip>{(buildings?.length||0)} buildings</Chip>
+          {totalArea>0 && <Chip>{totalArea.toLocaleString()} m²</Chip>}
+          <Chip onClick={goLineage}>Lineage →</Chip>
         </div>
       </div>
-      <div className="text-[12px] text-slate-400 mt-1">Stack shows systematic vs idiosyncratic share</div>
-    </div>
-  </div>
-</div>
+
+      {/* Top KPI tiles (portfolio aggregates) */}
+      <div className="p-6 grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+        <div className="rounded-xl p-4 border" style={{background:"var(--panel-2)", borderColor:"var(--stroke)"}}>
+          <div className="text-xs text-slate-300">Energy</div>
+          <div className="text-xl font-semibold text-slate-100">{totalEnergy? `${totalEnergy.toLocaleString()} kWh` : "—"}</div>
+        </div>
+        <div className="rounded-xl p-4 border" style={{background:"var(--panel-2)", borderColor:"var(--stroke)"}}>
+          <div className="text-xs text-slate-300">Emissions</div>
+          <div className="text-xl font-semibold text-slate-100">{totalCO2e? `${totalCO2e.toLocaleString()} tCO₂e` : "—"}</div>
+        </div>
+        <div className="rounded-xl p-4 border" style={{background:"var(--panel-2)", borderColor:"var(--stroke)"}}>
+          <div className="text-xs text-slate-300">Spend</div>
+          <div className="text-xl font-semibold text-slate-100">{fmtGBP(totalSpend)}</div>
+        </div>
+        <div className="rounded-xl p-4 border" style={{background:"var(--panel-2)", borderColor:"var(--stroke)"}}>
+          <div className="text-xs text-slate-300">Intensity</div>
+          <div className="text-xl font-semibold text-slate-100">{intensity? `${Math.round(intensity)} kWh/m²` : "—"}</div>
+        </div>
+      </div>
+
+      {/* Financial signals (dark cards) */}
+      <div className="px-6">
+        <div className="rounded-xl border p-4" style={{background:"var(--panel-2)", borderColor:"var(--stroke)"}}>
+          <div className="flex items-center justify-between">
+            <div className="text-sm font-medium text-slate-100">Financial signals (Forward ROI)</div>
+            <span className="text-xs text-slate-400">β + Idiosyncratic → FEP</span>
+          </div>
+          <div className="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="rounded-lg p-3 border" style={{background:"rgba(148,163,184,.06)", borderColor:"var(--stroke)"}}>
+              <div className="text-xs text-slate-300">β (systematic sensitivity)</div>
+              <div className="text-lg font-semibold text-slate-100">{signals.beta.toFixed(2)}</div>
+              <div className="text-[12px] text-slate-400 mt-1">Higher → more exposed to prices/policy/climate</div>
+            </div>
+            <div className="rounded-lg p-3 border" style={{background:"rgba(148,163,184,.06)", borderColor:"var(--stroke)"}}>
+              <div className="text-xs text-slate-300">Idiosyncratic premium</div>
+              <div className="text-lg font-semibold text-slate-100">{fmtPct(signals.idio)}</div>
+              <div className="text-[12px] text-slate-400 mt-1">Asset-specific performance & variance</div>
+            </div>
+            <div className="rounded-lg p-3 border" style={{background:"rgba(148,163,184,.06)", borderColor:"var(--stroke)"}}>
+              <div className="text-xs text-slate-300">Total FEP</div>
+              <div className="text-lg font-semibold text-slate-100">{fmtPct(signals.total)}</div>
+              <div className="mt-2"><MiniStackBar sys={signals.total - signals.idio} idio={signals.idio} /></div>
+              <div className="text-[12px] text-slate-400 mt-1">Stack shows systematic vs idiosyncratic share</div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* 12-month trend */}
       <div className="px-6 pb-6">
-    <div className="rounded-xl border p-4"
-      style={{background:"var(--panel-2)", borderColor:"var(--stroke)"}}>
+        <div className="rounded-xl border p-4" style={{background:"var(--panel-2)", borderColor:"var(--stroke)"}}>
           <div className="flex items-center justify-between">
-            <div className="text-sm font-medium">12-month trend (tCO₂e)</div>
+            <div className="text-sm font-medium text-slate-100">12–month trend (tCO₂e)</div>
             <span className="inline-flex">
-              <span className="px-2 py-0.5 rounded-full text-xs bg-slate-200 text-slate-700">Peer: Q2</span>
+              <span className="px-2 py-0.5 rounded-full text-xs bg-slate-700/40 text-slate-200">Peer: Q2</span>
             </span>
           </div>
           <div className="mt-2"><LineChart/></div>
         </div>
       </div>
 
-      {/* Marketing matrix (new card, dark) */}
+      {/* Marketing matrix */}
       <div className="px-6 pb-6">
-        <div className="rounded-2xl border p-4"
-             style={{ borderColor:"var(--stroke)", background:"var(--panel-2)" }}>
-          <MarketingMatrix
-            buildings={buildings}
-            onAddBuilding={() => setAddOpen(true)}
-          />
-        </div>
+        <MarketingMatrix
+          buildings={buildings}
+          onAddBuilding={() => setAddOpen(true)}
+        />
       </div>
 
-      {/* Actions summary */}
+      {/* Actions summary (kept) */}
       <div className="px-6 pb-6">
-       <div className="rounded-xl border p-4"
-      style={{background:"var(--panel-2)", borderColor:"var(--stroke)"}}>
+        <div className="rounded-xl border p-4" style={{background:"var(--panel-2)", borderColor:"var(--stroke)"}}>
           <div className="flex items-center justify-between">
-            <div className="text-sm font-medium">Actions in plan</div>
+            <div className="text-sm font-medium text-slate-100">Actions in plan</div>
             <button onClick={goActions}
-              className="text-sm px-3 py-1.5 rounded-lg bg-slate-900 text-white hover:opacity-90">
+              className="text-sm px-3 py-1.5 rounded-lg bg-sky-600 text-white hover:opacity-90">
               View plan →
             </button>
           </div>
-
-          <ul className="mt-3 divide-y divide-slate-200">
+          <ul className="mt-3 divide-y divide-slate-700/40">
             {topActions.map(a=>(
               <li key={a.id} className="py-2 flex items-start justify-between gap-3">
                 <div>
-                  <div className="font-medium">{a.title}</div>
-                  <div className="text-xs text-slate-500">{a.alarm} • {a.status}</div>
+                  <div className="font-medium text-slate-100">{a.title}</div>
+                  <div className="text-xs text-slate-400">{a.alarm} • {a.status}</div>
                 </div>
-                <div className="text-right text-sm text-slate-700">
+                <div className="text-right text-sm text-slate-200">
                   <div>NPV {fmtGBP(a.npv)}</div>
-                  <div className="text-xs text-slate-500">Payback {a.pay}y • β {a.beta.toFixed(2)} • conf. {Math.round(a.confidence*100)}%</div>
+                  <div className="text-xs text-slate-400">Payback {a.pay}y • β {a.beta.toFixed(2)} • conf. {Math.round(a.confidence*100)}%</div>
                 </div>
               </li>
             ))}
           </ul>
-
-          <div className="text-[12px] text-slate-500 mt-3">
+          <div className="text-[12px] text-slate-400 mt-3">
             Each action originates from a monitored alarm and carries a finance view (NPV, payback) plus expected impact on service index and comfort risk.
           </div>
         </div>
       </div>
 
-      {/* Footer / attestation strip */}
-      <div className="px-6 pb-5 text-[12px] text-slate-500 flex items-center justify-between">
+      {/* Footer */}
+      <div className="px-6 pb-5 text-[12px] text-slate-400 flex items-center justify-between">
         <div>BPS v1.3 • commit fb3c918 • Published 2 Sep 2025</div>
         <div>Signed by Hoshi • License: Aidan Parkinson</div>
       </div>
 
-      {/* Modal opened from the Matrix empty state */}
+      {/* Add building modal (for Matrix empty state) */}
       <HoshiAddBuildingModal
         open={addOpen}
         onClose={() => setAddOpen(false)}
@@ -3539,6 +3481,7 @@ const portfolio = {
     </div>
   );
 }
+
 
   const ICONS = {
   story: () => (
