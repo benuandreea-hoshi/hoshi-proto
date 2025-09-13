@@ -1469,85 +1469,141 @@ function MarketingMatrix({ buildings }) {
   const yScale = (y) => PAD + (1 - (y - yMin) / (yMax - yMin || 1)) * (H - 2*PAD);
 
   return (
-    <Section
-      title="Marketing: Building Positioning"
-      desc="Eisenhower-style 2×2 using Service Cost (↑) vs Rating (→). Each asset falls into one of four marketing narratives with role-based recommendations."
-    >
-      <div className="mb-3">
-        <ScenarioBar value={scenario} onChange={setScenario} />
-      </div>
+  <Section
+    title="Marketing: Building Positioning"
+    desc="Eisenhower-style 2×2 using Service Cost (↑) vs Rating (→). Each asset falls into one of four marketing narratives with role-based recommendations."
+  >
+    <div className="mb-3">
+      <ScenarioBar value={scenario} onChange={setScenario} />
+    </div>
 
-      <div className="grid lg:grid-cols-2 gap-4">
-        {/* SCATTER */}
-        <div className="rounded-2xl p-3 md:p-4 border" style={{borderColor:"var(--stroke)", background:"var(--panel-2)"}}>
-          <div className="text-slate-300 text-sm mb-2">Portfolio map</div>
-          <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-[260px] md:h-[360px]">
-            {/* quadrant fill */}
-            <rect x={PAD} y={PAD} width={W-2*PAD} height={H-2*PAD} fill="none" stroke="rgba(148,163,184,.25)"/>
-            <line x1={xScale(xCut)} y1={PAD} x2={xScale(xCut)} y2={H-PAD} stroke="rgba(148,163,184,.25)"/>
-            <line x1={PAD} y1={yScale(yCut)} x2={W-PAD} y2={yScale(yCut)} stroke="rgba(148,163,184,.25)"/>
+    <div className="grid md:grid-cols-2 gap-4 items-stretch">
+      {/* SCATTER */}
+      <div
+        className="rounded-2xl p-3 md:p-4 border h-full"
+        style={{ borderColor: "var(--stroke)", background: "var(--panel-2)" }}
+      >
+        <div className="text-slate-200 text-sm mb-2">Portfolio map</div>
 
-            {/* quadrant labels */}
-            <text x={xScale((xMin+xCut)/2)} y={yScale((yCut+yMax)/2)} fill="#e2e8f0" fontSize="12">Mission Critical</text>
-            <text x={xScale((xCut+xMax)/2)} y={yScale((yCut+yMax)/2)} fill="#e2e8f0" fontSize="12">Prospect</text>
-            <text x={xScale((xCut+xMax)/2)} y={yScale((yMin+yCut)/2)} fill="#e2e8f0" fontSize="12">Grand Design</text>
-            <text x={xScale((xMin+xCut)/2)} y={yScale((yMin+yCut)/2)} fill="#e2e8f0" fontSize="12">Unicorn</text>
+        {/* make the SVG height responsive & consistent */}
+        <div className="w-full h-[300px] md:h-[380px]">
+          <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-full">
+            {/* frame */}
+            <rect x={PAD} y={PAD} width={W - 2 * PAD} height={H - 2 * PAD}
+                  fill="none" stroke="rgba(148,163,184,.25)"/>
+
+            {/* subtle quadrant tint so single-point view doesn’t feel empty */}
+            <rect x={PAD} y={PAD} width={xScale(xCut) - PAD} height={yScale(yCut) - PAD}
+                  fill="rgba(244,63,94,.05)"/>
+            <rect x={xScale(xCut)} y={PAD} width={W - PAD - xScale(xCut)} height={yScale(yCut) - PAD}
+                  fill="rgba(245,158,11,.05)"/>
+            <rect x={xScale(xCut)} y={yScale(yCut)} width={W - PAD - xScale(xCut)} height={H - PAD - yScale(yCut)}
+                  fill="rgba(16,185,129,.05)"/>
+            <rect x={PAD} y={yScale(yCut)} width={xScale(xCut) - PAD} height={H - PAD - yScale(yCut)}
+                  fill="rgba(96,165,250,.06)"/>
+
+            {/* cut lines */}
+            <line x1={xScale(xCut)} y1={PAD} x2={xScale(xCut)} y2={H - PAD}
+                  stroke="rgba(148,163,184,.35)"/>
+            <line x1={PAD} y1={yScale(yCut)} x2={W - PAD} y2={yScale(yCut)}
+                  stroke="rgba(148,163,184,.35)"/>
+
+            {/* quadrant labels – slightly larger & higher contrast */}
+            <text x={xScale((xMin + xCut) / 2)} y={yScale((yCut + yMax) / 2)}
+                  fill="#e5e7eb" fontSize="13">Mission Critical</text>
+            <text x={xScale((xCut + xMax) / 2)} y={yScale((yCut + yMax) / 2)}
+                  fill="#e5e7eb" fontSize="13">Prospect</text>
+            <text x={xScale((xCut + xMax) / 2)} y={yScale((yMin + yCut) / 2)}
+                  fill="#e5e7eb" fontSize="13">Grand Design</text>
+            <text x={xScale((xMin + xCut) / 2)} y={yScale((yMin + yCut) / 2)}
+                  fill="#e5e7eb" fontSize="13">Unicorn</text>
 
             {/* axes titles */}
-            <text x={W/2} y={H-4} textAnchor="middle" fill="#94a3b8" fontSize="12">Higher Rating →</text>
-            <g transform={`translate(12 ${H/2}) rotate(-90)`}>
-              <text textAnchor="middle" fill="#94a3b8" fontSize="12">Service Cost ↑</text>
+            <text x={W / 2} y={H - 6} textAnchor="middle" fill="#cbd5e1" fontSize="12">Higher Rating →</text>
+            <g transform={`translate(12 ${H / 2}) rotate(-90)`}>
+              <text textAnchor="middle" fill="#cbd5e1" fontSize="12">Service Cost ↑</text>
             </g>
 
             {/* points */}
             {points.map(({ b, x, y }) => {
               const q = quadrantLabel(x, y);
+              const color = q === "Mission Critical" ? "#f43f5e"
+                          : q === "Prospect" ? "#f59e0b"
+                          : q === "Grand Design" ? "#10b981"
+                          : "#60a5fa";
               return (
                 <g key={b.id} transform={`translate(${xScale(x)} ${yScale(y)})`} cursor="default">
-                  <circle r="6" fill={q==="Mission Critical"?"#f43f5e":q==="Prospect"?"#f59e0b":q==="Grand Design"?"#10b981":"#60a5fa"} opacity="0.9"/>
+                  <circle r="6" fill={color} opacity="0.95" />
                   <title>{`${b.name} · ${q}\nRating: ${x.toFixed(0)} · Cost: ${y.toFixed(1)}`}</title>
                 </g>
               );
             })}
           </svg>
-          <div className="mt-2 text-xs text-slate-400">Tip: Hover points for values. Cuts are medians so it adapts to your portfolio.</div>
         </div>
 
-        {/* LIST + RECS */}
-        <div className="rounded-2xl p-3 md:p-4 border" style={{borderColor:"var(--stroke)", background:"var(--panel-2)"}}>
-          <div className="text-slate-300 text-sm mb-2">Positions & recommendations</div>
-          <div className="space-y-3 max-h-[360px] overflow-auto pr-1">
-            {points
-              .sort((a,b)=> a.b.name.localeCompare(b.b.name))
-              .map(({ b, x, y }) => {
-                const k = hoshiKPIs(b); // for quick stats
-                const label = quadrantLabel(x, y);
-                const tone = label==="Mission Critical"?"danger":label==="Prospect"?"warn":label==="Grand Design"?"success":"info";
-                const hero = (b.images && b.images[0]) || LOGO_SRC;
-                return (
-                  <div key={b.id} className="flex gap-3 p-3 rounded-xl border" style={{borderColor:"var(--stroke)", background:"rgba(148,163,184,.06)"}}>
-                    <img src={hero} alt="" className="w-10 h-10 rounded object-cover"/>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <div className="text-slate-100 font-medium truncate">{b.name}</div>
-                        <span className="chip text-xs">{b.city || "—"}</span>
-                        <Badge tone={tone}>{label}</Badge>
-                      </div>
-                      <div className="mt-1 text-xs text-slate-400">
-                        Rating {Math.round(x)} · Cost {serviceCostAxis(b).toFixed(1)} per m² · kWh/m² {k.intensity?Math.round(k.intensity):"—"}
-                      </div>
-                      <div className="mt-2 flex flex-wrap gap-1.5">
-                        {RECS[label].map((r,i)=> <span key={i} className="chip">{r}</span>)}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-          </div>
+        {/* tiny legend */}
+        <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-slate-400">
+          <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{background:"#f43f5e"}}/>Mission Critical</span>
+          <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{background:"#f59e0b"}}/>Prospect</span>
+          <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{background:"#10b981"}}/>Grand Design</span>
+          <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{background:"#60a5fa"}}/>Unicorn</span>
+        </div>
+
+        <div className="mt-2 text-xs text-slate-400">
+          Tip: Hover points for values. Cuts are medians so it adapts to your portfolio.
         </div>
       </div>
-    </Section>
-  );
+
+      {/* LIST + RECS */}
+      <div
+        className="rounded-2xl p-3 md:p-4 border h-full"
+        style={{ borderColor: "var(--stroke)", background: "var(--panel-2)" }}
+      >
+        <div className="text-slate-200 text-sm mb-2">Positions & recommendations</div>
+
+        <div className="space-y-3 max-h-[380px] overflow-auto pr-1">
+          {points
+            .sort((a, b) => a.b.name.localeCompare(b.b.name))
+            .map(({ b, x, y }) => {
+              const k = hoshiKPIs(b);
+              const label = quadrantLabel(x, y);
+              const tone = label === "Mission Critical" ? "danger"
+                        : label === "Prospect" ? "warn"
+                        : label === "Grand Design" ? "success"
+                        : "info";
+              const hero = (b.images && b.images[0]) || LOGO_SRC;
+
+              return (
+                <div key={b.id}
+                     className="flex gap-3 p-3 rounded-xl border"
+                     style={{ borderColor: "var(--stroke)", background: "rgba(148,163,184,.06)" }}>
+                  <img src={hero} alt="" className="w-10 h-10 rounded object-cover" />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <div className="text-slate-100 font-medium truncate">{b.name}</div>
+                      <span className="chip text-xs">{b.city || "—"}</span>
+                      <Badge tone={tone}>{label}</Badge>
+                    </div>
+
+                    <div className="mt-1 text-xs text-slate-400">
+                      Rating {Math.round(x)} · Cost {serviceCostAxis(b).toFixed(1)} per m² · kWh/m² {k.intensity ? Math.round(k.intensity) : "—"}
+                    </div>
+
+                    {/* allow chip wrapping without crowding */}
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {RECS[label].map((r, i) => (
+                        <span key={i} className="chip">{r}</span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+        </div>
+      </div>
+    </div>
+  </Section>
+);
 }
 
 
