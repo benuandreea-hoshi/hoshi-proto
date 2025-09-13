@@ -3306,72 +3306,54 @@ function Lineage({ fromAction, goActions }) {
 }
 
 function PublicBPS({ goLineage = ()=>{}, goActions = ()=>{} }) {
-  // Persisted buildings (same store)
+  // Persisted buildings
   const [buildings, setBuildings] = React.useState(() => hoshiLoadBuildings());
   const [addOpen, setAddOpen] = React.useState(false);
   React.useEffect(() => { hoshiSaveBuildings(buildings); }, [buildings]);
 
- // --- simple, safe helpers (no external deps) ---
-const signals = { beta: 0.55, idio: 1.8, total: 2.6 };
-const topActions = ACTIONS.slice(0, 2);
-const fmtGBP = n => "£ " + (+n || 0).toLocaleString();
-const fmtPct = n => (n >= 0 ? "+" : "") + (+n).toFixed(1) + "%";
+  // Demo signals / formatters
+  const signals  = { beta: 0.55, idio: 1.8, total: 2.6 };
+  const topActions = ACTIONS.slice(0, 2);
+  const fmtGBP   = n => "£ " + (+n || 0).toLocaleString();
+  const fmtPct   = n => (n >= 0 ? "+" : "") + (+n).toFixed(1) + "%";
 
-// helpers (ONE copy only)
-const pickNum = (obj, keys = []) => {
-  for (const k of keys) {
-    const v = obj?.[k];
-    if (v != null && !isNaN(+v)) return +v;
-  }
-  return null;
-};
-const sumBy = (arr, pick) => (arr || []).reduce((a, b) => a + (+pick(b) || 0), 0);
+  // ---- SINGLE HELPERS BLOCK (do not duplicate below) ----
+  const pickNum = (obj, keys=[]) => { for (const k of keys) { const v = obj?.[k]; if (v!=null && !isNaN(+v)) return +v; } return null; };
+  const sumBy   = (arr, pick) => (arr || []).reduce((a,b)=> a + (+pick(b) || 0), 0);
 
-// Common keys users might send
-const AREA_KEYS   = ["area","area_m2","gia","nla"];
-const ENERGY_KEYS = ["energy","energy_kwh","annualEnergy","kwh","kwh_total"];
-const EMISS_KEYS  = ["emissions","co2","tco2e","emissions_tco2e"];
-const SPEND_KEYS  = ["spend","spend_total","opex_spend"];
+  const AREA_KEYS   = ["area","area_m2","gia","nla"];
+  const ENERGY_KEYS = ["energy","energy_kwh","annualEnergy","kwh","kwh_total"];
+  const EMISS_KEYS  = ["emissions","co2","tco2e","emissions_tco2e"];
+  const SPEND_KEYS  = ["spend","spend_total","opex_spend"];
 
-// Portfolio aggregates
-const totalArea   = sumBy(buildings, b => pickNum(b, AREA_KEYS)   ?? 0);
-let   totalEnergy = sumBy(buildings, b => pickNum(b, ENERGY_KEYS) ?? 0);
-const totalCO2e   = sumBy(buildings, b => pickNum(b, EMISS_KEYS)  ?? 0);
-const totalSpend  = sumBy(buildings, b => pickNum(b, SPEND_KEYS)  ?? 0);
+  const BASE_SCENARIO =
+    (typeof HOSHI_SCENARIOS !== "undefined" && HOSHI_SCENARIOS[0]) ||
+    { elecP: 0.28, gasP: 0.07 };
 
-// Scenario prices (fallbacks if HOSHI_SCENARIOS is missing)
-const BASE_SCENARIO =
-  (typeof HOSHI_SCENARIOS !== "undefined" && HOSHI_SCENARIOS[0]) ||
-  { elecP: 0.28, gasP: 0.07 };
+  const totalArea   = sumBy(buildings, b => pickNum(b, AREA_KEYS)   ?? 0);
+  let   totalEnergy = sumBy(buildings, b => pickNum(b, ENERGY_KEYS) ?? 0);
+  const totalCO2e   = sumBy(buildings, b => pickNum(b, EMISS_KEYS)  ?? 0);
+  const totalSpend  = sumBy(buildings, b => pickNum(b, SPEND_KEYS)  ?? 0);
 
-// Estimate kWh from Spend where kWh is missing: kWh = Spend / blendedPrice
-let usedEnergyEstimate = false;
-if (buildings?.length) {
-  buildings.forEach(b => {
+  // Estimate kWh from Spend if kWh absent
+  let usedEnergyEstimate = false;
+  for (const b of (buildings || [])) {
     const kwh = pickNum(b, ENERGY_KEYS);
-    if (kwh != null) return;                           // we already counted actual kWh
+    if (kwh != null) continue;
 
     const spend = pickNum(b, SPEND_KEYS);
-    if (spend == null) return;
+    if (spend == null) continue;
 
     const split = (typeof getEnergySplit === "function" && (getEnergySplit(b) || {})) || {};
     const e = +split.elec || 0, g = +split.gas || 0;
-    let wElec = 0.6, wGas = 0.4;                        // default split if unknown
-    if (e + g > 0) { wElec = e / (e + g); wGas = g / (e + g); }
+    const wElec = (e+g)>0 ? e/(e+g) : 0.6;
+    const wGas  = (e+g)>0 ? g/(e+g) : 0.4;
 
-    const pElec = +BASE_SCENARIO.elecP || 0.25;
-    const pGas  = +BASE_SCENARIO.gasP  || 0.07;
-    const blendedP = (wElec * pElec) + (wGas * pGas);
+    const blended = wElec*(+BASE_SCENARIO.elecP || 0.25) + wGas*(+BASE_SCENARIO.gasP || 0.07);
+    if (blended > 0) { totalEnergy += spend / blended; usedEnergyEstimate = true; }
+  }
 
-    if (blendedP > 0) {
-      totalEnergy += spend / blendedP;
-      usedEnergyEstimate = true;
-    }
-  });
-}
-
-// Intensity after estimation (if any)
-const intensity = (totalArea > 0 && totalEnergy > 0) ? (totalEnergy / totalArea) : null;
+  const intensity = (totalArea > 0 && totalEnergy > 0) ? (totalEnergy / totalArea) : null;
 
 // UI helpers you already had
 const MiniStackBar = ({ sys, idio }) => {
