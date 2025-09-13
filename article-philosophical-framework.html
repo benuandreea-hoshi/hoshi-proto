@@ -28,43 +28,15 @@
     .chips{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 0}
     .chip{font-size:12px;color:#e2e8f0;padding:.35rem .6rem;border-radius:999px;border:1px solid var(--chip-bd);background:var(--chip-bg);white-space:nowrap}
 
-/* ---- HERO (this page only) ---- */
-figure.hero{
-  margin:14px 0 0;
-  border-radius:16px;
-  overflow:hidden;
-  border:1px solid var(--stroke);
-  background:#0c1220;
-  /* no fixed aspect on desktop */
-}
-figure.hero img{
-  display:block;
-  width:100%;
-  height:auto;          /* full image, no crop */
-  max-height:none;
-  object-fit:unset;     /* don't letterbox on desktop */
-  object-position:center;
-}
-
-/* phones: immersive crop */
-@media (max-width: 560px){
-  figure.hero{ aspect-ratio: 4 / 3; }
-  figure.hero img{
-    width:100%;
-    height:100%;
-    object-fit:cover;   /* nice edge-to-edge crop on mobile */
-  }
-}
-
-/* ---- GENERIC FIGURES (won’t affect the hero) ---- */
-figure:not(.hero){
+/* --- Generic figures inside the article body (not the hero) --- */
+article.body figure{
   margin:14px 0 0;
   border-radius:16px;
   overflow:hidden;
   border:1px solid var(--stroke);
   background:#0c1220;
 }
-figure:not(.hero) img{
+article.body figure img{
   display:block;
   width:100%;
   height:auto;
@@ -72,6 +44,34 @@ figure:not(.hero) img{
   max-height:56svh;
 }
 
+/* --- HERO: same visual weight as the Compare article --- */
+figure.hero{
+  margin:12px 0 0;
+  padding:18px;
+  border-radius:16px;
+  overflow:hidden;
+  border:1px solid var(--stroke);
+  background:#0c1220;
+
+  /* center contents and keep the image “card sized” on desktop */
+  display:flex;
+  justify-content:center;
+}
+figure.hero img{
+  display:block;
+  width:auto;               /* don’t stretch */
+  height:auto;              /* keep natural ratio */
+  margin:0 auto;            /* center */
+  max-width:min(720px, 92%);/* ≈ same width as Compare */
+  max-height:56svh;         /* never too tall */
+  object-fit:contain;       /* no cropping */
+}
+
+/* Phones: let it fill the card width cleanly */
+@media (max-width:640px){
+  figure.hero{ padding:10px; }
+  figure.hero img{ width:100%; max-width:100%; height:auto; }
+}
 
 
     figure{margin:14px 0 0;border-radius:16px;overflow:hidden;border:1px solid var(--stroke);background:#0c1220}
