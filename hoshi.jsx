@@ -3293,6 +3293,25 @@ function PublicBPS({ goLineage = ()=>{}, goActions = ()=>{} }) {
   const [addOpen, setAddOpen] = React.useState(false);
   React.useEffect(() => { hoshiSaveBuildings(buildings); }, [buildings]);
 
+  // --- portfolio helpers (inside PublicBPS, before return) ---
+const sumBy = (arr, pick) => (arr || []).reduce((a,b) => a + (+pick(b) || 0), 0);
+const fmtNum = (n) => (n == null ? "—" : n.toLocaleString());
+const todayStr = new Date().toLocaleDateString("en-GB", { day:"2-digit", month:"short", year:"numeric" });
+
+const totalArea   = sumBy(buildings, b => b.area ?? b.area_m2 ?? b.gia);
+const totalSpend  = sumBy(buildings, b => b.spend);
+const totalEnergy = sumBy(buildings, b => b.energy ?? b.energy_kwh);
+const totalCO2e   = sumBy(buildings, b => b.emissions ?? b.co2 ?? b.tco2e);
+const intensity   = totalArea > 0 && totalEnergy > 0 ? totalEnergy / totalArea : null;
+
+const portfolio = {
+  count: buildings?.length ?? 0,
+  area:  totalArea,
+  spend: totalSpend,
+  updated: todayStr,
+};
+
+
   // --- existing demo signals / helpers (unchanged) ---
   const signals = { beta: 0.55, idio: 1.8, total: 2.6 };
   const topActions = ACTIONS.slice(0,2);
@@ -3321,48 +3340,49 @@ function PublicBPS({ goLineage = ()=>{}, goActions = ()=>{} }) {
   return (
     <div className="max-w-4xl mx-auto rounded-2xl overflow-hidden shadow-2xl"
          style={{ background:"var(--panel-1)", color:"var(--text-1)" }}>
-      {/* Header */}
-      <div className="bg-slate-900 text-white p-6">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="text-lg md:text-xl font-semibold">Building Performance Sheet</h2>
-          <div className="hidden sm:flex items-center gap-2">
-            <Chip>Coverage 92%</Chip>
-            <Chip>Sources 2</Chip>
-            <Chip>Methods: bills+meter</Chip>
-            <Chip>Updated 10 Aug 2025</Chip>
-            <Chip onClick={goLineage}>View lineage →</Chip>
-          </div>
-        </div>
-        <div className="text-slate-300 text-sm">1 King Street, London • Office • 12,800 m²</div>
+    {/* Header (portfolio) */}
+<div className="bg-slate-900 text-white p-6">
+  <div className="flex items-center justify-between gap-3">
+    <h2 className="text-lg md:text-2xl font-semibold">Portfolio Performance Sheet</h2>
+    <div className="hidden sm:flex items-center gap-2">
+      <Chip>{portfolio.count} buildings</Chip>
+      {portfolio.area > 0 && <Chip>{fmtNum(portfolio.area)} m²</Chip>}
+      {portfolio.spend > 0 && <Chip>Spend {fmtGBP(portfolio.spend)}</Chip>}
+      <Chip>Updated {portfolio.updated}</Chip>
+      <Chip onClick={goLineage}>View lineage →</Chip>
+    </div>
+  </div>
 
-        {/* Mobile chips */}
-        <div className="sm:hidden flex flex-wrap gap-2 mt-3">
-          <Chip>Coverage 92%</Chip>
-          <Chip>Sources 2</Chip>
-          <Chip onClick={goLineage}>Lineage →</Chip>
-        </div>
-      </div>
+  {/* Mobile chips */}
+  <div className="sm:hidden flex flex-wrap gap-2 mt-3">
+    <Chip>{portfolio.count} buildings</Chip>
+    {portfolio.area > 0 && <Chip>{fmtNum(portfolio.area)} m²</Chip>}
+    <Chip onClick={goLineage}>Lineage →</Chip>
+  </div>
+</div>
 
-      {/* Top KPI tiles */}
-      <div className="p-6 grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-        <div className="rounded-xl p-4 border"
-     style={{background:"var(--panel-2)", borderColor:"var(--stroke)"}}>
-  <div className="text-xs text-slate-300">Energy</div>
-          <div className="text-xl font-semibold">142,000 kWh</div>
-        </div>
-        <div className="rounded-xl bg-slate-100 p-4">
-          <div className="text-xs text-slate-600">Emissions</div>
-          <div className="text-xl font-semibold">36.2 tCO₂e</div>
-        </div>
-        <div className="rounded-xl bg-slate-100 p-4">
-          <div className="text-xs text-slate-600">Spend</div>
-          <div className="text-xl font-semibold">£ 30,150</div>
-        </div>
-        <div className="rounded-xl bg-slate-100 p-4">
-          <div className="text-xs text-slate-600">Intensity</div>
-          <div className="text-xl font-semibold">92 kWh/m²</div>
-        </div>
-      </div>
+  {/* Top KPI tiles (portfolio) */}
+<div className="p-6 grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+  <div className="rounded-xl p-4 border" style={{background:"var(--panel-2)", borderColor:"var(--stroke)"}}>
+    <div className="text-xs text-slate-300">Energy</div>
+    <div className="text-xl font-semibold text-slate-100">{totalEnergy ? fmtNum(totalEnergy) + " kWh" : "—"}</div>
+  </div>
+
+  <div className="rounded-xl p-4 border" style={{background:"var(--panel-2)", borderColor:"var(--stroke)"}}>
+    <div className="text-xs text-slate-300">Emissions</div>
+    <div className="text-xl font-semibold text-slate-100">{totalCO2e ? fmtNum(totalCO2e) + " tCO₂e" : "—"}</div>
+  </div>
+
+  <div className="rounded-xl p-4 border" style={{background:"var(--panel-2)", borderColor:"var(--stroke)"}}>
+    <div className="text-xs text-slate-300">Spend</div>
+    <div className="text-xl font-semibold text-slate-100">{totalSpend ? fmtGBP(totalSpend) : "—"}</div>
+  </div>
+
+  <div className="rounded-xl p-4 border" style={{background:"var(--panel-2)", borderColor:"var(--stroke)"}}>
+    <div className="text-xs text-slate-300">Intensity</div>
+    <div className="text-xl font-semibold text-slate-100">{intensity ? Math.round(intensity) + " kWh/m²" : "—"}</div>
+  </div>
+</div>
 
       {/* Financial signals (β / idio / total FEP) */}
       <div className="px-6">
