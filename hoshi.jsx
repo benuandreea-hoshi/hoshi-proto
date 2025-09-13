@@ -1386,24 +1386,25 @@ const [scenario, setScenario] = React.useState(HOSHI_SCENARIOS[0]);
   );
 }
 function MarketingMatrix({ buildings = [], onAddBuilding }) {
-  const [scenario, setScenario] = React.useState(HOSHI_SCENARIOS[0]);
+  const [scenario] = React.useState(HOSHI_SCENARIOS[0]);
 
-  // --- axes
+  // --- axes ---
   function ratingAxis(b) {
-    const r = computeNCMProxy(b, scenario);           // % of notional (lower better)
+    // computeNCMProxy score = % of notional (lower is better).
+    const r = computeNCMProxy(b, scenario);
     if (r?.score == null) return null;
     const clamped = Math.max(0, Math.min(180, r.score)); // tame extremes a bit
-    const rating = 100 - (clamped / 2);                 // 0–180% → 100–10
-    return Math.max(10, Math.min(100, rating));         // floor at 10 → avoids 0
+    const rating = 100 - (clamped / 2);                  // 0–180% → 100–10
+    return Math.max(10, Math.min(100, rating));          // floor at 10 (no zeros)
   }
 
   function serviceCostAxis(b) {
     const area = +(b.area ?? b.area_m2 ?? b.gia ?? 0);
     if (!area) return null;
-    if (+b.spend > 0) return (+b.spend) / area;         // prefer provided total spend
-    const { elec = 0, gas = 0 } = getEnergySplit(b) || {};
+    if (+b.spend > 0) return (+b.spend) / area;          // prefer provided spend
+    const { elec = 0, gas = 0 } = (getEnergySplit(b) || {});
     const cost = elec * scenario.elecP + gas * scenario.gasP;
-    return cost / area;                                  // £/m²
+    return cost / area;                                   // £/m²
   }
 
   const points = (buildings || [])
@@ -1416,7 +1417,7 @@ function MarketingMatrix({ buildings = [], onAddBuilding }) {
       <Section title="Marketing: Building Positioning"
                desc="Service Cost (↑) vs Rating (→). Add a building to see its position and recommendations.">
         <div className="rounded-2xl p-5 border text-center"
-             style={{borderColor:"var(--stroke)", background:"var(--panel-2)"}}>
+             style={{ borderColor: "var(--stroke)", background: "var(--panel-2)" }}>
           <div className="text-slate-200 font-medium">No buildings yet</div>
           <div className="text-slate-400 text-sm mt-1">Add a building to see its position.</div>
           {typeof onAddBuilding === "function" && (
@@ -1427,17 +1428,17 @@ function MarketingMatrix({ buildings = [], onAddBuilding }) {
     );
   }
 
-  // Adaptive cuts & scales
+  // Adaptive cuts & padded scales
   const xs = points.map(p => p.x).sort((a,b)=>a-b);
   const ys = points.map(p => p.y).sort((a,b)=>a-b);
   const med = (arr) => arr.length ? arr[Math.floor(arr.length/2)] : 0;
   const xCut = med(xs), yCut = med(ys);
 
-  const xMin = 10,  xMax = 100;                                  // rating fixed range (10..100)
+  const xMin = 10,  xMax = 100;                                // rating fixed range
   const rawYMin = Math.min(...ys), rawYMax = Math.max(...ys);
-  const yPad = Math.max(0.5, (rawYMax - rawYMin) * 0.1);         // 10% breathing room
-  const yMin = Math.max(0, rawYMin - yPad);
-  const yMax = rawYMax + yPad;
+  const yPad    = Math.max(0.1, (rawYMax - rawYMin) * 0.12);   // 12% padding
+  const yMin    = Math.max(0, rawYMin - yPad);
+  const yMax    = rawYMax + yPad;
 
   const W = 680, H = 360, PAD = 28;
   const xScale = (x) => PAD + ((x - xMin) / (xMax - xMin || 1)) * (W - 2*PAD);
@@ -1447,7 +1448,7 @@ function MarketingMatrix({ buildings = [], onAddBuilding }) {
     const step = (max - min) / (n - 1 || 1);
     return Array.from({ length: n }, (_, i) => min + i * step);
   };
-  const xTicks = ticks(xMin, xMax, 6);                            // 10..100
+  const xTicks = ticks(xMin, xMax, 6);
   const yTicks = ticks(yMin, yMax, 5);
 
   const labelOf = (x,y)=>{
@@ -1458,10 +1459,20 @@ function MarketingMatrix({ buildings = [], onAddBuilding }) {
   };
 
   const RECS = {
-    "Mission Critical": ["Design Quality","Security of Supply","Business Continuity","Safety","Professional Building Services Engineers"],
-    "Grand Design":     ["Financial performance","Service quality","Reputation","Professional Asset Managers"],
-    "Prospect":         ["Retrofit","Cleaning","Decorating","Waste Management","Ecology","Safety","Professional Environmentalists"],
-    "Unicorn":          ["Popularity","Cost savings","Local knowledge","Professional Surveyors"],
+    "Mission Critical": [
+      "Design Quality", "Security of Supply", "Business Continuity", "Safety",
+      "Professional Building Services Engineers",
+    ],
+    "Grand Design": [
+      "Financial performance", "Service quality", "Reputation", "Professional Asset Managers",
+    ],
+    "Prospect": [
+      "Retrofit", "Cleaning", "Decorating", "Waste Management", "Ecology", "Safety",
+      "Professional Environmentalists",
+    ],
+    "Unicorn": [
+      "Popularity", "Cost savings", "Local knowledge", "Professional Surveyors",
+    ],
   };
 
   return (
@@ -1469,19 +1480,17 @@ function MarketingMatrix({ buildings = [], onAddBuilding }) {
       title="Marketing: Building Positioning"
       desc="Eisenhower-style 2×2 using Service Cost (↑, £/m²) vs Rating (→)."
     >
-      <div className="mb-3"><ScenarioBar value={scenario} onChange={setScenario} /></div>
-
       <div className="grid lg:grid-cols-2 gap-4">
         {/* SCATTER */}
         <div className="rounded-2xl p-3 md:p-4 border"
-             style={{borderColor:"var(--stroke)", background:"var(--panel-2)"}}>
+             style={{ borderColor: "var(--stroke)", background: "var(--panel-2)" }}>
           <div className="text-slate-300 text-sm mb-2">Portfolio map</div>
 
-<svg viewBox={`0 0 ${W} ${H}`} className="w-full h-[420px] sm:h-[380px] md:h-[360px]">
+          <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-[420px] sm:h-[380px] md:h-[360px]">
             {/* frame */}
             <rect x={PAD} y={PAD} width={W-2*PAD} height={H-2*PAD} fill="none" stroke="rgba(148,163,184,.25)"/>
 
-            {/* grid + tick labels */}
+            {/* grid ticks */}
             {yTicks.map((t,i)=>(
               <g key={`yt-${i}`}>
                 <line x1={PAD} y1={yScale(t)} x2={W-PAD} y2={yScale(t)} stroke="rgba(148,163,184,.12)"/>
@@ -1514,31 +1523,37 @@ function MarketingMatrix({ buildings = [], onAddBuilding }) {
             {/* points */}
             {points.map(({ b, x, y }) => {
               const q = labelOf(x, y);
-              const color =
-                q==="Mission Critical" ? "#f43f5e" :
-                q==="Prospect"         ? "#f59e0b" :
-                q==="Grand Design"     ? "#10b981" : "#60a5fa";
+              const color = q==="Mission Critical"?"#f43f5e":q==="Prospect"?"#f59e0b":q==="Grand Design"?"#10b981":"#60a5fa";
               return (
                 <g key={b.id} transform={`translate(${xScale(x)} ${yScale(y)})`} cursor="default">
-                  <circle r="7" fill={color} stroke="#0b1220" strokeWidth="1.5" opacity="0.95"/>
-                  <title>{`${b.name} · ${q}\nRating: ${Math.round(x)} · Cost: ${y.toFixed(1)} £/m²`}</title>
+                  <circle r="6" fill={color} opacity="0.95"/>
+                  <title>{`${b.name} · ${q}\nRating: ${x.toFixed(0)} · Cost: ${y.toFixed(1)} £/m²`}</title>
                 </g>
               );
             })}
           </svg>
 
+          {/* legend */}
           <div className="mt-2 flex flex-wrap gap-3 text-[11px] text-slate-400">
-            <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{background:"#f43f5e"}}/>Mission Critical</span>
-            <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{background:"#f59e0b"}}/>Prospect</span>
-            <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{background:"#10b981"}}/>Grand Design</span>
-            <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{background:"#60a5fa"}}/>Unicorn</span>
+            <span className="inline-flex items-center gap-1">
+              <span className="inline-block w-2 h-2 rounded-full" style={{background:"#f43f5e"}}/>Mission Critical
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <span className="inline-block w-2 h-2 rounded-full" style={{background:"#f59e0b"}}/>Prospect
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <span className="inline-block w-2 h-2 rounded-full" style={{background:"#10b981"}}/>Grand Design
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <span className="inline-block w-2 h-2 rounded-full" style={{background:"#60a5fa"}}/>Unicorn
+            </span>
           </div>
           <div className="mt-2 text-xs text-slate-400">Cuts are medians; axes show actual portfolio range.</div>
         </div>
 
-        {/* LIST + RECS (images removed) */}
+        {/* LIST + RECS (no images) */}
         <div className="rounded-2xl p-3 md:p-4 border"
-             style={{borderColor:"var(--stroke)", background:"var(--panel-2)"}}>
+             style={{ borderColor: "var(--stroke)", background: "var(--panel-2)" }}>
           <div className="text-slate-300 text-sm mb-2">Positions & recommendations</div>
           <div className="space-y-3 max-h-[360px] overflow-auto pr-1">
             {points
@@ -1546,23 +1561,25 @@ function MarketingMatrix({ buildings = [], onAddBuilding }) {
               .map(({ b, x, y }) => {
                 const k = hoshiKPIs(b);
                 const label = labelOf(x, y);
-                const tone  = label==="Mission Critical"?"danger":label==="Prospect"?"warn":label==="Grand Design"?"success":"info";
                 const color =
                   label==="Mission Critical" ? "#f43f5e" :
                   label==="Prospect"         ? "#f59e0b" :
                   label==="Grand Design"     ? "#10b981" : "#60a5fa";
                 return (
                   <div key={b.id} className="flex gap-3 p-3 rounded-xl border"
-                       style={{borderColor:"var(--stroke)", background:"rgba(148,163,184,.06)"}}>
-                    <span className="mt-1 w-2.5 h-2.5 rounded-full" style={{background:color}}/>
+                       style={{ borderColor:"var(--stroke)", background:"rgba(148,163,184,.06)" }}>
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
+                      <div className="flex items-center gap-2">
                         <div className="text-slate-100 font-medium truncate">{b.name}</div>
-                        <span className="chip text-xs">{b.city || "—"}</span>
-                        <Badge tone={tone}>{label}</Badge>
+                        <span className="px-2 py-0.5 rounded-full text-[10px]" style={{background:"rgba(148,163,184,.25)", color:"#cbd5e1"}}>
+                          {b.city || "—"}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-full text-[10px]" style={{background:color, color:"#0b1220", fontWeight:600}}>
+                          {label}
+                        </span>
                       </div>
                       <div className="mt-1 text-xs text-slate-400">
-                        Rating {Math.round(x)} · Cost {y.toFixed(1)} £/m² · kWh/m² {k.intensity?Math.round(k.intensity):"—"}
+                        Rating {Math.round(x)} · Cost {y.toFixed(1)} £/m² · kWh/m² {k.intensity ? Math.round(k.intensity) : "—"}
                       </div>
                       <div className="mt-2 flex flex-wrap gap-1.5">
                         {RECS[label].map((r,i)=> <span key={i} className="chip">{r}</span>)}
@@ -1577,6 +1594,7 @@ function MarketingMatrix({ buildings = [], onAddBuilding }) {
     </Section>
   );
 }
+
 
 
 function Story({ goApp, goBlog }) {
@@ -3502,7 +3520,9 @@ const intensity = (totalArea > 0 && totalEnergy > 0) ? (totalEnergy / totalArea)
                 </div>
                 <div className="text-right text-sm text-slate-200">
                   <div>NPV {fmtGBP(a.npv)}</div>
-                  <div className="text-xs text-slate-400">Payback {a.pay}y • β {a.beta.toFixed(2)} • conf. {Math.round(a.confidence*100)}%</div>
+                 <div className="text-xs text-slate-400">
+  Payback {a.pay}y • β {a.beta.toFixed(2)} • conf. {Math.round(a.confidence * 100)}%
+</div>
                 </div>
               </li>
             ))}
