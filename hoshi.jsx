@@ -3333,11 +3333,14 @@ function PublicBPS({ goLineage = ()=>{}, goActions = ()=>{} }) {
         defaultCurrency={(typeof window !== "undefined"
           ? (localStorage.getItem("hoshi.currency") || "GBP")
           : "GBP")}
-        onSave={(b) => { setBuildings(prev => [...(prev || []), b]); setAddOpen(false); }}
+onSave={(b) => {
+  setBuildings(prev => [ ...(prev || []), b ]);
+  setAddOpen(false);
+}}                               
       />
     </div>
   );
-}     {/* Header */}
+    {/* Header */}
       <div className="bg-slate-900 text-white p-6">
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-lg md:text-xl font-semibold">Building Performance Sheet</h2>
@@ -3508,6 +3511,7 @@ function PublicBPS({ goLineage = ()=>{}, goActions = ()=>{} }) {
     </svg>
   ),
 };
+
 // add the Blog icon without risking object-literal commas/braces
 ICONS.blog = function BlogIcon() {
   return (
