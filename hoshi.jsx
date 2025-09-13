@@ -3336,10 +3336,75 @@ function Lineage({ fromAction, goActions }) {
 }
 
 function PublicBPS({ goLineage = ()=>{}, goActions = ()=>{} }) {
+  
   // Persisted buildings (same store)
   const [buildings, setBuildings] = React.useState(() => hoshiLoadBuildings());
   const [addOpen, setAddOpen] = React.useState(false);
   React.useEffect(() => { hoshiSaveBuildings(buildings); }, [buildings]);
+
+  // === Portfolio aggregates for the top tiles (no collisions) ===
+const bpsPickNum = (obj, keys=[]) => {
+  for (const k of keys) { const v = obj?.[k]; if (v != null && !isNaN(+v)) return +v; }
+  return null;
+};
+const bpsSumBy = (arr, pick) => (arr || []).reduce((a,b)=> a + (+pick(b) || 0), 0);
+
+// Common keys we may receive from uploads
+const BPS_AREA_KEYS   = ["area","area_m2","gia","nla"];
+const BPS_ENERGY_KEYS = ["energy","energy_kwh","annualEnergy","kwh","kwh_total"];
+const BPS_EMISS_KEYS  = ["emissions","co2","tco2e","emissions_tco2e"];
+const BPS_SPEND_KEYS  = ["spend","spend_total","opex_spend"];
+
+// Currency + formatters
+const bpsCurrency = (typeof window !== "undefined"
+  ? (localStorage.getItem("hoshi.currency") || "GBP")
+  : "GBP");
+const bpsSymbols = { GBP:"£", EUR:"€", USD:"$", AUD:"A$", CAD:"C$", NOK:"kr", SEK:"kr" };
+const bpsSym = bpsSymbols[bpsCurrency] || "£";
+const bpsFmtMoney = n => (n==null ? "—" : `${bpsSym} ${Math.round(+n).toLocaleString()}`);
+const bpsFmtEnergy = kwh => {
+  if (kwh == null) return "—";
+  const v = +kwh;
+  if (v >= 1_000_000) return `${(v/1_000_000).toFixed(1)} GWh`;
+  if (v >=   1_000)   return `${(v/1_000).toFixed(1)} MWh`;
+  return `${Math.round(v).toLocaleString()} kWh`;
+};
+const bpsFmtCO2e = t => (t==null ? "—" : `${(+t).toFixed(1)} tCO₂e`);
+const bpsFmtIntensity = n => (n==null ? "—" : `${Math.round(+n)} kWh/m²`);
+
+// Scenario prices (guarded)
+const bpsScenario =
+  (typeof HOSHI_SCENARIOS !== "undefined" && HOSHI_SCENARIOS[0]) ||
+  { elecP: 0.28, gasP: 0.07 };
+
+// Aggregates
+const bpsTotalArea   = bpsSumBy(buildings, b => bpsPickNum(b, BPS_AREA_KEYS)   ?? 0);
+let   bpsTotalEnergy = bpsSumBy(buildings, b => bpsPickNum(b, BPS_ENERGY_KEYS) ?? 0);
+const bpsTotalCO2e   = bpsSumBy(buildings, b => bpsPickNum(b, BPS_EMISS_KEYS)  ?? 0);
+const bpsTotalSpend  = bpsSumBy(buildings, b => bpsPickNum(b, BPS_SPEND_KEYS)  ?? 0);
+
+// If some assets lack kWh but have Spend, estimate: kWh ≈ Spend / blendedPrice
+for (const b of (buildings || [])) {
+  const kwh = bpsPickNum(b, BPS_ENERGY_KEYS);
+  if (kwh != null) continue;
+
+  const spend = bpsPickNum(b, BPS_SPEND_KEYS);
+  if (spend == null) continue;
+
+  const split = (typeof getEnergySplit === "function" && (getEnergySplit(b) || {})) || {};
+  const e = +split.elec || 0, g = +split.gas || 0;
+  const total = e + g;
+  const wElec = total > 0 ? e/total : 0.6;
+  const wGas  = total > 0 ? g/total : 0.4;
+  const blended = wElec*(+bpsScenario.elecP || 0.25) + wGas*(+bpsScenario.gasP || 0.07);
+  if (blended > 0) bpsTotalEnergy += spend / blended;
+}
+
+// Intensity (kWh/m²)
+const bpsIntensity = (bpsTotalArea > 0 && bpsTotalEnergy > 0)
+  ? (bpsTotalEnergy / bpsTotalArea)
+  : null;
+
 
   // --- simple, safe helpers (no external deps) ---
   const signals = { beta: 0.55, idio: 1.8, total: 2.6 };
@@ -3413,19 +3478,19 @@ function PublicBPS({ goLineage = ()=>{}, goActions = ()=>{} }) {
       <div className="p-6 grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
         <div className="rounded-xl p-4 border" style={{background:"var(--panel-2)", borderColor:"var(--stroke)"}}>
           <div className="text-xs text-slate-300">Energy</div>
-          <div className="text-xl font-semibold text-slate-100">{totalEnergy? `${totalEnergy.toLocaleString()} kWh` : "—"}</div>
+          <div className="text-xl font-semibold">{bpsFmtEnergy(bpsTotalEnergy)}</div>
         </div>
         <div className="rounded-xl p-4 border" style={{background:"var(--panel-2)", borderColor:"var(--stroke)"}}>
           <div className="text-xs text-slate-300">Emissions</div>
-          <div className="text-xl font-semibold text-slate-100">{totalCO2e? `${totalCO2e.toLocaleString()} tCO₂e` : "—"}</div>
+         <div className="text-xl font-semibold">{bpsFmtCO2e(bpsTotalCO2e)}</div>
         </div>
         <div className="rounded-xl p-4 border" style={{background:"var(--panel-2)", borderColor:"var(--stroke)"}}>
           <div className="text-xs text-slate-300">Spend</div>
-          <div className="text-xl font-semibold text-slate-100">{fmtGBP(totalSpend)}</div>
+   <div className="text-xl font-semibold">{bpsFmtMoney(bpsTotalSpend)}</div>
         </div>
         <div className="rounded-xl p-4 border" style={{background:"var(--panel-2)", borderColor:"var(--stroke)"}}>
           <div className="text-xs text-slate-300">Intensity</div>
-          <div className="text-xl font-semibold text-slate-100">{intensity? `${Math.round(intensity)} kWh/m²` : "—"}</div>
+      <div className="text-xl font-semibold">{bpsFmtIntensity(bpsIntensity)}</div>
         </div>
       </div>
 
