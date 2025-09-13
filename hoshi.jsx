@@ -1386,37 +1386,33 @@ const [scenario, setScenario] = React.useState(HOSHI_SCENARIOS[0]);
   );
 }
 function MarketingMatrix({ buildings = [], onAddBuilding }) {
-  const [scenario, setScenario] = React.useState(HOSHI_SCENARIOS[0]); // :contentReference[oaicite:0]{index=0}
+  const [scenario, setScenario] = React.useState(HOSHI_SCENARIOS[0]);
 
-  // --- axis helpers (unchanged) ---
+  // ---- axes
   function ratingAxis(b) {
-    const r = computeNCMProxy(b, scenario);     // % of notional → band/score
+    const r = computeNCMProxy(b, scenario);   // % of notional → band/score
     if (r?.score == null) return null;
     const clamped = Math.max(0, Math.min(200, r.score));
-    return 100 - (clamped / 2);                 // 0–200% → 100–0 (right = better)
+    return 100 - (clamped / 2);               // 0–200% → 100–0 (right = better)
   }
-
   function serviceCostAxis(b) {
     const area = +(b.area ?? b.area_m2 ?? b.gia ?? 0);
     if (!area) return null;
-    if (+b.spend > 0) return (+b.spend) / area; // use provided spend first
-    const { elec, gas } = getEnergySplit(b);    // :contentReference[oaicite:1]{index=1}
+    if (+b.spend > 0) return (+b.spend) / area; // prefer provided spend
+    const { elec, gas } = getEnergySplit(b);
     const cost = elec * scenario.elecP + gas * scenario.gasP;
     return cost / area;
   }
 
-  // compute axes per building (real data only)
   const points = (buildings || [])
     .map(b => ({ b, x: ratingAxis(b), y: serviceCostAxis(b) }))
     .filter(p => p.x != null && p.y != null);
 
-  // empty state → no fake points
+  // empty state
   if (!points.length) {
     return (
-      <Section
-        title="Marketing: Building Positioning"
-        desc="Eisenhower-style 2×2 using Service Cost (↑) vs Rating (→)."
-      >
+      <Section title="Marketing: Building Positioning"
+               desc="Eisenhower-style 2×2 using Service Cost (↑) vs Rating (→).">
         <div className="rounded-2xl p-5 border text-center"
              style={{borderColor:"var(--stroke)", background:"var(--panel-2)"}}>
           <div className="text-slate-200 font-medium">No buildings yet</div>
@@ -1433,12 +1429,11 @@ function MarketingMatrix({ buildings = [], onAddBuilding }) {
     );
   }
 
-  // medians for adaptive cut lines
+  // medians for adaptive cuts
   const xs = points.map(p => p.x).sort((a,b)=>a-b);
   const ys = points.map(p => p.y).sort((a,b)=>a-b);
   const med = (arr) => arr.length ? arr[Math.floor(arr.length/2)] : 0;
-  const xCut = med(xs);
-  const yCut = med(ys);
+  const xCut = med(xs), yCut = med(ys);
 
   function quadrantLabel(x, y) {
     if (y >= yCut && x <  xCut) return "Mission Critical";
@@ -1449,9 +1444,9 @@ function MarketingMatrix({ buildings = [], onAddBuilding }) {
 
   const RECS = {
     "Mission Critical": ["Design Quality","Security of Supply","Business Continuity","Safety","Professional Building Services Engineers"],
-    "Grand Design": ["Financial performance","Service quality","Reputation","Professional Asset Managers"],
-    "Prospect": ["Retrofit","Cleaning","Decorating","Waste Management","Ecology","Safety","Professional Environmentalists"],
-    "Unicorn": ["Popularity","Cost savings","Local knowledge","Professional Surveyors"],
+    "Grand Design":     ["Financial performance","Service quality","Reputation","Professional Asset Managers"],
+    "Prospect":         ["Retrofit","Cleaning","Decorating","Waste Management","Ecology","Safety","Professional Environmentalists"],
+    "Unicorn":          ["Popularity","Cost savings","Local knowledge","Professional Surveyors"],
   };
 
   // canvas + scales
@@ -1467,7 +1462,7 @@ function MarketingMatrix({ buildings = [], onAddBuilding }) {
       desc="Eisenhower-style 2×2 using Service Cost (↑) vs Rating (→). Each asset falls into one of four marketing narratives with role-based recommendations."
     >
       <div className="mb-3">
-        <ScenarioBar value={scenario} onChange={setScenario} /> {/* :contentReference[oaicite:2]{index=2} */}
+        <ScenarioBar value={scenario} onChange={setScenario} />
       </div>
 
       <div className="grid md:grid-cols-2 gap-4 items-stretch">
@@ -1478,6 +1473,7 @@ function MarketingMatrix({ buildings = [], onAddBuilding }) {
 
           <div className="w-full h-[300px] md:h-[380px]">
             <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-full">
+              {/* quad fills */}
               <rect x={PAD} y={PAD} width={W-2*PAD} height={H-2*PAD}
                     fill="none" stroke="rgba(148,163,184,.25)"/>
               <rect x={xScale(xCut)} y={PAD}        width={W-PAD-xScale(xCut)} height={yScale(yCut)-PAD} fill="rgba(245,158,11,.05)"/>
@@ -1485,19 +1481,23 @@ function MarketingMatrix({ buildings = [], onAddBuilding }) {
               <rect x={xScale(xCut)} y={yScale(yCut)} width={W-PAD-xScale(xCut)} height={H-PAD-yScale(yCut)} fill="rgba(16,185,129,.05)"/>
               <rect x={PAD}        y={yScale(yCut)} width={xScale(xCut)-PAD}   height={H-PAD-yScale(yCut)} fill="rgba(96,165,250,.06)"/>
 
-              <line x1={xScale(xCut)} y1={PAD}   x2={xScale(xCut)} y2={H-PAD}   stroke="rgba(148,163,184,.35)"/>
-              <line x1={PAD}        y1={yScale(yCut)} x2={W-PAD}        y2={yScale(yCut)} stroke="rgba(148,163,184,.35)"/>
+              {/* cut lines */}
+              <line x1={xScale(xCut)} y1={PAD} x2={xScale(xCut)} y2={H-PAD} stroke="rgba(148,163,184,.35)"/>
+              <line x1={PAD} y1={yScale(yCut)} x2={W-PAD} y2={yScale(yCut)} stroke="rgba(148,163,184,.35)"/>
 
+              {/* labels */}
               <text x={xScale((xMin+xCut)/2)} y={yScale((yCut+yMax)/2)} fill="#e5e7eb" fontSize="13">Mission Critical</text>
               <text x={xScale((xCut+xMax)/2)} y={yScale((yCut+yMax)/2)} fill="#e5e7eb" fontSize="13">Prospect</text>
               <text x={xScale((xCut+xMax)/2)} y={yScale((yMin+yCut)/2)} fill="#e5e7eb" fontSize="13">Grand Design</text>
               <text x={xScale((xMin+xCut)/2)} y={yScale((yMin+yCut)/2)} fill="#e5e7eb" fontSize="13">Unicorn</text>
 
+              {/* axes titles */}
               <text x={W/2} y={H-6} textAnchor="middle" fill="#cbd5e1" fontSize="12">Higher Rating →</text>
               <g transform={`translate(12 ${H/2}) rotate(-90)`}>
                 <text textAnchor="middle" fill="#cbd5e1" fontSize="12">Service Cost ↑</text>
               </g>
 
+              {/* points */}
               {points.map(({ b, x, y }) => {
                 const q = quadrantLabel(x, y);
                 const color = q==="Mission Critical"?"#f43f5e":q==="Prospect"?"#f59e0b":q==="Grand Design"?"#10b981":"#60a5fa";
@@ -1511,13 +1511,13 @@ function MarketingMatrix({ buildings = [], onAddBuilding }) {
             </svg>
           </div>
 
+          {/* legend + tip */}
           <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-slate-400">
             <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{background:"#f43f5e"}}/>Mission Critical</span>
             <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{background:"#f59e0b"}}/>Prospect</span>
             <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{background:"#10b981"}}/>Grand Design</span>
             <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{background:"#60a5fa"}}/>Unicorn</span>
           </div>
-
           <div className="mt-2 text-xs text-slate-400">
             Tip: Hover points for values. Cuts are medians so it adapts to your portfolio.
           </div>
@@ -1527,35 +1527,32 @@ function MarketingMatrix({ buildings = [], onAddBuilding }) {
         <div className="rounded-2xl p-3 md:p-4 border h-full"
              style={{borderColor:"var(--stroke)", background:"var(--panel-2)"}}>
           <div className="text-slate-200 text-sm mb-2">Positions & recommendations</div>
-
           <div className="space-y-3 max-h-[380px] overflow-auto pr-1">
-            {points
-              .sort((a,b)=> a.b.name.localeCompare(b.b.name))
-              .map(({ b, x, y }) => {
-                const k = hoshiKPIs(b);                        // :contentReference[oaicite:3]{index=3}
-                const label = quadrantLabel(x, y);
-                const tone  = label==="Mission Critical"?"danger":label==="Prospect"?"warn":label==="Grand Design"?"success":"info";
-                const hero  = (b.images && b.images[0]) || LOGO_SRC; // :contentReference[oaicite:4]{index=4}
-                return (
-                  <div key={b.id} className="flex gap-3 p-3 rounded-xl border"
-                       style={{borderColor:"var(--stroke)", background:"rgba(148,163,184,.06)"}}>
-                    <img src={hero} alt="" className="w-10 h-10 rounded object-cover"/>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <div className="text-slate-100 font-medium truncate">{b.name}</div>
-                        <span className="chip text-xs">{b.city || "—"}</span>
-                        <Badge tone={tone}>{label}</Badge>       {/* :contentReference[oaicite:5]{index=5} */}
-                      </div>
-                      <div className="mt-1 text-xs text-slate-400">
-                        Rating {Math.round(x)} · Cost {serviceCostAxis(b).toFixed(1)} per m² · kWh/m² {k.intensity ? Math.round(k.intensity) : "—"}
-                      </div>
-                      <div className="mt-2 flex flex-wrap gap-1.5">
-                        {RECS[label].map((r,i)=> <span key={i} className="chip">{r}</span>)}
-                      </div>
+            {points.sort((a,b)=> a.b.name.localeCompare(b.b.name)).map(({ b, x, y }) => {
+              const k = hoshiKPIs(b);
+              const label = quadrantLabel(x, y);
+              const tone  = label==="Mission Critical"?"danger":label==="Prospect"?"warn":label==="Grand Design"?"success":"info";
+              const hero  = (b.images && b.images[0]) || LOGO_SRC;
+              return (
+                <div key={b.id} className="flex gap-3 p-3 rounded-xl border"
+                     style={{borderColor:"var(--stroke)", background:"rgba(148,163,184,.06)"}}>
+                  <img src={hero} alt="" className="w-10 h-10 rounded object-cover"/>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <div className="text-slate-100 font-medium truncate">{b.name}</div>
+                      <span className="chip text-xs">{b.city || "—"}</span>
+                      <Badge tone={tone}>{label}</Badge>
+                    </div>
+                    <div className="mt-1 text-xs text-slate-400">
+                      Rating {Math.round(x)} · Cost {serviceCostAxis(b).toFixed(1)} per m² · kWh/m² {k.intensity ? Math.round(k.intensity) : "—"}
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {RECS[label].map((r,i)=> <span key={i} className="chip">{r}</span>)}
                     </div>
                   </div>
-                );
-              })}
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -3274,10 +3271,13 @@ function Lineage({ fromAction, goActions }) {
 
 
 
-function PublicBPS() {
-  const [buildings, setBuildings] = React.useState(() => hoshiLoadBuildings()); // :contentReference[oaicite:6]{index=6}
-  React.useEffect(() => { hoshiSaveBuildings(buildings); }, [buildings]);  
-  
+function PublicBPS({ goLineage = ()=>{}, goActions = ()=>{} }) {
+  const [buildings, setBuildings] = React.useState(() => hoshiLoadBuildings());
+  const [actions, setActions]     = React.useState(() => hoshiLoadActions());
+  const [addOpen, setAddOpen]     = React.useState(false);
+
+  React.useEffect(() => { hoshiSaveBuildings(buildings); }, [buildings]);
+  React.useEffect(() => { hoshiSaveActions(actions);   }, [actions]);
 
   // Demo signals (swap with real values later)
   const signals = {
@@ -3286,14 +3286,6 @@ function PublicBPS() {
     total: 2.6,         // total Forward Energy Premium, %
   };
 
-  const buildings = [{
-    id: "1-king-st",
-    name: "1 King Street",
-    city: "London",
-    area: 12800,   // from your header
-    spend: 30150,  // from your KPI tiles
-    // images: [...], // optional
-  }];
   
   const topActions = ACTIONS.slice(0,2);
 
@@ -3320,21 +3312,32 @@ function PublicBPS() {
   );
 
   return (
+     <div className="grid gap-4 md:gap-6">
       <MarketingMatrix
         buildings={buildings}
         onAddBuilding={() => setAddOpen(true)}
       />
+       
+    {/* keep the rest of your app as-is */}
+      <Portfolio
+        buildings={buildings}
+        setBuildings={setBuildings}
+        actions={actions}
+        openActionsFor={(id) => goActions?.(id)}
+      />
 
-      <HoshiAddBuildingModal                                   // :contentReference[oaicite:8]{index=8}
+      {/* Modal opened from the Matrix empty state */}
+      <HoshiAddBuildingModal
         open={addOpen}
         onClose={() => setAddOpen(false)}
-        onSave={(b) => setBuildings(prev => [...prev, b])}
-        defaultCurrency={typeof window!=="undefined" ? (localStorage.getItem("hoshi.currency") || "GBP") : "GBP"}
+        defaultCurrency={(typeof window !== "undefined"
+          ? (localStorage.getItem("hoshi.currency") || "GBP")
+          : "GBP")}
+        onSave={(b) => { setBuildings(prev => [...(prev || []), b]); setAddOpen(false); }}
       />
-    </>
+    </div>
   );
-}
-      {/* Header */}
+}     {/* Header */}
       <div className="bg-slate-900 text-white p-6">
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-lg md:text-xl font-semibold">Building Performance Sheet</h2>
