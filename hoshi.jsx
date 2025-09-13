@@ -1477,7 +1477,7 @@ function MarketingMatrix({ buildings = [], onAddBuilding }) {
              style={{borderColor:"var(--stroke)", background:"var(--panel-2)"}}>
           <div className="text-slate-300 text-sm mb-2">Portfolio map</div>
 
-          <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-[260px] md:h-[360px]">
+<svg viewBox={`0 0 ${W} ${H}`} className="w-full h-[420px] sm:h-[380px] md:h-[360px]">
             {/* frame */}
             <rect x={PAD} y={PAD} width={W-2*PAD} height={H-2*PAD} fill="none" stroke="rgba(148,163,184,.25)"/>
 
@@ -3337,6 +3337,55 @@ function PublicBPS({ goLineage = ()=>{}, goActions = ()=>{} }) {
       {children}
     </button>
   );
+  // --- scenario & helpers for estimation ---
+const BASE_SCENARIO = (typeof HOSHI_SCENARIOS !== "undefined" && HOSHI_SCENARIOS[0])
+  || { elecP: 0.28, gasP: 0.07 }; // safe defaults if not present
+
+const pickNum = (obj, keys=[]) => { for (const k of keys) { const v = obj?.[k]; if (v!=null && !isNaN(+v)) return +v; } return null; };
+const sumBy   = (arr, pick)       => (arr || []).reduce((a,b)=> a + (+pick(b) || 0), 0);
+
+// Common keys we see in uploads
+const AREA_KEYS   = ["area","area_m2","gia","nla"];
+const ENERGY_KEYS = ["energy","energy_kwh","annualEnergy","kwh","kwh_total"];
+const EMISS_KEYS  = ["emissions","co2","tco2e","emissions_tco2e"];
+const SPEND_KEYS  = ["spend","spend_total","opex_spend"];
+
+// Portfolio area is straightforward
+const totalArea = sumBy(buildings, b => pickNum(b, AREA_KEYS) ?? 0);
+
+// 1) Use *actual* kWh where present
+let totalEnergy = sumBy(buildings, b => pickNum(b, ENERGY_KEYS) ?? 0);
+
+// 2) If some buildings have no kWh but do have Spend, estimate kWh = Spend / blendedPrice
+//    blendedPrice uses the building's elec/gas split (if known), else 60/40 as a sane fallback.
+let usedEnergyEstimate = false;
+
+if (buildings?.length) {
+  buildings.forEach(b => {
+    const kwh = pickNum(b, ENERGY_KEYS);
+    if (kwh != null) return; // already counted in step (1)
+
+    const spend = pickNum(b, SPEND_KEYS);
+    if (spend == null) return;
+
+    const split = (typeof getEnergySplit === "function" && (getEnergySplit(b) || {})) || {};
+    const e = +split.elec || 0, g = +split.gas || 0;
+    let wElec = 0.6, wGas = 0.4;
+    if (e + g > 0) { wElec = e / (e + g); wGas = g / (e + g); }
+
+    const pElec = +BASE_SCENARIO.elecP || 0.25;
+    const pGas  = +BASE_SCENARIO.gasP  || 0.07;
+    const blendedP = (wElec * pElec) + (wGas * pGas);
+
+    if (blendedP > 0) {
+      totalEnergy += spend / blendedP;
+      usedEnergyEstimate = true;
+    }
+  });
+}
+
+// Intensity from (Energy / Area), if possible. Falls back to "—" if neither is available.
+const intensity = (totalArea > 0 && totalEnergy > 0) ? (totalEnergy / totalArea) : null;
 
   return (
     <div className="max-w-5xl mx-auto rounded-2xl overflow-hidden shadow-2xl"
@@ -3362,11 +3411,14 @@ function PublicBPS({ goLineage = ()=>{}, goActions = ()=>{} }) {
       </div>
 
       {/* Top KPI tiles (portfolio aggregates) */}
-      <div className="p-6 grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-        <div className="rounded-xl p-4 border" style={{background:"var(--panel-2)", borderColor:"var(--stroke)"}}>
-          <div className="text-xs text-slate-300">Energy</div>
-          <div className="text-xl font-semibold text-slate-100">{totalEnergy? `${totalEnergy.toLocaleString()} kWh` : "—"}</div>
-        </div>
+      <div className="rounded-xl p-4 border" style={{background:"var(--panel-2)", borderColor:"var(--stroke)"}}>
+  <div className="text-xs text-slate-300">Energy</div>
+  <div className="text-xl font-semibold text-slate-100">
+    {totalEnergy
+      ? `${usedEnergyEstimate ? "≈ " : ""}${totalEnergy.toLocaleString()} kWh`
+      : "—"}
+  </div>
+</div>
         <div className="rounded-xl p-4 border" style={{background:"var(--panel-2)", borderColor:"var(--stroke)"}}>
           <div className="text-xs text-slate-300">Emissions</div>
           <div className="text-xl font-semibold text-slate-100">{totalCO2e? `${totalCO2e.toLocaleString()} tCO₂e` : "—"}</div>
@@ -3375,11 +3427,12 @@ function PublicBPS({ goLineage = ()=>{}, goActions = ()=>{} }) {
           <div className="text-xs text-slate-300">Spend</div>
           <div className="text-xl font-semibold text-slate-100">{fmtGBP(totalSpend)}</div>
         </div>
-        <div className="rounded-xl p-4 border" style={{background:"var(--panel-2)", borderColor:"var(--stroke)"}}>
-          <div className="text-xs text-slate-300">Intensity</div>
-          <div className="text-xl font-semibold text-slate-100">{intensity? `${Math.round(intensity)} kWh/m²` : "—"}</div>
-        </div>
-      </div>
+      <div className="rounded-xl p-4 border" style={{background:"var(--panel-2)", borderColor:"var(--stroke)"}}>
+  <div className="text-xs text-slate-300">Intensity</div>
+  <div className="text-xl font-semibold text-slate-100">
+    {intensity ? `${usedEnergyEstimate ? "≈ " : ""}${Math.round(intensity)} kWh/m²` : "—"}
+  </div>
+</div>
 
       {/* Financial signals (dark cards) */}
       <div className="px-6">
