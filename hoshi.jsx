@@ -1388,59 +1388,74 @@ const [scenario, setScenario] = React.useState(HOSHI_SCENARIOS[0]);
 function MarketingMatrix({ buildings = [], onAddBuilding }) {
   const [scenario, setScenario] = React.useState(HOSHI_SCENARIOS[0]);
 
-  // ---- axes
+  // --- axes
   function ratingAxis(b) {
-    const r = computeNCMProxy(b, scenario);   // % of notional → band/score
+    const r = computeNCMProxy(b, scenario);           // % of notional (lower better)
     if (r?.score == null) return null;
-    const clamped = Math.max(0, Math.min(200, r.score));
-    return 100 - (clamped / 2);               // 0–200% → 100–0 (right = better)
+    const clamped = Math.max(0, Math.min(180, r.score)); // tame extremes a bit
+    const rating = 100 - (clamped / 2);                 // 0–180% → 100–10
+    return Math.max(10, Math.min(100, rating));         // floor at 10 → avoids 0
   }
+
   function serviceCostAxis(b) {
     const area = +(b.area ?? b.area_m2 ?? b.gia ?? 0);
     if (!area) return null;
-    if (+b.spend > 0) return (+b.spend) / area; // prefer provided spend
-    const { elec, gas } = getEnergySplit(b);
+    if (+b.spend > 0) return (+b.spend) / area;         // prefer provided total spend
+    const { elec = 0, gas = 0 } = getEnergySplit(b) || {};
     const cost = elec * scenario.elecP + gas * scenario.gasP;
-    return cost / area;
+    return cost / area;                                  // £/m²
   }
 
   const points = (buildings || [])
     .map(b => ({ b, x: ratingAxis(b), y: serviceCostAxis(b) }))
     .filter(p => p.x != null && p.y != null);
 
-  // empty state
+  // Empty state
   if (!points.length) {
     return (
       <Section title="Marketing: Building Positioning"
-               desc="Eisenhower-style 2×2 using Service Cost (↑) vs Rating (→).">
+               desc="Service Cost (↑) vs Rating (→). Add a building to see its position and recommendations.">
         <div className="rounded-2xl p-5 border text-center"
              style={{borderColor:"var(--stroke)", background:"var(--panel-2)"}}>
           <div className="text-slate-200 font-medium">No buildings yet</div>
-          <div className="text-slate-400 text-sm mt-1">
-            Add a building to see its position and recommendations.
-          </div>
+          <div className="text-slate-400 text-sm mt-1">Add a building to see its position.</div>
           {typeof onAddBuilding === "function" && (
-            <button className="btn btn-primary mt-3" onClick={onAddBuilding}>
-              + Add building
-            </button>
+            <button className="btn btn-primary mt-3" onClick={onAddBuilding}>+ Add building</button>
           )}
         </div>
       </Section>
     );
   }
 
-  // medians for adaptive cuts
+  // Adaptive cuts & scales
   const xs = points.map(p => p.x).sort((a,b)=>a-b);
   const ys = points.map(p => p.y).sort((a,b)=>a-b);
   const med = (arr) => arr.length ? arr[Math.floor(arr.length/2)] : 0;
   const xCut = med(xs), yCut = med(ys);
 
-  function quadrantLabel(x, y) {
+  const xMin = 10,  xMax = 100;                                  // rating fixed range (10..100)
+  const rawYMin = Math.min(...ys), rawYMax = Math.max(...ys);
+  const yPad = Math.max(0.5, (rawYMax - rawYMin) * 0.1);         // 10% breathing room
+  const yMin = Math.max(0, rawYMin - yPad);
+  const yMax = rawYMax + yPad;
+
+  const W = 680, H = 360, PAD = 28;
+  const xScale = (x) => PAD + ((x - xMin) / (xMax - xMin || 1)) * (W - 2*PAD);
+  const yScale = (y) => PAD + (1 - (y - yMin) / (yMax - yMin || 1)) * (H - 2*PAD);
+
+  const ticks = (min, max, n = 5) => {
+    const step = (max - min) / (n - 1 || 1);
+    return Array.from({ length: n }, (_, i) => min + i * step);
+  };
+  const xTicks = ticks(xMin, xMax, 6);                            // 10..100
+  const yTicks = ticks(yMin, yMax, 5);
+
+  const labelOf = (x,y)=>{
     if (y >= yCut && x <  xCut) return "Mission Critical";
     if (y >= yCut && x >= xCut) return "Prospect";
     if (y <  yCut && x >= xCut) return "Grand Design";
     return "Unicorn";
-  }
+  };
 
   const RECS = {
     "Mission Critical": ["Design Quality","Security of Supply","Business Continuity","Safety","Professional Building Services Engineers"],
@@ -1449,110 +1464,113 @@ function MarketingMatrix({ buildings = [], onAddBuilding }) {
     "Unicorn":          ["Popularity","Cost savings","Local knowledge","Professional Surveyors"],
   };
 
-  // canvas + scales
-  const W = 680, H = 360, PAD = 24;
-  const xMin = 0, xMax = 100;
-  const yMin = Math.min(...ys, 0), yMax = Math.max(...ys, 1);
-  const xScale = (x) => PAD + ((x - xMin) / (xMax - xMin || 1)) * (W - 2*PAD);
-  const yScale = (y) => PAD + (1 - (y - yMin) / (yMax - yMin || 1)) * (H - 2*PAD);
-
   return (
     <Section
       title="Marketing: Building Positioning"
-      desc="Eisenhower-style 2×2 using Service Cost (↑) vs Rating (→). Each asset falls into one of four marketing narratives with role-based recommendations."
+      desc="Eisenhower-style 2×2 using Service Cost (↑, £/m²) vs Rating (→)."
     >
-      <div className="mb-3">
-        <ScenarioBar value={scenario} onChange={setScenario} />
-      </div>
+      <div className="mb-3"><ScenarioBar value={scenario} onChange={setScenario} /></div>
 
-      <div className="grid md:grid-cols-2 gap-4 items-stretch">
+      <div className="grid lg:grid-cols-2 gap-4">
         {/* SCATTER */}
-        <div className="rounded-2xl p-3 md:p-4 border h-full"
+        <div className="rounded-2xl p-3 md:p-4 border"
              style={{borderColor:"var(--stroke)", background:"var(--panel-2)"}}>
-          <div className="text-slate-200 text-sm mb-2">Portfolio map</div>
+          <div className="text-slate-300 text-sm mb-2">Portfolio map</div>
 
-          <div className="w-full h-[300px] md:h-[380px]">
-            <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-full">
-              {/* quad fills */}
-              <rect x={PAD} y={PAD} width={W-2*PAD} height={H-2*PAD}
-                    fill="none" stroke="rgba(148,163,184,.25)"/>
-              <rect x={xScale(xCut)} y={PAD}        width={W-PAD-xScale(xCut)} height={yScale(yCut)-PAD} fill="rgba(245,158,11,.05)"/>
-              <rect x={PAD}        y={PAD}           width={xScale(xCut)-PAD}   height={yScale(yCut)-PAD} fill="rgba(244,63,94,.05)"/>
-              <rect x={xScale(xCut)} y={yScale(yCut)} width={W-PAD-xScale(xCut)} height={H-PAD-yScale(yCut)} fill="rgba(16,185,129,.05)"/>
-              <rect x={PAD}        y={yScale(yCut)} width={xScale(xCut)-PAD}   height={H-PAD-yScale(yCut)} fill="rgba(96,165,250,.06)"/>
+          <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-[260px] md:h-[360px]">
+            {/* frame */}
+            <rect x={PAD} y={PAD} width={W-2*PAD} height={H-2*PAD} fill="none" stroke="rgba(148,163,184,.25)"/>
 
-              {/* cut lines */}
-              <line x1={xScale(xCut)} y1={PAD} x2={xScale(xCut)} y2={H-PAD} stroke="rgba(148,163,184,.35)"/>
-              <line x1={PAD} y1={yScale(yCut)} x2={W-PAD} y2={yScale(yCut)} stroke="rgba(148,163,184,.35)"/>
-
-              {/* labels */}
-              <text x={xScale((xMin+xCut)/2)} y={yScale((yCut+yMax)/2)} fill="#e5e7eb" fontSize="13">Mission Critical</text>
-              <text x={xScale((xCut+xMax)/2)} y={yScale((yCut+yMax)/2)} fill="#e5e7eb" fontSize="13">Prospect</text>
-              <text x={xScale((xCut+xMax)/2)} y={yScale((yMin+yCut)/2)} fill="#e5e7eb" fontSize="13">Grand Design</text>
-              <text x={xScale((xMin+xCut)/2)} y={yScale((yMin+yCut)/2)} fill="#e5e7eb" fontSize="13">Unicorn</text>
-
-              {/* axes titles */}
-              <text x={W/2} y={H-6} textAnchor="middle" fill="#cbd5e1" fontSize="12">Higher Rating →</text>
-              <g transform={`translate(12 ${H/2}) rotate(-90)`}>
-                <text textAnchor="middle" fill="#cbd5e1" fontSize="12">Service Cost ↑</text>
+            {/* grid + tick labels */}
+            {yTicks.map((t,i)=>(
+              <g key={`yt-${i}`}>
+                <line x1={PAD} y1={yScale(t)} x2={W-PAD} y2={yScale(t)} stroke="rgba(148,163,184,.12)"/>
+                <text x={PAD-8} y={yScale(t)+4} textAnchor="end" fill="#94a3b8" fontSize="11">{t.toFixed(1)}</text>
               </g>
+            ))}
+            {xTicks.map((t,i)=>(
+              <g key={`xt-${i}`}>
+                <line x1={xScale(t)} y1={PAD} x2={xScale(t)} y2={H-PAD} stroke="rgba(148,163,184,.12)"/>
+                <text x={xScale(t)} y={H-PAD+14} textAnchor="middle" fill="#94a3b8" fontSize="11">{Math.round(t)}</text>
+              </g>
+            ))}
 
-              {/* points */}
-              {points.map(({ b, x, y }) => {
-                const q = quadrantLabel(x, y);
-                const color = q==="Mission Critical"?"#f43f5e":q==="Prospect"?"#f59e0b":q==="Grand Design"?"#10b981":"#60a5fa";
-                return (
-                  <g key={b.id} transform={`translate(${xScale(x)} ${yScale(y)})`} cursor="default">
-                    <circle r="6" fill={color} opacity="0.95"/>
-                    <title>{`${b.name} · ${q}\nRating: ${x.toFixed(0)} · Cost: ${y.toFixed(1)}`}</title>
-                  </g>
-                );
-              })}
-            </svg>
-          </div>
+            {/* cut lines */}
+            <line x1={xScale(xCut)} y1={PAD} x2={xScale(xCut)} y2={H-PAD} stroke="rgba(56,189,248,.35)"/>
+            <line x1={PAD} y1={yScale(yCut)} x2={W-PAD} y2={yScale(yCut)} stroke="rgba(16,185,129,.35)"/>
 
-          {/* legend + tip */}
-          <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-slate-400">
+            {/* quadrant labels */}
+            <text x={xScale((xMin+xCut)/2)} y={yScale((yCut+yMax)/2)} fill="#e5e7eb" fontSize="12">Mission Critical</text>
+            <text x={xScale((xCut+xMax)/2)} y={yScale((yCut+yMax)/2)} fill="#e5e7eb" fontSize="12" textAnchor="end">Prospect</text>
+            <text x={xScale((xCut+xMax)/2)} y={yScale((yMin+yCut)/2)} fill="#e5e7eb" fontSize="12" textAnchor="end">Grand Design</text>
+            <text x={xScale((xMin+xCut)/2)} y={yScale((yMin+yCut)/2)} fill="#e5e7eb" fontSize="12">Unicorn</text>
+
+            {/* axis titles */}
+            <text x={W/2} y={H-4} textAnchor="middle" fill="#cbd5e1" fontSize="12">Higher Rating →</text>
+            <g transform={`translate(12 ${H/2}) rotate(-90)`}>
+              <text textAnchor="middle" fill="#cbd5e1" fontSize="12">Service Cost ( £ / m² ) ↑</text>
+            </g>
+
+            {/* points */}
+            {points.map(({ b, x, y }) => {
+              const q = labelOf(x, y);
+              const color =
+                q==="Mission Critical" ? "#f43f5e" :
+                q==="Prospect"         ? "#f59e0b" :
+                q==="Grand Design"     ? "#10b981" : "#60a5fa";
+              return (
+                <g key={b.id} transform={`translate(${xScale(x)} ${yScale(y)})`} cursor="default">
+                  <circle r="7" fill={color} stroke="#0b1220" strokeWidth="1.5" opacity="0.95"/>
+                  <title>{`${b.name} · ${q}\nRating: ${Math.round(x)} · Cost: ${y.toFixed(1)} £/m²`}</title>
+                </g>
+              );
+            })}
+          </svg>
+
+          <div className="mt-2 flex flex-wrap gap-3 text-[11px] text-slate-400">
             <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{background:"#f43f5e"}}/>Mission Critical</span>
             <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{background:"#f59e0b"}}/>Prospect</span>
             <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{background:"#10b981"}}/>Grand Design</span>
             <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{background:"#60a5fa"}}/>Unicorn</span>
           </div>
-          <div className="mt-2 text-xs text-slate-400">
-            Tip: Hover points for values. Cuts are medians so it adapts to your portfolio.
-          </div>
+          <div className="mt-2 text-xs text-slate-400">Cuts are medians; axes show actual portfolio range.</div>
         </div>
 
-        {/* LIST + RECS */}
-        <div className="rounded-2xl p-3 md:p-4 border h-full"
+        {/* LIST + RECS (images removed) */}
+        <div className="rounded-2xl p-3 md:p-4 border"
              style={{borderColor:"var(--stroke)", background:"var(--panel-2)"}}>
-          <div className="text-slate-200 text-sm mb-2">Positions & recommendations</div>
-          <div className="space-y-3 max-h-[380px] overflow-auto pr-1">
-            {points.sort((a,b)=> a.b.name.localeCompare(b.b.name)).map(({ b, x, y }) => {
-              const k = hoshiKPIs(b);
-              const label = quadrantLabel(x, y);
-              const tone  = label==="Mission Critical"?"danger":label==="Prospect"?"warn":label==="Grand Design"?"success":"info";
-              const hero  = (b.images && b.images[0]) || LOGO_SRC;
-              return (
-                <div key={b.id} className="flex gap-3 p-3 rounded-xl border"
-                     style={{borderColor:"var(--stroke)", background:"rgba(148,163,184,.06)"}}>
-                  <img src={hero} alt="" className="w-10 h-10 rounded object-cover"/>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <div className="text-slate-100 font-medium truncate">{b.name}</div>
-                      <span className="chip text-xs">{b.city || "—"}</span>
-                      <Badge tone={tone}>{label}</Badge>
-                    </div>
-                    <div className="mt-1 text-xs text-slate-400">
-                      Rating {Math.round(x)} · Cost {serviceCostAxis(b).toFixed(1)} per m² · kWh/m² {k.intensity ? Math.round(k.intensity) : "—"}
-                    </div>
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                      {RECS[label].map((r,i)=> <span key={i} className="chip">{r}</span>)}
+          <div className="text-slate-300 text-sm mb-2">Positions & recommendations</div>
+          <div className="space-y-3 max-h-[360px] overflow-auto pr-1">
+            {points
+              .sort((a,b)=> a.b.name.localeCompare(b.b.name))
+              .map(({ b, x, y }) => {
+                const k = hoshiKPIs(b);
+                const label = labelOf(x, y);
+                const tone  = label==="Mission Critical"?"danger":label==="Prospect"?"warn":label==="Grand Design"?"success":"info";
+                const color =
+                  label==="Mission Critical" ? "#f43f5e" :
+                  label==="Prospect"         ? "#f59e0b" :
+                  label==="Grand Design"     ? "#10b981" : "#60a5fa";
+                return (
+                  <div key={b.id} className="flex gap-3 p-3 rounded-xl border"
+                       style={{borderColor:"var(--stroke)", background:"rgba(148,163,184,.06)"}}>
+                    <span className="mt-1 w-2.5 h-2.5 rounded-full" style={{background:color}}/>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <div className="text-slate-100 font-medium truncate">{b.name}</div>
+                        <span className="chip text-xs">{b.city || "—"}</span>
+                        <Badge tone={tone}>{label}</Badge>
+                      </div>
+                      <div className="mt-1 text-xs text-slate-400">
+                        Rating {Math.round(x)} · Cost {y.toFixed(1)} £/m² · kWh/m² {k.intensity?Math.round(k.intensity):"—"}
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {RECS[label].map((r,i)=> <span key={i} className="chip">{r}</span>)}
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
           </div>
         </div>
       </div>
@@ -3327,8 +3345,9 @@ function PublicBPS({ goLineage = ()=>{}, goActions = ()=>{} }) {
 
       {/* Top KPI tiles */}
       <div className="p-6 grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-        <div className="rounded-xl bg-slate-100 p-4">
-          <div className="text-xs text-slate-600">Energy</div>
+        <div className="rounded-xl p-4 border"
+     style={{background:"var(--panel-2)", borderColor:"var(--stroke)"}}>
+  <div className="text-xs text-slate-300">Energy</div>
           <div className="text-xl font-semibold">142,000 kWh</div>
         </div>
         <div className="rounded-xl bg-slate-100 p-4">
@@ -3347,16 +3366,18 @@ function PublicBPS({ goLineage = ()=>{}, goActions = ()=>{} }) {
 
       {/* Financial signals (β / idio / total FEP) */}
       <div className="px-6">
-        <div className="rounded-xl border border-slate-200 p-4">
+       <div className="rounded-xl border p-4"
+      style={{background:"var(--panel-2)", borderColor:"var(--stroke)"}}>
           <div className="flex items-center justify-between">
             <div className="text-sm font-medium">Financial signals (Forward ROI)</div>
             <span className="text-xs text-slate-500">β + Idiosyncratic → FEP</span>
           </div>
 
           <div className="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="rounded-lg bg-slate-50 p-3">
-              <div className="text-xs text-slate-600">β (systematic sensitivity)</div>
-              <div className="text-lg font-semibold">{signals.beta.toFixed(2)}</div>
+           <div className="rounded-lg p-3 border"
+     style={{background:"rgba(148,163,184,.06)", borderColor:"var(--stroke)"}}>
+  <div className="text-xs text-slate-300">β (systematic sensitivity)</div>
+  <div className="text-lg font-semibold text-slate-100">{signals.beta.toFixed(2)}</div>
               <div className="text-[12px] text-slate-500 mt-1">Higher → more exposed to prices/policy/climate</div>
             </div>
             <div className="rounded-lg bg-slate-50 p-3">
@@ -3376,7 +3397,8 @@ function PublicBPS({ goLineage = ()=>{}, goActions = ()=>{} }) {
 
       {/* 12-month trend */}
       <div className="px-6 pb-6">
-        <div className="rounded-xl border border-slate-200 p-4">
+    <div className="rounded-xl border p-4"
+      style={{background:"var(--panel-2)", borderColor:"var(--stroke)"}}>
           <div className="flex items-center justify-between">
             <div className="text-sm font-medium">12-month trend (tCO₂e)</div>
             <span className="inline-flex">
@@ -3400,7 +3422,8 @@ function PublicBPS({ goLineage = ()=>{}, goActions = ()=>{} }) {
 
       {/* Actions summary */}
       <div className="px-6 pb-6">
-        <div className="rounded-xl border border-slate-200 p-4">
+       <div className="rounded-xl border p-4"
+      style={{background:"var(--panel-2)", borderColor:"var(--stroke)"}}>
           <div className="flex items-center justify-between">
             <div className="text-sm font-medium">Actions in plan</div>
             <button onClick={goActions}
