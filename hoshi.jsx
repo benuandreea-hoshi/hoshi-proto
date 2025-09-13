@@ -3269,26 +3269,15 @@ function Lineage({ fromAction, goActions }) {
   );
 }
 
-
-
 function PublicBPS({ goLineage = ()=>{}, goActions = ()=>{} }) {
+  // Persisted buildings (same store the rest of the app uses)
   const [buildings, setBuildings] = React.useState(() => hoshiLoadBuildings());
-  const [actions, setActions]     = React.useState(() => hoshiLoadActions());
-  const [addOpen, setAddOpen]     = React.useState(false);
-
+  const [addOpen, setAddOpen] = React.useState(false);
   React.useEffect(() => { hoshiSaveBuildings(buildings); }, [buildings]);
-  React.useEffect(() => { hoshiSaveActions(actions);   }, [actions]);
 
-  // Demo signals (swap with real values later)
-  const signals = {
-    beta: 0.55,         // systematic sensitivity (β)
-    idio: 1.8,          // idiosyncratic premium, %
-    total: 2.6,         // total Forward Energy Premium, %
-  };
-
-  
+  // --- existing demo signals / helpers (unchanged) ---
+  const signals = { beta: 0.55, idio: 1.8, total: 2.6 };
   const topActions = ACTIONS.slice(0,2);
-
   const fmtGBP = n => "£ " + n.toLocaleString();
   const fmtPct = n => (n>=0?"+":"") + n.toFixed(1) + "%";
 
@@ -3312,35 +3301,9 @@ function PublicBPS({ goLineage = ()=>{}, goActions = ()=>{} }) {
   );
 
   return (
-     <div className="grid gap-4 md:gap-6">
-      <MarketingMatrix
-        buildings={buildings}
-        onAddBuilding={() => setAddOpen(true)}
-      />
-       
-    {/* keep the rest of your app as-is */}
-      <Portfolio
-        buildings={buildings}
-        setBuildings={setBuildings}
-        actions={actions}
-        openActionsFor={(id) => goActions?.(id)}
-      />
-
-      {/* Modal opened from the Matrix empty state */}
-      <HoshiAddBuildingModal
-        open={addOpen}
-        onClose={() => setAddOpen(false)}
-        defaultCurrency={(typeof window !== "undefined"
-          ? (localStorage.getItem("hoshi.currency") || "GBP")
-          : "GBP")}
-onSave={(b) => {
-  setBuildings(prev => [ ...(prev || []), b ]);
-  setAddOpen(false);
-}}                               
-      />
-    </div>
-  );
-    {/* Header */}
+    <div className="max-w-4xl mx-auto rounded-2xl overflow-hidden shadow-2xl"
+         style={{ background:"var(--panel-1)", color:"var(--text-1)" }}>
+      {/* Header */}
       <div className="bg-slate-900 text-white p-6">
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-lg md:text-xl font-semibold">Building Performance Sheet</h2>
@@ -3396,13 +3359,11 @@ onSave={(b) => {
               <div className="text-lg font-semibold">{signals.beta.toFixed(2)}</div>
               <div className="text-[12px] text-slate-500 mt-1">Higher → more exposed to prices/policy/climate</div>
             </div>
-
             <div className="rounded-lg bg-slate-50 p-3">
               <div className="text-xs text-slate-600">Idiosyncratic premium</div>
               <div className="text-lg font-semibold">{fmtPct(signals.idio)}</div>
               <div className="text-[12px] text-slate-500 mt-1">Asset-specific performance & variance</div>
             </div>
-
             <div className="rounded-lg bg-slate-50 p-3">
               <div className="text-xs text-slate-600">Total FEP</div>
               <div className="text-lg font-semibold">{fmtPct(signals.total)}</div>
@@ -3423,6 +3384,17 @@ onSave={(b) => {
             </span>
           </div>
           <div className="mt-2"><LineChart/></div>
+        </div>
+      </div>
+
+      {/* Marketing matrix (new card, dark) */}
+      <div className="px-6 pb-6">
+        <div className="rounded-2xl border p-4"
+             style={{ borderColor:"var(--stroke)", background:"var(--panel-2)" }}>
+          <MarketingMatrix
+            buildings={buildings}
+            onAddBuilding={() => setAddOpen(true)}
+          />
         </div>
       </div>
 
@@ -3463,9 +3435,23 @@ onSave={(b) => {
         <div>BPS v1.3 • commit fb3c918 • Published 2 Sep 2025</div>
         <div>Signed by Hoshi • License: Aidan Parkinson</div>
       </div>
+
+      {/* Modal opened from the Matrix empty state */}
+      <HoshiAddBuildingModal
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        defaultCurrency={(typeof window !== "undefined"
+          ? (localStorage.getItem("hoshi.currency") || "GBP")
+          : "GBP")}
+        onSave={(b) => {
+          setBuildings(prev => [ ...(prev || []), b ]);
+          setAddOpen(false);
+        }}
+      />
     </div>
   );
 }
+
   const ICONS = {
   story: () => (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
