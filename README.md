@@ -1,12 +1,16 @@
-Hoshi is a portfolio optimisation platform designed to support capital allocation decisions in real estate decarbonisation. It addresses a structural gap in current ESG tooling: the absence of a decision layer that integrates emissions performance, regulatory exposure, and financial modelling at portfolio scale. 
-Most ESG platforms measure and report. Hoshi is built to prioritise and sequence investment. Most ESG systems focus on data aggregation, disclosure alignment, or scoring frameworks. They provide measurement.
-Hoshi focuses on optimisation. It integrates sustainability variables directly into capital allocation logic. Emissions are not displayed as standalone metrics; they are evaluated in terms of investment sequencing, risk-adjusted return, and portfolio resilience. The platform is designed for cross-functional decision-making between sustainability leads, finance teams, and asset managers. 
-It creates a shared quantitative framework rather than parallel reporting streams.
+Hoshi is a portfolio optimisation platform designed to support capital allocation decisions in real estate decarbonisation. 
+- It addresses a structural gap in current ESG tooling: the absence of a decision layer that integrates emissions performance, regulatory exposure, and financial modelling at portfolio scale. 
+- Most ESG platforms measure and report. --> Hoshi is built to prioritise and sequence investment.
+- Most ESG systems focus on data aggregation, disclosure alignment, or scoring frameworks. They provide measurement. --> Hoshi focuses on optimisation.
+- It integrates sustainability variables directly into capital allocation logic. Emissions are not displayed as standalone metrics; they are evaluated in terms of investment sequencing, risk-adjusted return, and portfolio resilience.
+- The platform is designed for cross-functional decision-making between sustainability leads, finance teams, and asset managers. 
+
 **Prototype**
 An interactive prototype demonstrating Hoshi’s portfolio workflows and interface structure is available here: https://hoshi-property-dba4d5.webflow.io/
+
 **The Problem:**
-Real estate owners are under increasing regulatory and market pressure to decarbonise their portfolios. EPC thresholds are tightening. Energy volatility affects operating income. Investors scrutinise climate exposure and stranded asset risk. Capital budgets remain constrained.
-Despite this, decision-making is fragmented. Building performance data exists but is rarely normalised across portfolios. Emissions metrics are calculated but not consistently tied to asset valuation or capital efficiency. Retrofit options are assessed in isolation rather than optimised across assets. Regulatory risk is acknowledged but not modelled forward in financial terms.
+- Real estate owners are under increasing regulatory and market pressure to decarbonise their portfolios. EPC thresholds are tightening. Energy volatility affects operating income. Investors scrutinise climate exposure and stranded asset risk. Capital budgets remain constrained.
+- Despite this, decision-making is fragmented. Building performance data exists but is rarely normalised across portfolios. Emissions metrics are calculated but not consistently tied to asset valuation or capital efficiency. Retrofit options are assessed in isolation rather than optimised across assets. Regulatory risk is acknowledged but not modelled forward in financial terms.
 The result is reactive action: projects are executed when compliance becomes urgent rather than when capital efficiency is maximised. Hoshi was designed to solve that coordination failure.
 **What Hoshi does:**
 Hoshi provides a structured decision environment that connects:
