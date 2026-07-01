@@ -3,10 +3,7 @@ Hoshi is a portfolio optimisation platform designed to support capital allocatio
 - Most ESG platforms measure and report. --> Hoshi is built to prioritise and sequence investment.
 - Most ESG systems focus on data aggregation, disclosure alignment, or scoring frameworks. They provide measurement. --> Hoshi focuses on optimisation.
 - It integrates sustainability variables directly into capital allocation logic. Emissions are not displayed as standalone metrics; they are evaluated in terms of investment sequencing, risk-adjusted return, and portfolio resilience.
-- The platform is designed for cross-functional decision-making between sustainability leads, finance teams, and asset managers. 
-
-**Prototype**
-An interactive prototype demonstrating Hoshi’s portfolio workflows and interface structure is available here: https://hoshi-property-dba4d5.webflow.io/
+- The platform is designed for cross-functional decision-making between sustainability leads, finance teams, and asset managers.
 
 **The Problem:**
 - Real estate owners are under increasing regulatory and market pressure to decarbonise their portfolios. EPC thresholds are tightening. Energy volatility affects operating income. Investors scrutinise climate exposure and stranded asset risk. Capital budgets remain constrained.
